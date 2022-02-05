@@ -1,14 +1,17 @@
 ## Installation
-
-1. npm 설치
+npm 설치
 ```
 npm install
 ```
 
-## Run 1
-1. server.js 실행
+## Run
+1. node 사용
 ```
 node ./server/server.js
+```
+2. npm 사용
+```
+npm start
 ```
 
 
