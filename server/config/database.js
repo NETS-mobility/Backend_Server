@@ -2,9 +2,9 @@
 
 module.exports = {
     connectionLimit: 5,
-    host: 'localhost',
+    host: '34.64.115.208',
     user: 'root',
-    password: '1234',
+    password: '638877926',
     database: 'nets',
     multipleStatements: true
 }
