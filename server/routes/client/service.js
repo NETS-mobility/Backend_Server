@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 
-const jwt = require('../modules/jwt');
-const pool = require('../modules/mysql');
-const pool2 = require('../modules/mysql2');
+const jwt = require('../../modules/jwt');
+const pool = require('../../modules/mysql');
+const pool2 = require('../../modules/mysql2');
 
-const service_state = require('../config/service_state');
+const service_state = require('../../config/service_state');
 
 
 // ===== 서비스 목록 조회 =====
