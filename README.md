@@ -10,4 +10,4 @@ node ./server/server.js
 ```
 
 
-npm start로 실행하는 방법을 확인하면 추가로 올리겠습니다.
++ npm start로 실행하는 방법을 확인하면 추가로 올리겠습니다.
