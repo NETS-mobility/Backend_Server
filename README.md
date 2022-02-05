@@ -1,10 +1,12 @@
 ## Installation
 
-1. 프로젝트 디렉터리에서 npm 설치
+1. npm 설치
 ```
 npm install
 ```
-2. 프로젝트 디렉터리에서 server.js 실행
+
+## Run 1
+1. server.js 실행
 ```
 node ./server/server.js
 ```
