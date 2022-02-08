@@ -96,8 +96,7 @@ router.post('/changePw/checkId/', async function (req, res, next) {
 
 // ===== 마이페이지 비밀번호 변경 - 비밀번호 변경 =====
 router.post('/changePw/', async function (req, res, next) {
-    const token = await jwt.sign({id : req.body.jwtToken, name : "홍길동"});
-    // const token = req.body.jwtToken;
+    const token = req.body.jwtToken;
     const user_pw = req.body.user_pw;
 
     const token_res = await jwt.verify(token);
