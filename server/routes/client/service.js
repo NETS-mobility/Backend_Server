@@ -18,16 +18,10 @@ router.post('/serviceList/:listType', async function (req, res, next) {
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
     const user_id = token_res.id; // 이용자 id
 
-    let err_custom = false;
-    let err_msg = "";
-
     const connection = await pool2.getConnection(async conn => conn);
     try {
         if(!(listType >= 0 && listType <= 1))
-        {
-            err_custom = true;
-            err_msg = "잘못된 인자 전달";
-        }
+            throw err = 0;
 
         let param = [user_id];
         let sql1 = "select S.`service_kind` as `service_type`, R.`reservation_id` as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_base_address` as `pickup_address`, " + 
@@ -57,14 +51,9 @@ router.post('/serviceList/:listType', async function (req, res, next) {
         res.send(data1);
     }
     catch (err) {
-        if(!err_custom)
-        {
-            err_msg = "서버 오류";
-            console.error("err : " + err);
-            throw err;
-        }
-        else err_msg = err.message;
-        res.status(500).send({ err : err_msg });
+        console.error("err : " + err);
+        if(err == 0) res.status(401).send({ err : "잘못된 인자 전달" });
+        else res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -75,9 +64,6 @@ router.post('/serviceList/:listType', async function (req, res, next) {
 // ===== 서비스 상세보기 =====
 router.post('/serviceDetail/:service_id', async function (req, res, next) {
     const service_id = req.params.service_id;
-
-    let err_custom = false;
-    let err_msg = "";
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -91,10 +77,7 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
         const data_service = result_service[0];
 
         if(data_service.length == 0)
-        {
-            err_custom = true;
-            err_msg = "해당 서비스 정보가 존재하지 않습니다.";
-        }
+            throw err = 0;
 
         // const sql_car = "select `car_number` from `reservation` as R, `car` as C where `reservation_id`=? and R.`car_id`=C.`car_id`;";
         // const result_car = await connection.query(sql_car, [service_id]);
@@ -117,14 +100,9 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
         });
     }
     catch (err) {
-        if(!err_custom)
-        {
-            err_msg = "서버 오류";
-            console.error("err : " + err);
-            throw err;
-        }
-        else err_msg = err.message;
-        res.status(500).send({ err : err_msg });
+        console.error("err : " + err);
+        if(err == 0) res.status(401).send({ err : "해당 서비스 정보가 존재하지 않습니다." });
+        else res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
