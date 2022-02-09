@@ -15,12 +15,12 @@ npm start
 ```
 
 ## Connect Test
-# react installation
+### react installation
 ```
 npm install -g create-react-app
 ```
 
-# create app
+### create app
 ```
 npx create-react-app my-app
 cd my-app
