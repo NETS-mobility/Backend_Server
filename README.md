@@ -5,11 +5,6 @@ npm install
 ```
 
 ## Run
-1. node 사용
-```
-node ./server/server.js
-```
-2. npm 사용
 ```
 npm start
 ```
@@ -21,6 +16,7 @@ npm install -g create-react-app
 ```
 
 ### create app
+프론트 앱 생성
 ```
 npx create-react-app my-app
 cd my-app
@@ -31,7 +27,7 @@ axios 설치
 npm install axios
 ```
 
-App.js 수정
+src/App.js 수정
 ```
 import react from 'react';
 import axios from 'axios';
@@ -60,7 +56,7 @@ export default App;
 
 ```
 
-시작
+### run
 ```
 npm start
 ```
