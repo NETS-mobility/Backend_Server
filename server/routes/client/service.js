@@ -5,6 +5,7 @@ const jwt = require('../../modules/jwt');
 const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
 
+const reservation_state = require('../../config/reservation_state');
 const service_state = require('../../config/service_state');
 
 
@@ -36,12 +37,12 @@ router.post('/serviceList/:listType', async function (req, res, next) {
         if(listType == 0)
         {
             sql1 += "and `reservation_state_id` in (?,?) ";
-            param.push(service_state.ready, service_state.inProgress);
+            param.push(reservation_state.ready, reservation_state.inProgress);
         }
         else 
         {
             sql1 += "and `reservation_state_id`=? ";
-            param.push(service_state.complete);
+            param.push(reservation_state.complete);
         }
         
         sql1 += "order by `expect_pickup_time`;";
@@ -67,6 +68,7 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
+        // 서비스 정보
         const sql_service = "select R.`reservation_id` as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_base_address` as `pickup_address`, `hospital_base_address` as `hos_name`, " + 
             "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " + 
             "NM.`netsmanager_name` as `netsmanager`, C.`car_number` as `car_number`, `gowithmanager_name` as `gowithumanager`, " + 
@@ -79,15 +81,31 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
         if(data_service.length == 0)
             throw err = 0;
 
+        // 차량정보
         // const sql_car = "select `car_number` from `reservation` as R, `car` as C where `reservation_id`=? and R.`car_id`=C.`car_id`;";
         // const result_car = await connection.query(sql_car, [service_id]);
         // const data_car = result_car[0];
 
+        // 서비스 상태정보
+        const sql_prog = "select * from `service_progress` where `reservation_id`=?;";
+        const result_prog = await connection.query(sql_prog, [service_id]);
+        const data_prog = result_prog[0];
+
+        const service_prog = data_prog[0].service_state_id;
+        const service_prog_nextime = [];
+        service_prog_nextime[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
+        service_prog_nextime[service_state.arrivalHos] = data_prog[0].real_hospital_arrival_time; // 병원도착
+        service_prog_nextime[service_state.carReady] = data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
+        service_prog_nextime[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
+        service_prog_nextime[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
+
+        // 매니저 정보
         const sql_manager = "select `netsmanager_name` as `name`, `netsmanager_about_me` as `intro`, `netsmanager_phone` as `tel`, `netsmanager_notice` as `mention` " + 
             "from `reservation` as R, `netsmanager` as NM where `reservation_id`=? and R.`netsmanager_id`=NM.`netsmanager_id`;";
         const result_manager = await connection.query(sql_manager, [service_id]);
         const data_manager = result_manager[0];
 
+        // 결제 정보
         const sql_pay = "select `base_payment_amount` as `charge`, `extra_payment_amount` as `extraPay` " + 
             "from `reservation` as R, `payment` as P where R.`reservation_id`=? and R.`reservation_id`=P.`reservation_id`;";
         const result_pay = await connection.query(sql_pay, [service_id]);
@@ -96,7 +114,9 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
         res.send({
             manager: data_manager[0],
             service: data_service[0],
-            payment: data_pay[0]
+            payment: data_pay[0],
+            service_prog: service_prog,
+            service_prog_nextime: service_prog_nextime
         });
     }
     catch (err) {
