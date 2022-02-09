@@ -9,6 +9,8 @@ const TOKEN_EXPIRED = -1;
 const TOKEN_INVALID = -2;
 
 module.exports = {
+    TOKEN_EXPIRED: TOKEN_EXPIRED,
+    TOKEN_INVALID: TOKEN_INVALID,
     sign: async (user) => { // 토큰을 생성합니다 (jwt.sign로 인해 비동기 방식으로 동작합니다)
         const payload = { // 유저 정보
             id: user.id,
