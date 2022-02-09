@@ -46,9 +46,9 @@ function App() {
   }
 
   return (
-    <form onClick={handleClick}>
-      <button type="button">test</button>
-    </form>
+    <div>
+      <button onClick={handleClick}>test</button>
+    </div>
   );
 }
 
