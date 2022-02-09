@@ -4,6 +4,8 @@ const express = require('express');
 const route_client_service = require('./routes/client/service');
 const route_client_mypage = require('./routes/client/mypage');
 const route_client_home = require('./routes/client/home');
+const route_client_login = require('./routes/client/login');
+const route_client_register = require('./routes/client/register');
 
 // npm 모듈 목록
 const cors = require("cors");
@@ -21,3 +23,5 @@ app.listen(port, () => console.log(`${port}`));
 app.use('/client/service', route_client_service);
 app.use('/client/mypage', route_client_mypage);
 app.use('/client/', route_client_home);
+app.use('/client/login', route_client_login);
+app.use('/client/register', route_client_register);
