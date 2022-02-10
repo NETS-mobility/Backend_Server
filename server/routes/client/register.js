@@ -5,10 +5,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('../../modules/jwt');
 const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
+const message = require('../../modules/message');
 
 
 // ===== 회원가입 - 아이디 중복확인 =====
-router.post('/register/checkDup', async function (req, res, next) {
+router.post('/checkDup', async function (req, res, next) {
     const id = req.body.user_id;
 
     const connection = await pool2.getConnection(async conn => conn);
@@ -30,14 +31,23 @@ router.post('/register/checkDup', async function (req, res, next) {
 });
 
 
+// ===== 휴대폰 인증-인증번호 반환 =====
+router.post('/checkPhone', async function (req, res, next) {
+    const phone = req.body;
+    const message_res = await message.sendMessage(phone); // 메세지 생성, 결과 얻음
+    if(message_res == -1) res.send({ success : false, msg : "메세지 전송 실패"});
+    else res.status(200).send({ success : true, randomNumber : message_res }); // 인증번호 반환
+});
+
+
 // ===== 회원가입 =====
-router.post('/register', async function (req, res, next) {
+router.post('', async function (req, res, next) {
     const { id, password, name, phone } = req.body;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const salt = await bcrypt.genSalt(10);
-        const hashed = await bcrypt.hash(password, salt);
+        const hashed = await bcrypt.hash(password, salt); // 암호화
         
         const sql = `INSERT INTO user(id, password, name, phone, user_join_date) VALUES(?, ?, ?, ?);`;
         const now = new Date();

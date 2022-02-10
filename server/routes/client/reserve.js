@@ -9,9 +9,9 @@ const reservation_state = require('../../config/reservation_state');
 
 
 // ===== 예약 =====
-router.post('/reserve', async function (req, res, next) {
+router.post('', async function (req, res, next) {
     const token = req.body.jwtToken;
-    const user = this.body;
+    const user = req.body;
 
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
