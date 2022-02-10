@@ -5,11 +5,11 @@ const router = express.Router();
 const jwt = require('../../modules/jwt');
 const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
-const fileupload = require('../../modules/fileupload');
+const upload = require('../../modules/fileupload');
 
 const reservation_state = require('../../config/reservation_state');
 const service_state = require('../../config/service_state');
-const upload_path = require('../../config/upload_path');
+const uplPath = require('../../config/upload_path');
 
 
 // ===== 서비스 목록 조회 =====
@@ -177,29 +177,26 @@ router.post('/serviceDetail/:service_id/recodeTime', async function (req, res, n
 
 
 // ===== 서비스 상세보기 - 필수서류 제출 =====
-router.post('/serviceDetail/:service_id/submitDoc', async function (req, res, next) {
-    (fileupload(upload_path.customer_document))(req, res, async function(err) {
-        if (err instanceof multer.MulterError) return res.status(500).send({ err : "파일 업로드 오류" });
-        else if (err) return res.status(500).send({ err : "파일 업로드 오류" });
-        if(req.file === undefined) return res.status(500).send({ err : "파일 업로드 오류" });
+router.post('/serviceDetail/:service_id/submitDoc', (upload(uplPath.customer_document)).single('file'), async function (req, res, next) {
+    const file = req.file;
+    if(file === undefined) return res.status(400).send({ err : "파일이 업로드되지 않았습니다." });
 
-        const service_id = req.params.service_id;
-        const filepath = upload_path.customer_document + req.file.filename; // 업로드 파일 경로
+    const service_id = req.params.service_id;
+    const filepath = uplPath.customer_document + file.filename; // 업로드 파일 경로
 
-        const connection = await pool2.getConnection(async conn => conn);
-        try {
-            const spl = "update `reservation_user` set `valid_target_evidence_path`=? where `reservation_id`=?;"
-            await connection.query(spl, [filepath, service_id]);
-            res.send();
-        }
-        catch (err) {
-            console.error("err : " + err);
-            res.status(500).send({ err : "서버 오류" });
-        }
-        finally {
-            connection.release();
-        }
-    });
+    const connection = await pool2.getConnection(async conn => conn);
+    try {
+        const spl = "update `reservation_user` set `valid_target_evidence_path`=? where `reservation_id`=?;"
+        await connection.query(spl, [filepath, service_id]);
+        res.send();
+    }
+    catch (err) {
+        console.error("err : " + err);
+        res.status(500).send({ err : "서버 오류" });
+    }
+    finally {
+        connection.release();
+    }
 });
 
 

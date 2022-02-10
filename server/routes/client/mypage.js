@@ -51,7 +51,7 @@ router.post('/changeInfo/checkDup', async function (req, res, next) {
 
 
 // ===== 마이페이지 개인정보 변경 =====
-router.post('/changeInfo/', async function (req, res, next) {
+router.post('/changeInfo', async function (req, res, next) {
     const token = req.body.jwtToken;
     const user_name = req.body.user_name;
     const user_newId = req.body.user_newId;
