@@ -12,5 +12,5 @@ module.exports = (uploadPath) => {
             cb(null, Date.now() + "-" + path.basename(file.originalname)); // 파일명 중복 방지를 위해 현재 시간을 파일 이름에 추가
         },
     });
-    return multer({ storage: storage }).single('file');
+    return multer({ storage: storage });
 }

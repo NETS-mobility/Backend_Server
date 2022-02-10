@@ -9,6 +9,7 @@ const route_client_register = require('./routes/client/register');
 const route_client_reserve = require('./routes/client/reserve');
 
 const route_manager_service = require('./routes/manager/service');
+const route_manager_mypage = require('./routes/manager/mypage');
 
 // npm 모듈 목록
 const cors = require("cors");
@@ -27,9 +28,10 @@ app.listen(port, () => console.log(`${port}`));
 // 서버별 도메인 설정 (app.use(bodyParser.json())코드 이후에 추가해야 bodyParser가 적용됨)
 app.use('/client/service', route_client_service);
 app.use('/client/mypage', route_client_mypage);
-app.use('/client/', route_client_home);
+app.use('/client', route_client_home);
 app.use('/client/login', route_client_login);
 app.use('/client/register', route_client_register);
 app.use('/client/reserve', route_client_reserve);
 
 app.use('/manager/service', route_manager_service);
+app.use('/manager/mypage', route_manager_mypage);
