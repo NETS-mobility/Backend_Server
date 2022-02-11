@@ -25,7 +25,51 @@ router.post('', async function (req, res, next) {
 });
 
 
-// ===== 마이페이지 개인정보 변경-아이디 중복확인 =====
+// ===== 마이페이지 개인정보 변경 - 페이지 입장 =====
+router.post('/changeInfo', async function (req, res, next) {
+    const token = req.body.jwtToken;
+
+    const token_res = await jwt.verify(token);
+    if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
+    if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
+    const id = token_res.id; // 이용자 id
+
+    const connection = await pool2.getConnection(async conn => conn);
+    try {
+        const sql1 = "select * from `netsmanager` where `netsmanager_id`=?;";
+        const result1 = await connection.query(sql1, [id]);
+        const data1 = result1[0];
+        if(data1.length == 0) throw err = 0;
+
+        const sql2 = "select `netsmanager_certificate_name` as `name` from `manager_certificate` where `netsmanager_id`=?;";
+        const result2 = await connection.query(sql2, [id]);
+        const data2 = result2[0];
+
+        // const picture = await fs.readFile("public/" + data1[0].netsmanager_picture_path);
+        res.status(200).send({
+            info: {
+                phone: data1[0].netsmanager_phone,
+                notice: data1[0].netsmanager_notice,
+                intro: data1[0].netsmanager_about_me,
+                name: token_res.name,
+                id: id
+            },
+            certificate: data2,
+            picture: data1[0].netsmanager_picture_path
+        });
+    }
+    catch (err) {
+        console.error("err : " + err);
+        if(err == 0) res.status(400).send({ err : "사용자 정보가 없습니다." });
+        else res.status(500).send({ err : "서버 오류" });
+    }
+    finally {
+        connection.release();
+    }
+});
+
+
+// ===== 마이페이지 개인정보 변경 - 아이디 중복확인 =====
 router.post('/changeInfo/checkDup', async function (req, res, next) {
     const token = req.body.jwtToken;
     const user_newId = req.body.user_newId;
@@ -58,7 +102,7 @@ router.post('/changeInfo/checkDup', async function (req, res, next) {
 // ===== 마이페이지 개인정보 변경 - 프로필 사진 업로드 =====
 router.post('/changeInfo/UploadProfile', (upload(uplPath.manager_picture)).single('file'), async function (req, res, next) {
     const file = req.file;
-    const token = req.body.jwtToken;
+    const token = JSON.parse(req.body.json).jwtToken;
     if(file === undefined) return res.status(400).send({ err : "파일이 업로드되지 않았습니다." });
 
     const token_res = await jwt.verify(token);
@@ -86,7 +130,7 @@ router.post('/changeInfo/UploadProfile', (upload(uplPath.manager_picture)).singl
 // ===== 마이페이지 개인정보 변경 - 전달사항 첨부이미지 업로드 =====
 router.post('/changeInfo/UploadIntroimage', (upload(uplPath.manager_introimage)).single('file'), async function (req, res, next) {
     const file = req.file;
-    const token = req.body.jwtToken;
+    const token = JSON.parse(req.body.json).jwtToken;
     if(file === undefined) return res.status(400).send({ err : "파일이 업로드되지 않았습니다." });
 
     const token_res = await jwt.verify(token);
@@ -112,7 +156,7 @@ router.post('/changeInfo/UploadIntroimage', (upload(uplPath.manager_introimage))
 
 
 // ===== 마이페이지 개인정보 변경 =====
-router.post('/changeInfo', async function (req, res, next) {
+router.post('/changeInfo/changeInfo', async function (req, res, next) {
     const token = req.body.jwtToken;
     const { name, phone, intro, notice } = req.body;
 
@@ -183,9 +227,183 @@ router.post('/changePw', async function (req, res, next) {
 });
 
 
-// ===== 마이페이지 FAQ =====
-// ===== 마이페이지 공지사항 =====
-// ===== 마이페이지 예약변경 및 취소 수수료 안내 =====
-// ===== 마이페이지 약관 상세 확인 =====
+// ===== 마이페이지 휴가 등록 - 페이지 입장 =====
+router.post('/vacation', async function (req, res, next) {
+    const token = req.body.jwtToken;
+
+    const token_res = await jwt.verify(token);
+    if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
+    if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
+    const id = token_res.id; // 이용자 id
+
+    const connection = await pool2.getConnection(async conn => conn);
+    try {
+        const sql1 = "select `netsmanager_rest_holiday` as `restDay` from `netsmanager` where `netsmanager_id`=?;";
+        const result1 = await connection.query(sql1, [id]);
+        const data1 = result1[0];
+        if(data1.length == 0) throw err = 0;
+
+        const sql2 = "select * from `manager_holiday` where `netsmanager_id`=?;";
+        const result2 = await connection.query(sql2, [id]);
+        const data2 = result2[0];
+
+        let useDay = 0;
+        if(data2.length > 0) // 날짜 차이 계산 - 일 단위
+        {
+            const start = new Date(data2[0].start_holiday_date);
+            const end = new Date(data2[0].end_holiday_date);
+            useDay = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 3600 * 24));
+        }
+
+        res.status(200).send({
+            restDay: data1[0].restDay,
+            useDay: useDay
+        });
+    }
+    catch (err) {
+        console.error("err : " + err);
+        if(err == 0) res.status(400).send({ err : "사용자 정보가 없습니다." });
+        else res.status(500).send({ err : "서버 오류" });
+    }
+    finally {
+        connection.release();
+    }
+});
+
+
+// ===== 마이페이지 휴가 등록 - 휴가 등록 =====
+router.post('/vacation/register', async function (req, res, next) {
+    const token = req.body.jwtToken;
+    const { start, end } = req.body;
+
+    const token_res = await jwt.verify(token);
+    if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
+    if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
+    const id = token_res.id; // 이용자 id
+
+    const connection = await pool2.getConnection(async conn => conn);
+    try {
+        const sql1 = "insert into `manager_holiday` values (?,?,?,0);";
+        await connection.query(sql1, [id, start, end]);
+        res.status(200).send();
+    }
+    catch (err) {
+        console.error("err : " + err);
+        res.status(500).send({ err : "서버 오류" });
+    }
+    finally {
+        connection.release();
+    }
+});
+
+
+// ===== 마이페이지 휠체어/리프트 수리/점검 페이지 입장 =====
+router.post('/repairWheel', async function (req, res, next) {
+    const connection = await pool2.getConnection(async conn => conn);
+    try {
+        const sql1 = "select `equip_id` as `id`, `equip_number` as `number`, `equip_type` as `type` from `equipment`;";
+        const result1 = await connection.query(sql1, []);
+        const data1 = result1[0];
+        res.status(200).send(data1);
+    }
+    catch (err) {
+        console.error("err : " + err);
+        res.status(500).send({ err : "서버 오류" });
+    }
+    finally {
+        connection.release();
+    }
+});
+
+
+// ===== 마이페이지 휠체어/리프트 수리/점검 등록 =====
+router.post('/repairWheel/register', (upload(uplPath.repair_wheel_document)).single('file'), async function (req, res, next) {
+    const body = JSON.parse(req.body.json);
+    const token = body.jwtToken;
+    const { wheel_id, start, end, why, cost } = body;
+
+    const token_res = await jwt.verify(token);
+    if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
+    if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
+    const user_id = token_res.id;
+
+    const file = req.file;
+    if(file === undefined) return res.status(400).send({ err : "파일이 업로드되지 않았습니다." });
+
+    const connection = await pool2.getConnection(async conn => conn);
+    try {
+        const filepath = uplPath.repair_wheel_document + file.filename; // 업로드 파일 경로
+        const sql1 = "insert into `equipment_repair`(`equip_id`,`equip_repair_cost`,`equip_repair_reason`," + 
+            "`equip_repair_start_date`,`equip_repair_end_date`,`equip_repair_evidence_path`,`netsmanager_id`) values (?,?,?,?,?,?,?);";
+        await connection.query(sql1, [wheel_id, cost, why, start, end, filepath, user_id]);
+        res.status(200).send();
+    }
+    catch (err) {
+        console.error("err : " + err);
+        res.status(500).send({ err : "서버 오류" });
+    }
+    finally {
+        connection.release();
+    }
+});
+
+
+// ===== 마이페이지 차량 수리/점검 페이지 입장 =====
+router.post('/repairCar', async function (req, res, next) {
+    const token = req.body.jwtToken;
+
+    const token_res = await jwt.verify(token);
+    if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
+    if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
+    const id = token_res.id; // 이용자 id
+
+    const connection = await pool2.getConnection(async conn => conn);
+    try {
+        const sql1 = "select `car_id` as `id`, `car_number` as `number`, `car_kind` as `type` from `car` where `netsmanager_id`=?;";
+        const result1 = await connection.query(sql1, [id]);
+        const data1 = result1[0];
+        res.status(200).send(data1);
+    }
+    catch (err) {
+        console.error("err : " + err);
+        res.status(500).send({ err : "서버 오류" });
+    }
+    finally {
+        connection.release();
+    }
+});
+
+
+// ===== 마이페이지 차량 수리/점검 등록 =====
+router.post('/repairCar/register', (upload(uplPath.repair_car_document)).single('file'), async function (req, res, next) {
+    const body = JSON.parse(req.body.json);
+    const token = body.jwtToken;
+    const { car_id, start, end, why, cost } = body;
+
+    const token_res = await jwt.verify(token);
+    if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
+    if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
+    const user_id = token_res.id;
+
+    const file = req.file;
+    if(file === undefined) return res.status(400).send({ err : "파일이 업로드되지 않았습니다." });
+
+    const connection = await pool2.getConnection(async conn => conn);
+    try {
+        const filepath = uplPath.repair_car_document + file.filename; // 업로드 파일 경로
+        const sql1 = "insert into `car_repair`(`car_id`,`car_repair_cost`,`car_repair_reason`," + 
+            "`car_repair_start_date`,`car_repair_end_date`,`car_repair_evidence_path`,`netsmanager_id`) values (?,?,?,?,?,?,?);";
+        await connection.query(sql1, [car_id, cost, why, start, end, filepath, user_id]);
+        res.status(200).send();
+    }
+    catch (err) {
+        console.error("err : " + err);
+        res.status(500).send({ err : "서버 오류" });
+    }
+    finally {
+        connection.release();
+    }
+});
+
 
 module.exports = router;
