@@ -10,8 +10,8 @@ const message = require('../../modules/message');
 
 // ===== 회원가입 - 아이디 중복확인 =====
 router.post('/checkDup', async function (req, res, next) {
-    const id = req.body.user_id;
-
+    const id = req.body.id;
+    
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const sql = `SELECT user_id FROM user WHERE user_id=?;`;
@@ -49,7 +49,7 @@ router.post('', async function (req, res, next) {
         const salt = await bcrypt.genSalt(10);
         const hashed = await bcrypt.hash(password, salt); // 암호화
         
-        const sql = `INSERT INTO user(id, password, name, phone, user_join_date) VALUES(?, ?, ?, ?);`;
+        const sql = "insert into `user`(`user_id`,`user_password`,`user_name`,`user_phone`,`user_join_date`) values (?,?,?,?,?);";
         const now = new Date();
 
         await connection.query(sql, [id, hashed, name, phone, now]);

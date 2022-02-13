@@ -2,9 +2,9 @@
 
 module.exports = {
     connectionLimit: 5,
-    host: '34.64.115.208',
+    host: 'localhost',              // 로컬계정
     user: 'root',
-    password: '638877926',
+    password: '1234',               // 비밀번호
     database: 'nets',
     multipleStatements: true
 }
