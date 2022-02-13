@@ -20,14 +20,14 @@ router.post('', async function (req, res, next) {
         
         if(sql_data.length == 0) return res.send({ msg : "아이디가 존재하지 않음" });
         
-        const validPassword = await bcrypt.compare(password, sql_data[0]); // 복호화 비교
+        const validPassword = await bcrypt.compare(password, sql_data[0].user_password); // 복호화 비교
         if(validPassword == 0) {
             res.send({ msg : "비밀번호가 일치하지 않음" });
         }
         else {
             const payload = { // 유저 정보
                 id : id,
-                name : sql_data[1],
+                name : sql_data[0].user_name,
             };
 
             const token_res = await jwt.sign(payload); // 토큰 생성
