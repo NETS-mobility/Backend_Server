@@ -18,8 +18,8 @@ router.post('/checkDup', async function (req, res, next) {
         const sql_result = await connection.query(sql, [id]);
         const sql_data = sql_result[0];
 
-        if(sql_data.length == 0) res.send({ msg : "아이디 중복 안 됨, 회원가입 가능" });
-        else res.send({ msg : "아이디 중복됨, 회원가입 불가능" });
+        if(sql_data.length == 0) res.status(200).send({ msg : "아이디 중복 안 됨, 회원가입 가능" });
+        else res.status(401).send({ msg : "아이디 중복됨, 회원가입 불가능" });
     }
     catch (err) {
         console.error("err : " + err);
@@ -33,9 +33,9 @@ router.post('/checkDup', async function (req, res, next) {
 
 // ===== 휴대폰 인증-인증번호 반환 =====
 router.post('/checkPhone', async function (req, res, next) {
-    const phone = req.body;
+    const phone = req.body.phone;
     const message_res = await message.sendMessage(phone); // 메세지 생성, 결과 얻음
-    if(message_res == -1) res.send({ success : false, msg : "메세지 전송 실패"});
+    if(message_res == -1) res.status(500).send({ msg : "메세지 전송 실패"});
     else res.status(200).send({ success : true, randomNumber : message_res }); // 인증번호 반환
 });
 

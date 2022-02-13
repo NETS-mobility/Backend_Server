@@ -18,11 +18,11 @@ router.post('', async function (req, res, next) {
         const sql_result = await connection.query(sql, [id]);
         const sql_data = sql_result[0];
         
-        if(sql_data.length == 0) return res.send({ msg : "아이디가 존재하지 않음" });
+        if(sql_data.length == 0) return res.status(401).send({ msg : "아이디가 존재하지 않음" });
         
         const validPassword = await bcrypt.compare(password, sql_data[0].user_password); // 복호화 비교
         if(validPassword == 0) {
-            res.send({ msg : "비밀번호가 일치하지 않음" });
+            res.status(401).send({ msg : "비밀번호가 일치하지 않음" });
         }
         else {
             const payload = { // 유저 정보
@@ -46,16 +46,16 @@ router.post('', async function (req, res, next) {
 
 // ===== 휴대폰 인증-인증번호 반환 =====
 router.post('/checkPhone', async function (req, res, next) {
-    const phone = req.body;
+    const phone = req.body.phone;
     const message_res = await message.sendMessage(phone); // 메세지 생성, 결과 얻음
-    if(message_res == -1) res.send({ success : false, msg : "메세지 전송 실패"});
+    if(message_res == -1) res.status(500).send({ msg : "메세지 전송 실패"});
     else res.status(200).send({ success : true, randomNumber : message_res }); // 인증번호 반환
 });
 
 
 // ===== 아이디 찾기 =====
 router.post('/findId', async function (req, res, next) {
-    const phone = req.body;
+    const phone = req.body.phone;
     
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -63,7 +63,7 @@ router.post('/findId', async function (req, res, next) {
         const sql_result = await connection.query(sql, [phone]);
         const sql_data = sql_result[0];
 
-        if(sql_data.length == 0) res.send({ msg: "아이디가 존재하지 않음" });
+        if(sql_data.length == 0) res.status(401).send({ msg: "아이디가 존재하지 않음" });
         else res.status(200).send({ success : true, id : sql_data }); // 아이디 반환
     }
     catch (err) {
