@@ -8,3 +8,8 @@ module.exports = {
     database: 'nets',
     multipleStatements: true
 }
+
+/* === gcp 클라우드 계정 ===
+ * host: 34.64.115.208
+ * password: 638877926
+*/
