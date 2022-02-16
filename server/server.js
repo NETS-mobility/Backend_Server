@@ -10,6 +10,7 @@ const route_client_reserve = require('./routes/client/reserve');
 
 const route_manager_service = require('./routes/manager/service');
 const route_manager_mypage = require('./routes/manager/mypage');
+const route_manager_home = require('./routes/manager/home');
 
 // npm 모듈 목록
 const cors = require("cors");
@@ -35,3 +36,4 @@ app.use('/client/reserve', route_client_reserve);
 
 app.use('/manager/service', route_manager_service);
 app.use('/manager/mypage', route_manager_mypage);
+app.use('/manager', route_manager_home);
