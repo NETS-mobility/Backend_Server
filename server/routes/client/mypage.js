@@ -4,6 +4,10 @@ const router = express.Router();
 const jwt = require('../../modules/jwt');
 const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
+const bcrypt = require('bcryptjs');
+
+const bcrypt_option = require('../../config/bcrypt');
+const saltRounds = bcrypt_option.saltRounds;
 
 
 // ===== 마이페이지 입장 =====
@@ -98,6 +102,7 @@ router.post('/changePw/checkId/', async function (req, res, next) {
 router.post('/changePw/', async function (req, res, next) {
     const token = req.body.jwtToken;
     const user_pw = req.body.user_pw;
+    console.log(req.body);
 
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
@@ -106,8 +111,9 @@ router.post('/changePw/', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
+        const user_hashedPw = await bcrypt.hash(user_pw, saltRounds);
         const sql = "update `user` set `user_password`=? where `user_id`=?;";
-        await connection.query(sql, [user_pw, user_id]);
+        await connection.query(sql, [user_hashedPw, user_id]);
         res.status(200).send();
     }
     catch (err) {
