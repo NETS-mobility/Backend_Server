@@ -61,8 +61,7 @@ router.post('/service', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        if(err == 0) res.status(401).send({ err : "잘못된 인자 전달" });
-        else res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
