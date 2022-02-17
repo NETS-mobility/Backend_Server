@@ -14,6 +14,7 @@ const route_manager_home = require('./routes/manager/home');
 
 const route_admin_service = require('./routes/admin/service');
 const route_admin_home = require('./routes/admin/home');
+const route_admin_statistics = require('./routes/admin/statistics');
 
 
 // npm 모듈 목록
@@ -44,3 +45,4 @@ app.use('/manager', route_manager_home);
 
 app.use('/admin/service', route_admin_service);
 app.use('/admin', route_admin_home);
+app.use('/admin/statistics', route_admin_statistics);
