@@ -58,4 +58,28 @@ router.post('', async function (req, res, next) {
     }
 });
 
+
+// ===== 예약 - 필수서류 제출 =====
+router.post('/:reservationId/submitDoc', (upload(uplPath.customer_document)).single('file'), async function (req, res, next) {
+    const file = req.file;
+    if(file === undefined) return res.status(400).send({ err : "파일이 업로드되지 않음" });
+
+    const reservationId = req.params.reservationId;
+    const filepath = uplPath.customer_document + file.filename; // 업로드 파일 경로
+
+    const connection = await pool2.getConnection(async conn => conn);
+    try {
+        const sql = `UPDATE reservation_user SET valid_target_evidence_path=?, is_submit_evidence=? WHERE reservation_id=?;`;
+        await connection.query(sql, [filepath, 1, reservationId]);
+        res.status(200).send({ success : true });
+    }
+    catch (err) {
+        console.error("err : " + err);
+        res.status(500).send({ err : "서버 오류" });
+    }
+    finally {
+        connection.release();
+    }
+});
+
 module.exports = router;
