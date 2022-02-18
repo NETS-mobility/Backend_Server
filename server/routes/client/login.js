@@ -25,7 +25,7 @@ router.post('', async function (req, res, next) {
             res.status(401).send({ msg : "비밀번호가 일치하지 않음" });
         }
         else {
-            const payload = { // 유저 정보
+            const payload = { // 고객 정보
                 id : id,
                 name : sql_data[0].user_name,
             };
