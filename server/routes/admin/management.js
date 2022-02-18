@@ -94,7 +94,7 @@ router.post('/manager/detail', async function (req, res, next) {
         const result3 = await connection.query(sql3, [id]);
         const data3 = result3[0];
 
-        const now = new Date("2022-02-09");
+        const now = new Date();
         const sql4 = "select S.`service_kind` as `service_type`, `expect_pickup_time` as `pickup_time`, U.`user_name` as `customer_name`" + 
             "from `reservation` as R, `service_info` as S, `user` as U " + 
             "where `netsmanager_id`=? and R.`service_kind_id`=S.`service_kind_id` and R.`user_id`=U.`user_id` and `expect_pickup_time` >= ? " + 
