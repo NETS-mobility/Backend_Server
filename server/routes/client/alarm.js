@@ -13,21 +13,20 @@ router.post('', async function (req, res, next) {
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
     const user_id = token_res.id; // 이용자 id
-
+  
     const connection = await pool2.getConnection(async conn => conn);
     
     try {
         let param = [user_id];
 
-        const sql = "select * from customer_alarm;";
-                    "select u.'user_name', ca.'alarm_kind', ca.'alarm_content', r.'fixed_medical_time'" +
-                    "from 'customer_alarm' as ca " +
+        const sql = "select u.`user_name`, ca.`alarm_kind`, ca.`alarm_content`, r.`fixed_medical_time` " +
+                    "from `customer_alarm` as ca " +
+                    "left join user as u " +
+                    "on ca.`user_id` = u.`user_id` " +
                     "left join reservation as r " +
-                    "on ca.'user_id' = r.'user_id'" +
-                    "left join user as u" +
-                    "on r.'user_id' = u.'user_id'" +
-                    "where r.user_id = ?" +
-                    "order by ca.'alarm_id' as desc;";
+                    "on ca.`user_id` = r.`user_id` " +
+                    "where ca.`user_id` =? " +
+                    "order by ca.`alarm_id` desc;";
             const result = await connection.query(sql, param);
             const data = result[0];
             connection.release();
