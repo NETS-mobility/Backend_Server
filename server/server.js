@@ -22,17 +22,25 @@ const route_admin_board = require('./routes/admin/board');
 const route_admin_cost = require('./routes/admin/cost');
 const route_admin_login = require('./routes/admin/login');
 const route_admin_register = require('./routes/admin/register');
-
+const route_client_feedback = require('./routes/client/feedback');
+const route_client_pay = require('./routes/client/pay');
 
 // npm 모듈 목록
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const bodyParser = require('body-parser');
 const jwt = require("jsonwebtoken");
+const favicon = require("serve-favicon");
+const logger = require("morgan");
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser());
 app.use(express.static("../public")); // 정적 리소스 관리 디렉터리 설정
+app.use(logger('dev'));
+
 
 const port = 5000; // 포트 설정
 app.listen(port, () => console.log(`${port}`));
@@ -46,6 +54,8 @@ app.use('/client/login', route_client_login);
 app.use('/client/register', route_client_register);
 app.use('/client/reserve', route_client_reserve);
 app.use('/client/alarm', route_client_alarm);
+app.use('/client/feedback', route_client_feedback);
+app.use('/client/pay', route_client_pay);
 
 app.use('/manager/service', route_manager_service);
 app.use('/manager/mypage', route_manager_mypage);
@@ -60,3 +70,37 @@ app.use('/admin/board', route_admin_board);
 app.use('/admin/cost', route_admin_cost);
 app.use('/admin/login', route_admin_login);
 app.use('/admin/register', route_admin_register);
+
+// catch 404 and forward to error handler
+app.use(function(req, res, next) {
+    var err = new Error('Not Found');
+    err.status = 404;
+    next(err);
+  });
+  
+  // error handlers
+  
+  // development error handler
+  // will print stacktrace
+  if (app.get('env') === 'development') {
+    app.use(function(err, req, res, next) {
+      res.status(err.status || 500);
+      res.render('error', {
+        message: err.message,
+        error: err
+      });
+    });
+  }
+  
+  // production error handler
+  // no stacktraces leaked to user
+  app.use(function(err, req, res, next) {
+    res.status(err.status || 500);
+    res.render('error', {
+      message: err.message,
+      error: {}
+    });
+  });
+
+  module.exports = app;
+  
