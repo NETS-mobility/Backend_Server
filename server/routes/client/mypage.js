@@ -17,9 +17,24 @@ router.post('', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const user_name = token_res.name;
+    const user_id = token_res.id;
 
-    res.send({user_name: user_name});
+    const connection = await pool2.getConnection(async conn => conn);
+    try {
+        const sql = "select `user_id` as `id`, `user_name` as `name`, `user_phone` as `phone` from `user` where `user_id`=?;";
+        const sql_result = await connection.query(sql, [user_id]);
+        const sql_data = sql_result[0];
+        if(sql_data.length == 0) throw err = 0;
+        res.send(sql_data[0]);
+    }
+    catch (err) {
+        console.error("err : " + err);
+        if(err == 0) res.status(400).send({ err : "회원정보가 존재하지 않습니다." });
+        else res.status(500).send({ err : "서버 오류" });
+    }
+    finally {
+        connection.release();
+    }
 });
 
 
