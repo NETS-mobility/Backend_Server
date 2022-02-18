@@ -14,20 +14,20 @@ router.post('', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try{
-        const sql = `SELECT user_password, user_name FROM user WHERE user_id=?;`;
+        const sql = `SELECT netsmanager_password, netsmanager_name FROM netsmanager WHERE netsmanager_id=?;`;
         const sql_result = await connection.query(sql, [id]);
         const sql_data = sql_result[0];
         
         if(sql_data.length == 0) return res.status(401).send({ msg : "아이디가 존재하지 않음" });
         
-        const validPassword = await bcrypt.compare(password, sql_data[0].user_password); // 복호화 비교
+        const validPassword = await bcrypt.compare(password, sql_data[0].netsmanager_password); // 복호화 비교
         if(validPassword == 0) {
             res.status(401).send({ msg : "비밀번호가 일치하지 않음" });
         }
         else {
-            const payload = { // 고객 정보
+            const payload = { // 매니저 정보
                 id : id,
-                name : sql_data[0].user_name,
+                name : sql_data[0].netsmanager_name,
             };
 
             const token_res = await jwt.sign(payload); // 토큰 생성
@@ -59,7 +59,7 @@ router.post('/findId', async function (req, res, next) {
     
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql = `SELECT user_id FROM user WHERE user_phone=?;`;
+        const sql = `SELECT netsmanager_id FROM netsmanager WHERE netsmanager_phone=?;`;
         const sql_result = await connection.query(sql, [phone]);
         const sql_data = sql_result[0];
 
@@ -85,7 +85,7 @@ router.post('/changePw', async function (req, res, next) {
         const salt = await bcrypt.genSalt(10);
         const hashed = await bcrypt.hash(password, salt); // 암호화
 
-        const sql = `UPDATE user SET user_password=? WHERE user_id=?;`;
+        const sql = `UPDATE netsmanager SET netsmanager_password=? WHERE netsmanager_id=?;`;
         await connection.query(sql, [hashed, id]);
         res.status(200).send({ success : true });        
     }
