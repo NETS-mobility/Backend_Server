@@ -12,6 +12,7 @@ const route_client_alarm = require('./routes/client/alarm');
 const route_manager_service = require('./routes/manager/service');
 const route_manager_mypage = require('./routes/manager/mypage');
 const route_manager_home = require('./routes/manager/home');
+const route_manager_login = require('./routes/manager/login');
 
 const route_admin_service = require('./routes/admin/service');
 const route_admin_home = require('./routes/admin/home');
@@ -47,6 +48,7 @@ app.use('/client/alarm', route_client_alarm);
 app.use('/manager/service', route_manager_service);
 app.use('/manager/mypage', route_manager_mypage);
 app.use('/manager', route_manager_home);
+app.use('/manager/login', route_manager_login);
 
 app.use('/admin/service', route_admin_service);
 app.use('/admin', route_admin_home);
