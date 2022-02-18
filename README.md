@@ -1,6 +1,3 @@
-## Swagger
-https://app.swaggerhub.com/apis/NETS-mobility/Backend_Server/1.0.0
-
 ## Installation
 package.json에 등록된 node_modules 설치
 ```
