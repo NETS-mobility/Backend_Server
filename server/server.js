@@ -16,6 +16,7 @@ const route_admin_service = require('./routes/admin/service');
 const route_admin_home = require('./routes/admin/home');
 const route_admin_statistics = require('./routes/admin/statistics');
 const route_admin_management = require('./routes/admin/management');
+const route_admin_board = require('./routes/admin/board');
 
 
 // npm 모듈 목록
@@ -48,3 +49,4 @@ app.use('/admin/service', route_admin_service);
 app.use('/admin', route_admin_home);
 app.use('/admin/statistics', route_admin_statistics);
 app.use('/admin/management', route_admin_management);
+app.use('/admin/board', route_admin_board);
