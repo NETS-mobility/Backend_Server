@@ -7,6 +7,7 @@ const route_client_home = require('./routes/client/home');
 const route_client_login = require('./routes/client/login');
 const route_client_register = require('./routes/client/register');
 const route_client_reserve = require('./routes/client/reserve');
+const route_client_alarm = require('./routes/client/alarm');
 
 const route_manager_service = require('./routes/manager/service');
 const route_manager_mypage = require('./routes/manager/mypage');
@@ -41,6 +42,7 @@ app.use('/client', route_client_home);
 app.use('/client/login', route_client_login);
 app.use('/client/register', route_client_register);
 app.use('/client/reserve', route_client_reserve);
+app.use('/client/alarm', route_client_alarm);
 
 app.use('/manager/service', route_manager_service);
 app.use('/manager/mypage', route_manager_mypage);
