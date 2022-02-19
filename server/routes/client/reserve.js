@@ -1,12 +1,14 @@
 const express = require('express');
+const multer = require('multer');
 const router = express.Router();
 
 const jwt = require('../../modules/jwt');
 const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
+const upload = require('../../modules/fileupload');
 
 const reservation_state = require('../../config/reservation_state');
-
+const uplPath = require('../../config/upload_path');
 
 // ===== 예약 =====
 router.post('', async function (req, res, next) {
