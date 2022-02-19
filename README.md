@@ -3,7 +3,7 @@ https://app.swaggerhub.com/apis/n3wzd/Backend_Server/1.0.0
 https://app.swaggerhub.com/apis/YunseoKang/NETS-Backend2.0/1.0.0
 
 ## DB
-2022.02.19 NETS_db_v2.2.mwb
+2022.02.19 NETS_db_v2.4.mwb
 
 ## Installation
 package.json에 등록된 node_modules 설치
