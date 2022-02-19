@@ -27,11 +27,11 @@ router.post('', async function (req, res, next) {
                     pickup_base_address, pickup_detail_address, hospital_base_address, hospital_detail_address, drop_base_address, drop_detail_address,
                     hope_reservation_date, fixed_medical_time, hope_hospital_arrival_time, hope_hospital_departure_time,
                     gowith_hospital_time, is_over_point, fixed_medical_detail, hope_requires
-                    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
         
         const sql2 = `INSERT INTO reservation_user(reservation_id, patient_name, patient_phone,
                     valid_target_kind, is_submit_evidence
-                    ) VALUES(?, ?, ?, ?, ?);`;
+                    ) VALUES(?,?,?,?,?);`;
         
         const now = new Date();
         let isOverPoint = 0; //2시간 이하

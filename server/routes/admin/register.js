@@ -40,17 +40,19 @@ router.post('/checkDup', async function (req, res, next) {
 
 // ===== 회원가입 - 매니저 등록 =====
 router.post('/manager', async function (req, res, next) {
-    const { id, password, name, phone } = req.body;
+    const { id, password, name, phone, rrn, driverLicense, bankName, bankAccount } = req.body;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const salt = await bcrypt.genSalt(10);
         const hashed = await bcrypt.hash(password, salt); // 암호화
         
-        const sql = `INSERT INTO netsmanager(netsmanager_id, netsmanager_password, netsmanager_name, netsmanager_phone, netsmanager_join_date) VALUES(?, ?, ?, ?, ?);`;
+        const sql = `INSERT INTO netsmanager(netsmanager_id, netsmanager_password, netsmanager_name, netsmanager_phone,
+                   netsmanager_rrn, netsmanager_driver_license, netsmanager_bank_name, netsmanager_bank_accout,      
+                   netsmanager_join_date) VALUES(?,?,?,?,?,?,?,?,?);`;
         const now = new Date();
 
-        await connection.query(sql, [id, hashed, name, phone, now]);
+        await connection.query(sql, [id, hashed, name, phone, rrn, driverLicense, bankName, bankAccount, now]);
         res.status(200).send({ success : true });
     }
     catch (err) {
@@ -72,7 +74,7 @@ router.post('/admin', async function (req, res, next) {
         const salt = await bcrypt.genSalt(10);
         const hashed = await bcrypt.hash(password, salt); // 암호화
         
-        const sql = `INSERT INTO administrator(admin_id, admin_password, admin_name, admin_phone, admin_join_date) VALUES(?, ?, ?, ?, ?);`;
+        const sql = `INSERT INTO administrator(admin_id, admin_password, admin_name, admin_phone, admin_join_date) VALUES(?,?,?,?,?);`;
         const now = new Date();
 
         await connection.query(sql, [id, hashed, name, phone, now]);
