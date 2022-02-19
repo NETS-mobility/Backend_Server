@@ -24,8 +24,9 @@ const route_admin_cost = require('./routes/admin/cost');
 const route_admin_login = require('./routes/admin/login');
 const route_admin_register = require('./routes/admin/register');
 
-const route_client_feedback = require('./routes/client/feedback');
-const route_client_pay = require('./routes/client/pay');
+//const route_client_feedback = require('./routes/client/feedback');
+//const route_client_pay = require('./routes/client/pay');
+
 
 // npm 모듈 목록
 const cors = require("cors");
@@ -56,8 +57,8 @@ app.use('/client/login', route_client_login);
 app.use('/client/register', route_client_register);
 app.use('/client/reserve', route_client_reserve);
 app.use('/client/alarm', route_client_alarm);
-app.use('/client/feedback', route_client_feedback);
-app.use('/client/pay', route_client_pay);
+//app.use('/client/feedback', route_client_feedback);
+//app.use('/client/pay', route_client_pay);
 
 app.use('/manager/service', route_manager_service);
 app.use('/manager/mypage', route_manager_mypage);
@@ -73,7 +74,7 @@ app.use('/admin/board', route_admin_board);
 app.use('/admin/cost', route_admin_cost);
 app.use('/admin/login', route_admin_login);
 app.use('/admin/register', route_admin_register);
-
+/*
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
     var err = new Error('Not Found');
@@ -106,4 +107,4 @@ app.use(function(req, res, next) {
   });
 
   module.exports = app;
-  
+*/

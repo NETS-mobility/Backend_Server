@@ -1,44 +1,37 @@
+/*
 var express = require('express');
 var router = express.Router();
 
 var http = require('http');
 var querystring = require('query-string');
 
-/* GET home page. */
+// GET home page.
 router.get('/', function(req, res, next) {
     res.render('index', { title: 'Express' });
 });
 
-/**
- * 결제 요청
- */
+// 결제 요청
 router.get('/payRequest', function(req, res, next) {
     payRequest();
     res.render('test', { title: 'Express' });
 
 });
 
-/**
- * 결제 (요청, 승인) 취소
- */
+// 결제 (요청, 승인) 취소
 router.get('/payRequestCancel', function(req, res, next) {
     payRequestCancel();
     res.render('test', { title: 'Express' });
 
 });
 
-/**
- * 결제 취소 요청
- */
+// 결제 취소 요청
 router.get('/payRequestCancel2', function(req, res, next) {
     payRequestCancel2();
     res.render('test', { title: 'Express' });
 
 });
 
-/**
- * 결제 요청
- */
+// 결제 요청
 function payRequest() {
     var postData = querystring.stringify({
       'cmd' : 'payrequest',
@@ -55,9 +48,7 @@ function payRequest() {
     request.end();
 }
 
-/**
- * 결제 (요청, 승인) 취소
- */
+// 결제 (요청, 승인) 취소
 function payRequestCancel() {
     var postData = querystring.stringify({
         'cmd' : 'paycancel',
@@ -78,9 +69,7 @@ function payRequestCancel() {
     request.end();
 }
 
-/**
- * 결제 취소 요청
- */
+// 결제 취소 요청
 function payRequestCancel2() {
     var postData = querystring.stringify({
         'cmd' : 'paycancel',
@@ -100,10 +89,8 @@ function payRequestCancel2() {
     request.end();
 }
 
-/**
- * http 정보
- * @param postData
- */
+// http 정보
+// @param postData
  function optionsMake (postData) {
     var options = {
         host: 'api.payapp.kr',
@@ -119,10 +106,8 @@ function payRequestCancel2() {
     return options;
 }
 
-/**
- * 응답
- * @param response
- */
+// 응답
+// @param response
 function readJSONResponse(response) {
     var responseData = '';
     response.on('data', function (chunk) {
@@ -135,3 +120,4 @@ function readJSONResponse(response) {
         console.log("result==" + JSON.stringify(result));
     });
 }
+*/
