@@ -13,6 +13,7 @@ const route_manager_service = require('./routes/manager/service');
 const route_manager_mypage = require('./routes/manager/mypage');
 const route_manager_home = require('./routes/manager/home');
 const route_manager_login = require('./routes/manager/login');
+const route_manager_alarm = require('./routes/manager/alarm');
 
 const route_admin_service = require('./routes/admin/service');
 const route_admin_home = require('./routes/admin/home');
@@ -22,6 +23,7 @@ const route_admin_board = require('./routes/admin/board');
 const route_admin_cost = require('./routes/admin/cost');
 const route_admin_login = require('./routes/admin/login');
 const route_admin_register = require('./routes/admin/register');
+
 const route_client_feedback = require('./routes/client/feedback');
 const route_client_pay = require('./routes/client/pay');
 
@@ -61,6 +63,7 @@ app.use('/manager/service', route_manager_service);
 app.use('/manager/mypage', route_manager_mypage);
 app.use('/manager', route_manager_home);
 app.use('/manager/login', route_manager_login);
+app.use('/manager/alarm', route_manager_alarm);
 
 app.use('/admin/service', route_admin_service);
 app.use('/admin', route_admin_home);
