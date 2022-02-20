@@ -12,7 +12,7 @@ module.exports = {
             const result = await twilio.messages.create({
                 body: `[NETS] 본인확인 인증번호 [${randomNumber}]를 입력해주세요.`,
                 from: twilioPhone,
-                to: phone,
+                to: "+82"+phone,
             });
             if (result) return { randomNumber }; // 메세지 전송 성공, 인증번호 반환 
             else return -1; // 메세지 전송 실패
