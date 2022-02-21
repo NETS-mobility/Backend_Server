@@ -3,7 +3,6 @@ const router = express.Router();
 
 const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
-const ssn_birth = require('../../modules/ssn_birth');
 const upload = require('../../modules/fileupload');
 const bcrypt = require('bcryptjs');
 
@@ -80,7 +79,7 @@ router.post('/manager/detail', async function (req, res, next) {
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const sql1 = "select `netsmanager_id` as `id`, `netsmanager_name` as `name`, `netsmanager_join_date` as `date`, `netsmanager_possible` as `available`, `netsmanager_picture_path` as `path_pic`, " +
-            "`netsmanager_phone` as `phone`, `netsmanager_rrn` as `ssn`, `netsmanager_basic_salary` as `salary`, `netsmanager_rest_holiday` as `restDay` from `netsmanager` where `netsmanager_id`=?;";
+            "`netsmanager_phone` as `phone`, `netsmanager_basic_salary` as `salary`, `netsmanager_rest_holiday` as `restDay`, `netsmanager_birth` as `birth` from `netsmanager` where `netsmanager_id`=?;";
         const result1 = await connection.query(sql1, [id]);
         const data1 = result1[0];
         if(data1.length == 0) throw err = 0;
@@ -103,16 +102,7 @@ router.post('/manager/detail', async function (req, res, next) {
         const data4 = result4[0];
 
         res.send({
-            manager: {
-                id: data1[0].id,
-                name: data1[0].name,
-                date: data1[0].date,
-                phone: data1[0].phone,
-                birth: ssn_birth(data1[0].ssn),
-                salary: data1[0].salary,
-                available: data1[0].available,
-                path_pic: data1[0].path_pic
-            },
+            manager: data1[0],
             certificate: data2,
             vacation_restDay: data1[0].restDay,
             vacation: data3,
@@ -280,19 +270,11 @@ router.post('/admin/detail', async function (req, res, next) {
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const sql1 = "select `admin_id` as `id`, `admin_name` as `name`, `admin_join_date` as `date`, `admin_phone` as `phone`, " + 
-            "`admin_rrn` as `ssn`, `admin_authority` as `level`, `admin_picture_path` as `path_pic` from `administrator` where `admin_id`=?;";
+            "`admin_birth` as `birth`, `admin_picture_path` as `path_pic` from `administrator` where `admin_id`=?;";
         const result1 = await connection.query(sql1, [id]);
         const data1 = result1[0];
         if(data1.length == 0) throw err = 0;
-        res.send({
-            id: data1[0].id,
-            name: data1[0].name,
-            date: data1[0].date,
-            phone: data1[0].phone,
-            birth: ssn_birth(data1[0].ssn),
-            level: data1[0].level,
-            path_pic: data1[0].path_pic
-        });
+        res.send(data1[0]);
     }
     catch (err) {
         console.error("err : " + err);
@@ -328,7 +310,7 @@ router.post('/admin/detail/deleteAdmin', async function (req, res, next) {
 // ===== 관리자 등록 =====
 router.post('/admin/addAdmin', (upload(uplPath.admin_picture)).single('file') ,async function (req, res, next) {
     const file = req.file;
-    const {id, password, name, phone, ssn, level} = JSON.parse(req.body.json);
+    const {id, password, name, phone, birth} = JSON.parse(req.body.json);
 
     let path_picture;
     if(file !== undefined) path_picture = uplPath.admin_picture + file.filename; // 업로드 파일 경로
@@ -339,7 +321,7 @@ router.post('/admin/addAdmin', (upload(uplPath.admin_picture)).single('file') ,a
         const hashedPW = await bcrypt.hash(password, saltRounds);
 
         const spl = "insert into `administrator` values (?,?,?,?,?,?,?,?);"
-        await connection.query(spl, [id, hashedPW, name, phone, ssn, path_picture, level, now]);
+        await connection.query(spl, [id, hashedPW, name, phone, birth, path_picture, now]);
         res.status(200).send();
     }
     catch (err) {
