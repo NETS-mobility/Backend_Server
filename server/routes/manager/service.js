@@ -28,7 +28,7 @@ router.post('/serviceList/:listType', async function (req, res, next) {
             throw err = 0;
 
         let param = [manager_id];
-        let sql1 = "select S.`service_kind` as `service_type`, R.`reservation_id` as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_base_address` as `pickup_address`, " + 
+        let sql1 = "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_base_address` as `pickup_address`, " + 
             "`hospital_base_address` as `hos_name`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " + 
             "U.`user_name` as `user_name`, `gowithmanager_name` as `gowithumanager`, " + 
             "`reservation_state_id` as `reservation_state`, P.`is_need_extra_payment` as `isNeedExtraPay`, P.`is_complete_extra_payment` as `isCompleteExtraPay` " + 

@@ -21,7 +21,7 @@ router.post('/serviceList/:listType/:listDate', async function (req, res, next) 
         if(listDate != "NONE" && !(targetDate instanceof Date && !isNaN(targetDate))) throw err = 0;
 
         const param = [];
-        let sql1 = "select `reservation_id` as `service_id`, `expect_pickup_time` as `pickup_time`, `netsmanager_id` as `manager_id` "+ 
+        let sql1 = "select cast(`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `netsmanager_id` as `manager_id` "+ 
             "from `reservation` where `reservation_state_id`=? ";
 
         if (listType == 0) param.push(reservation_state.ready); // 운행 전
@@ -68,7 +68,7 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
     const connection = await pool2.getConnection(async conn => conn);
     try {
     	// 서비스 정보
-        const sql_service = "select R.`reservation_id` as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_base_address` as `pickup_address`, `hospital_base_address` as `hos_name`, " + 
+        const sql_service = "select cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_base_address` as `pickup_address`, `hospital_base_address` as `hos_name`, " + 
             "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " + 
             "NM.`netsmanager_name` as `netsmanager_name`, R.`netsmanager_id` as `netsmanager_id`, C.`car_number` as `car_number`, `gowithmanager_name` as `gowithumanager`, " + 
             "`reservation_state_id` as `reservation_state`, P.`base_payment_method` as `payMethod`, P.`is_need_extra_payment` as `isNeedExtraPay`, " + 
@@ -96,7 +96,7 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
         res.send({
             service_state: service_state,
             service_state_time: service_state_time,
-            service: data_service[0],
+            service: data_service[0]
         });
     }
     catch (err) {
