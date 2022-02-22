@@ -48,7 +48,7 @@ router.post('', async function (req, res, next) {
 router.post('/checkPhone', async function (req, res, next) {
     const phone = req.body.phone;
     const message_res = await message.sendMessage(phone); // 메세지 생성, 결과 얻음
-    if(message_res == -1) res.status(500).send({ msg : "메세지 전송 실패"});
+    if(message_res == -1) res.status(500).send({ err : "메세지 전송 실패"});
     else res.status(200).send({ success : true, randomNumber : message_res }); // 인증번호 반환
 });
 
