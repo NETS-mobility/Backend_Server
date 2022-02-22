@@ -1,5 +1,4 @@
 const express = require('express');
-const multer = require('multer');
 const router = express.Router();
 
 const jwt = require('../../modules/jwt');
@@ -7,7 +6,6 @@ const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
 const upload = require('../../modules/fileupload');
 
-const reservation_state = require('../../config/reservation_state');
 const uplPath = require('../../config/upload_path');
 
 // ===== 예약 =====
@@ -18,36 +16,70 @@ router.post('', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const user_id = token_res.id; // 이용자 id
+    const id = token_res.id; // 고객 id
+    const name = token_res.name; // 고객 이름
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql1 = `INSERT INTO reservation(reservation_id, user_id, reservation_submit_date,
+        const sql1 = `SELECT user_number, user_phone FROM user WHERE user_id=?;`;
+        const sql2 = `INSERT INTO reservation(reservation_id, user_number,
                     is_need_lift, is_gowith_hospital, move_method, move_direction, service_kind_id,
-                    pickup_base_address, pickup_detail_address, hospital_base_address, hospital_detail_address, drop_base_address, drop_detail_address,
-                    hope_reservation_date, fixed_medical_time, hope_hospital_arrival_time, hope_hospital_departure_time,
-                    gowith_hospital_time, is_over_point, fixed_medical_detail, hope_requires
-                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
+                    gowith_hospital_time, is_over_point,
+                    pickup_base_address, pickup_detail_address, drop_base_address, drop_detail_address, hospital_base_address, hospital_detail_address, hospital_name,
+                    hope_reservation_date, hope_hospital_arrival_time, fixed_medical_time, hope_hospital_departure_time,
+                    fixed_medical_detail, hope_requires, reservation_submit_date 
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
         
-        const sql2 = `INSERT INTO reservation_user(reservation_id, patient_name, patient_phone,
-                    valid_target_kind, is_submit_evidence
-                    ) VALUES(?,?,?,?,?);`;
+        const sql3 = `INSERT INTO reservation_user(reservation_id, patient_name, patient_phone, protector_name, protector_phone, valid_target_kind
+                    ) VALUES(?,?,?,?,?,?);`;
+
+        const now = new Date(); // 예약 신청일=매칭 완료일(날짜, 시간 포함)
         
-        const now = new Date();
-        let isOverPoint = 0; //2시간 이하
-        if (user.gowithHospitalTime > 120) //2시간 초과인지 확인
+        let isNeedLift = 0; // 리프트 서비스 이용 여부
+        let isGowithHospital = 0; // 병원 동행 서비스 이용 여부
+        let gowithHospitalTime = 0; // 병원 동행 시간 = 0
+        let isOverPoint = 0; // 병원 동행 시간 2시간 초과 여부 = 0(false)
+
+        // 서비스 유형에 따라->리프트, 동행 여부 판단
+        if (user.serviceKindId == 1) { // 네츠 휠체어 플러스->리프트, 병원 동행
+            isNeedLift = 1; // 리프트 서비스 이용
+            isGowithHospital = 1; // 병원 동행 서비스 이용
+            gowithHospitalTime = user.gowithHospitalTime; // 병원 동행 시간
+        }
+        else if (user.serviceKindId == 2) { // 네츠 휠체어->병원 동행
+            isGowithHospital = 1; // 병원 동행 서비스 이용
+            gowithHospitalTime = user.gowithHospitalTime; // 병원 동행 시간
+        } // 네츠 무브->리프트 없음, 병원 동행 없음
+
+        // 병원 동행 2시간 초과 여부
+        if (gowithHospitalTime > 120) // 병원 동행 2시간(120분) 초과인지 확인
         {
-            isOverPoint = 1; //2시간 초과
+            isOverPoint = 1; // 2시간 초과
         }
 
-        const result1 = await connection.query(sql1, [user.reservationId, user_id, now, 
-                     user.isNeedLift, user.isGowithHospital, user.moveMethod, user.moveDirection, user.serviceKindId,
-                     user.pickupBaseAddr, user.pickupDetailAddr, user.hospitalBaseAddr, user.hospitalDetailAddr, user.dropBaseAddr, user.dropDetailAddr,
-                     user.hopeReservationDate, user.fixedMedicalTime, user.hopeHospitalArrivalTime, user.hopeHospitalDepartureTime,
-                     user.gowithHospitalTime, isOverPoint, user.fixedMedicalDetail, user.hopeRequires]);
+        // 왕복인지 편도인지 판단
+        if (user.moveDirection == "집-집") // 집-집의 경우
+        {
+            moveMethod = "왕복";
+        }
+        else { // 집-병원, 병원-집의 경우
+            moveMethod = "편도";
+        }
+        
+        const result1 = await connection.query(sql1, [id]);
+        const sql_data = result1[0];
 
-        const result2 = await connection.query(sql2, [user.reservationId, user.patientName, user.patientPhone,
-                     user.validTargetKind, user.isSubmitEvidence]);
+        const userNumber = sql_data[0].user_number;
+        const userPhone = sql_data[0].user_phone;
+
+        const result2 = await connection.query(sql2, [Number(user.reservationId), userNumber,
+                    isNeedLift, isGowithHospital, moveMethod, user.moveDirection, user.serviceKindId,
+                    gowithHospitalTime, isOverPoint,
+                    user.pickupBaseAddr, user.pickupDetailAddr, user.dropBaseAddr, user.dropDetailAddr, user.hospitalBaseAddr, user.hospitalDetailAddr, user.hospitalName,
+                    user.hopeReservationDate, user.hopeHospitalArrivalTime, user.fixedMedicalTime, user.hopeHospitalDepartureTime,
+                    user.fixedMedicalDetail, user.hopeRequires, now]);
+
+        const result3 = await connection.query(sql3, [Number(user.reservationId), user.patientName, user.patientPhone, name, userPhone, user.validTargetKind]);
 
         res.status(200).send({ success: true });
     }
@@ -72,7 +104,7 @@ router.post('/:reservationId/submitDoc', (upload(uplPath.customer_document)).sin
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const sql = `UPDATE reservation_user SET valid_target_evidence_path=?, is_submit_evidence=? WHERE reservation_id=?;`;
-        await connection.query(sql, [filepath, 1, reservationId]);
+        await connection.query(sql, [filepath, 1, Number(reservationId)]);
         res.status(200).send({ success : true });
     }
     catch (err) {
