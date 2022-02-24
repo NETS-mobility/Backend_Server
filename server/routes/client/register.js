@@ -6,6 +6,7 @@ const jwt = require('../../modules/jwt');
 const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
 const message = require('../../modules/message');
+const formatdate = require('../../modules/formatdate');
 
 
 // ===== 회원가입 - 아이디 중복확인 =====
@@ -49,8 +50,8 @@ router.post('', async function (req, res, next) {
         const salt = await bcrypt.genSalt(10);
         const hashed = await bcrypt.hash(password, salt); // 암호화
         
-        const sql = "insert into `user`(`user_id`,`user_password`,`user_name`,`user_phone`,`user_join_date`) values (?,?,?,?,?);";
-        const now = new Date();
+        const sql = `INSERT INTO user (user_id, user_password, user_name, user_phone, user_join_date) VALUES (?,?,?,?,?);`;
+        const now = formatdate.getFormatDate(new Date(), 2); // 날짜
 
         await connection.query(sql, [id, hashed, name, phone, now]);
         res.status(200).send({ success : true });

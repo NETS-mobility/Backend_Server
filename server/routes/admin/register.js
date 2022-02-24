@@ -6,6 +6,7 @@ const jwt = require('../../modules/jwt');
 const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
 const message = require('../../modules/message');
+const formatdate = require('../../modules/formatdate');
 
 
 // ===== 회원가입 - 아이디 중복확인(매니저 or 관리자) =====
@@ -50,7 +51,8 @@ router.post('/manager', async function (req, res, next) {
         const sql = `INSERT INTO netsmanager(netsmanager_id, netsmanager_password, netsmanager_name, netsmanager_phone,
                    netsmanager_birth, netsmanager_driver_license, netsmanager_bank_name, netsmanager_bank_accout,      
                    netsmanager_join_date) VALUES(?,?,?,?,?,?,?,?,?);`;
-        const now = new Date();
+
+        const now = formatdate.getFormatDate(new Date(), 2); // 날짜
 
         await connection.query(sql, [id, hashed, name, phone, birth, driverLicense, bankName, bankAccount, now]);
         res.status(200).send({ success : true });
@@ -75,7 +77,8 @@ router.post('/admin', async function (req, res, next) {
         const hashed = await bcrypt.hash(password, salt); // 암호화
         
         const sql = `INSERT INTO administrator(admin_id, admin_password, admin_name, admin_phone, admin_birth, admin_join_date) VALUES(?,?,?,?,?,?);`;
-        const now = new Date();
+        
+        const now = formatdate.getFormatDate(new Date(), 2); // 날짜
 
         await connection.query(sql, [id, hashed, name, phone, birth, now]);
         res.status(200).send({ success : true });
