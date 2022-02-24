@@ -64,7 +64,7 @@ router.post('/findId', async function (req, res, next) {
         const sql_data = sql_result[0];
 
         if(sql_data.length == 0) res.status(401).send({ msg: "아이디가 존재하지 않음" });
-        else res.status(200).send({ success : true, id : sql_data }); // 아이디 반환
+        else res.status(200).send({ success : true, id : sql_data[0].netsmanager_id }); // 아이디 반환
     }
     catch (err) {
         console.error("err : " + err);
