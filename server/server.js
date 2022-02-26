@@ -39,7 +39,7 @@ const logger = require("morgan");
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static("../public")); // 정적 리소스 관리 디렉터리 설정
 app.use(logger('dev'));
