@@ -8,6 +8,9 @@ const pool2 = require('../../modules/mysql2');
 const message = require('../../modules/message');
 const formatdate = require('../../modules/formatdate');
 
+const bcrypt_option = require('../../config/bcrypt');
+const saltRounds = bcrypt_option.saltRounds;
+
 
 // ===== 회원가입 - 아이디 중복확인(매니저 or 관리자) =====
 router.post('/checkDup', async function (req, res, next) {
@@ -23,10 +26,10 @@ router.post('/checkDup', async function (req, res, next) {
             sql = `SELECT admin_id FROM administrator WHERE admin_id=?;`;
         }
     
-        const sql_result = await connection.query(sql, [id]);
-        const sql_data = sql_result[0];
+        const result = await connection.query(sql, [id]);
+        const sql_data = result[0];
 
-        if(sql_data.length == 0) res.status(200).send({ msg : "아이디 중복 안 됨, 회원가입 가능" });
+        if (sql_data.length == 0) res.status(200).send({ msg : "아이디 중복 안 됨, 회원가입 가능" });
         else res.status(401).send({ msg : "아이디 중복됨, 회원가입 불가능" });
     }
     catch (err) {
@@ -45,11 +48,11 @@ router.post('/manager', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const salt = await bcrypt.genSalt(10);
+        const salt = await bcrypt.genSalt(saltRounds);
         const hashed = await bcrypt.hash(password, salt); // 암호화
         
         const sql = `INSERT INTO netsmanager(netsmanager_id, netsmanager_password, netsmanager_name, netsmanager_phone,
-                   netsmanager_birth, netsmanager_driver_license, netsmanager_bank_name, netsmanager_bank_accout,      
+                   netsmanager_birth, netsmanager_driver_license, netsmanager_bank_name, netsmanager_bank_account,      
                    netsmanager_join_date) VALUES(?,?,?,?,?,?,?,?,?);`;
 
         const now = formatdate.getFormatDate(new Date(), 2); // 날짜
@@ -73,7 +76,7 @@ router.post('/admin', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const salt = await bcrypt.genSalt(10);
+        const salt = await bcrypt.genSalt(saltRounds);
         const hashed = await bcrypt.hash(password, salt); // 암호화
         
         const sql = `INSERT INTO administrator(admin_id, admin_password, admin_name, admin_phone, admin_birth, admin_join_date) VALUES(?,?,?,?,?,?);`;
