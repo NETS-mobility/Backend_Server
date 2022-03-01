@@ -14,7 +14,7 @@ router.post("", async function (req, res, next) {
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
-  const user_number = token_res.number; // 이용자 number
+  const user_number = token_res.id; // 이용자 id
 
   const connection = await pool2.getConnection(async (conn) => conn);
 
@@ -28,13 +28,11 @@ router.post("", async function (req, res, next) {
       "on ca.`user_number` = u.`user_number` " +
       "left join reservation as r " +
       "on ca.`user_number` = r.`user_number` " +
-      "where ca.`user_number` =? " +
+      "where u.`user_id` =? " +
       "order by ca.`alarm_id` desc;";
     const result = await connection.query(sql, param);
     const data = result[0];
     connection.release();
-
-    console.log(data);
 
     res.send(data);
   } catch (err) {
