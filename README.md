@@ -3,7 +3,7 @@ https://app.swaggerhub.com/apis/n3wzd/Backend_Server/1.0.0
 https://app.swaggerhub.com/apis/YunseoKang/NETS-Backend2.0/1.0.0
 
 ## DB-main
-2022.03.02 NETS_db_v2.13.mwb
+2022.03.04 NETS_db_v2.14.mwb
 
 ## DB-base_setting(need to import)
 2022.02.24 service_info_data_v1.csv
