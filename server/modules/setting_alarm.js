@@ -7,15 +7,13 @@ const pool = require("./mysql");
 const pool2 = require("./mysql2");
 const cron = require("node-cron");
 
-const task = cron.schedule("* 30 1 * *", () => {}, { scheduled: false });
-
 class Alarm {
   constructor(user_number, reservation_id, alarm_type, reservation_time) {
     this.user_number = user_number;
     this.reservation_id = reservation_id;
     this.alarm_type = alarm_type;
-    //this.reservation_date = getFormatDate.getFormatDate(reservation_time, 2);
-    this.reservation_date = reservation_time;
+    this.reservation_date = getFormatDate.getFormatDate(reservation_time, 2);
+    //this.reservation_date = reservation_time;
     this.pickup_time = reservation_time;
     //this.pickup_time = getFormatDate(reservation_time, 3);
     this.context;
@@ -96,8 +94,8 @@ async function set_alarm(reservation_id, alarm_kind, user_number, pickup_time) {
         );
         // 결제 여부 확인
         if (payment == false) {
-          const task = cron.schedule(
-            "* 30 1 * *", // 1시간 30분 뒤에 실행됨 (초, 분, 시, 일, 월)
+          /*const task = cron.schedule(
+            "* 30 1 * * ", // 1시간 30분 뒤에 실행됨 (초, 분, 시, 일, 월)
             () => {
               set_alarm(
                 reservation_id,
@@ -110,7 +108,7 @@ async function set_alarm(reservation_id, alarm_kind, user_number, pickup_time) {
               scheduled: false, // start()함수로 시작시 스케줄링된 작업 실행
             }
           );
-          task.start();
+          task.start();*/
         }
       }
       break;
@@ -136,7 +134,7 @@ async function set_alarm(reservation_id, alarm_kind, user_number, pickup_time) {
         );
         // 결제 여부 확인
         if (payment == false) {
-          const task = cron.schedule(
+          /*const task = cron.schedule(
             "* 30 * * *", // 30분 뒤에 실행됨 (초, 분, 시, 일, 월)
             () => {
               set_alarm(
@@ -150,7 +148,7 @@ async function set_alarm(reservation_id, alarm_kind, user_number, pickup_time) {
               scheduled: false, // start()함수로 시작시 스케줄링된 작업 실행
             }
           );
-          task.start();
+          task.start();*/
         }
       }
       break;

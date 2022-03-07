@@ -1,10 +1,9 @@
 // === push 알림 전송 ===
-const Alarm = require("./alarm_class");
+const Alarm = require("./setting_alarm");
 const admin = require("firebase-admin");
 
 // SDK 초기화
 let serviceAccount = require("../../public/nets-339714-firebase-adminsdk-w7rz6-cbc6b343db.json");
-const Alarm = require("./alarm_class");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -13,7 +12,7 @@ admin.initializeApp({
 
 const registrationToken = ""; // 기기의 개별 토큰  (해당 토큰은 앱 설치시 입력받는 것이라고 함)
 
-getMessaging()
+/*getMessaging()
   .sendToDevice(registrationToken, message)
   .then((response) => {
     // See the MessagingDevicesResponse reference documentation for
@@ -22,7 +21,7 @@ getMessaging()
   })
   .catch((error) => {
     console.log("Error sending message:", error);
-  });
+  });*/
 
 async function push_alarm(reservation_id, alarm_kind, user_name, pickup_time) {
   // 알림 setting
