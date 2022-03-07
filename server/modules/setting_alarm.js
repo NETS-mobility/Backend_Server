@@ -5,10 +5,13 @@ const alarm_kind_number = require("../config/alarm_kind");
 const getFormatDate = require("./formatdate");
 const pool = require("./mysql");
 const pool2 = require("./mysql2");
+const cron = require("node-cron");
+
+const task = cron.schedule("* 30 1 * *", () => {}, { scheduled: false });
 
 class Alarm {
-  constructor(user_id, reservation_id, alarm_type, reservation_time) {
-    this.user_id = user_id;
+  constructor(user_number, reservation_id, alarm_type, reservation_time) {
+    this.user_number = user_number;
     this.reservation_id = reservation_id;
     this.alarm_type = alarm_type;
     //this.reservation_date = getFormatDate.getFormatDate(reservation_time, 2);
@@ -91,11 +94,30 @@ async function set_alarm(reservation_id, alarm_kind, user_number, pickup_time) {
           "예약 확정을 위해 결제 부탁드립니다.\n" +
             "1시간 이내에 결제되지 않을 경우 예약이 취소될 수 있습니다. "
         );
+        // 결제 여부 확인
+        if (payment == false) {
+          const task = cron.schedule(
+            "* 30 1 * *", // 1시간 30분 뒤에 실행됨 (초, 분, 시, 일, 월)
+            () => {
+              set_alarm(
+                reservation_id,
+                alarm_kind_number.request_payment,
+                user_number,
+                pickup_time
+              );
+            },
+            {
+              scheduled: false, // start()함수로 시작시 스케줄링된 작업 실행
+            }
+          );
+          task.start();
+        }
       }
       break;
     // 결제 독촉
     case alarm_kind_number.press_payment:
       {
+        task.destroy();
         alarm.set_context(
           "네츠서비스가 매칭되었습니다.\n" +
             "예약 확정을 위해 결제 부탁드립니다.\n" +
@@ -112,11 +134,30 @@ async function set_alarm(reservation_id, alarm_kind, user_number, pickup_time) {
           "예약 확정을 위해 결제 부탁드립니다." +
             "\n30분 이내에 결제되지 않을 경우 예약이 취소될 수 있습니다. "
         );
+        // 결제 여부 확인
+        if (payment == false) {
+          const task = cron.schedule(
+            "* 30 * * *", // 30분 뒤에 실행됨 (초, 분, 시, 일, 월)
+            () => {
+              set_alarm(
+                reservation_id,
+                alarm_kind_number.press_payment,
+                user_number,
+                pickup_time
+              );
+            },
+            {
+              scheduled: false, // start()함수로 시작시 스케줄링된 작업 실행
+            }
+          );
+          task.start();
+        }
       }
       break;
     // 취소 안내
     case alarm_kind_number.cancellation:
       {
+        task.destroy();
         alarm.set_context(
           "결제시간 초과로 예약이 취소되었습니다.\n" +
             "서비스번호: " +
@@ -263,9 +304,9 @@ async function set_alarm(reservation_id, alarm_kind, user_number, pickup_time) {
             "\n픽업 시간: " +
             alarm.pickup_time +
             "\n고객 성함: " +
-            patient_name +
+            user_name +
             "\n고객 전화: " +
-            patient_phone +
+            user_phone +
             "\n보호자 성함: " +
             protector_name +
             "\n보호자 전화: " +
