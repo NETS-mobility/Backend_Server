@@ -53,7 +53,8 @@ app.use("/client", route_client_home);
 app.use("/client/login", route_client_login);
 app.use("/client/register", route_client_register);
 app.use("/client/reserve", route_client_reserve);
-app.use("/client/alarm", route_client_alarm);
+
+app.use("/client/view_alarm", route_client_alarm);
 //app.use('/client/feedback', route_client_feedback);
 //app.use('/client/pay', route_client_pay);
 
@@ -61,7 +62,8 @@ app.use("/manager/service", route_manager_service);
 app.use("/manager/mypage", route_manager_mypage);
 app.use("/manager", route_manager_home);
 app.use("/manager/login", route_manager_login);
-app.use("/manager/alarm", route_manager_alarm);
+app.use("/manager/view_alarm", route_manager_alarm);
+
 
 app.use("/admin/service", route_admin_service);
 app.use("/admin", route_admin_home);
