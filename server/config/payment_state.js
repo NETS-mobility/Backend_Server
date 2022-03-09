@@ -1,4 +1,4 @@
-// === 결제 상태 정보
+// === 결제 상태 정보 (reservation_payment_state)
 // 상태명: 결제 단계 번호
 
 module.exports = {
