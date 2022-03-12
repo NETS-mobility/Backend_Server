@@ -16,7 +16,7 @@ router.post('/customer', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql1 = "select `user_id` as `id`, `user_name` as `name`, `user_join_date` as `date` from `user`;";
+        const sql1 = "select `user_id` as `id`, `user_number` as `number`, `user_name` as `name`, `user_join_date` as `date` from `user`;";
         const result1 = await connection.query(sql1, []);
         res.send(result1[0]);
     }
@@ -32,12 +32,12 @@ router.post('/customer', async function (req, res, next) {
 
 // ===== 고객 상세 조회 =====
 router.post('/customer/detail', async function (req, res, next) {
-    const id = req.body.id;
+    const number = req.body.number;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql1 = "select `user_id` as `id`, `user_name` as `name`, `user_join_date` as `date`, `user_phone` as `phone` from `user` where `user_id`=?;";
-        const result1 = await connection.query(sql1, [id]);
+        const sql1 = "select `user_id` as `id`, `user_number` as `number`,`user_name` as `name`, `user_join_date` as `date`, `user_phone` as `phone` from `user` where `user_number`=?;";
+        const result1 = await connection.query(sql1, [number]);
         const data1 = result1[0];
         if(data1.length == 0) throw err = 0;
         res.send(data1[0]);
@@ -58,7 +58,7 @@ router.post('/manager', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql1 = "select `netsmanager_id` as `id`, `netsmanager_name` as `name`, `netsmanager_join_date` as `date` from `netsmanager`;";
+        const sql1 = "select `netsmanager_id` as `id`, `netsmanager_number` as `number`, `netsmanager_name` as `name`, `netsmanager_join_date` as `date` from `netsmanager`;";
         const result1 = await connection.query(sql1, []);
         res.send(result1[0]);
     }
@@ -74,31 +74,31 @@ router.post('/manager', async function (req, res, next) {
 
 // ===== 매니저 상세 조회 =====
 router.post('/manager/detail', async function (req, res, next) {
-    const id = req.body.id;
+    const number = req.body.number;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql1 = "select `netsmanager_id` as `id`, `netsmanager_name` as `name`, `netsmanager_join_date` as `date`, `netsmanager_possible` as `available`, `netsmanager_picture_path` as `path_pic`, " +
-            "`netsmanager_phone` as `phone`, `netsmanager_basic_salary` as `salary`, `netsmanager_rest_holiday` as `restDay`, `netsmanager_birth` as `birth` from `netsmanager` where `netsmanager_id`=?;";
-        const result1 = await connection.query(sql1, [id]);
+        const sql1 = "select `netsmanager_id` as `id`, `netsmanager_name` as `name`, `netsmanager_number` as `number`, `netsmanager_join_date` as `date`, `netsmanager_possible` as `available`, `netsmanager_picture_path` as `path_pic`, " +
+            "`netsmanager_phone` as `phone`, `netsmanager_basic_salary` as `salary`, `netsmanager_rest_holiday` as `restDay`, `netsmanager_birth` as `birth` from `netsmanager` where `netsmanager_number`=?;";
+        const result1 = await connection.query(sql1, [number]);
         const data1 = result1[0];
         if(data1.length == 0) throw err = 0;
 
         const sql2 = "select `netsmanager_certificate_name` as `name`, `certificate_obtention_date` as `obtention`, " + 
-            "`certiicate_expiration_date` as `expiration`, `netsmanager_certificate_number` as `number` from `manager_certificate` where `netsmanager_id`=?;";
-        const result2 = await connection.query(sql2, [id]);
+            "`certiicate_expiration_date` as `expiration`, `netsmanager_certificate_number` as `number` from `manager_certificate` where `netsmanager_number`=?;";
+        const result2 = await connection.query(sql2, [number]);
         const data2 = result2[0];
 
-        const sql3 = "select `start_holiday_date` as `start`, `end_holiday_date` as `end`, `holiday_certified` as `isOK` from `manager_holiday` where `netsmanager_id`=?;";
-        const result3 = await connection.query(sql3, [id]);
+        const sql3 = "select `start_holiday_date` as `start`, `end_holiday_date` as `end`, `holiday_certified` as `isOK` from `manager_holiday` where `netsmanager_number`=?;";
+        const result3 = await connection.query(sql3, [number]);
         const data3 = result3[0];
 
         const now = new Date();
-        const sql4 = "select S.`service_kind` as `service_type`, `expect_pickup_time` as `pickup_time`, U.`user_name` as `customer_name`" + 
-            "from `reservation` as R, `service_info` as S, `user` as U " + 
-            "where `netsmanager_id`=? and R.`service_kind_id`=S.`service_kind_id` and R.`user_id`=U.`user_id` and `expect_pickup_time` >= ? " + 
-            "order by `pickup_time`;";
-        const result4 = await connection.query(sql4, [id, now]);
+        const sql4 = "select C.`car_dispatch_number` as `dispatch_id`, C.`reservation_id`, S.`service_kind` as `service_type`, `expect_car_pickup_time` as `start_time`, `expect_car_terminate_service_time` as `end_time`, U.`user_name` as `customer_name`" + 
+            "from `car_dispatch` as C, `reservation` as R, `service_info` as S, `user` as U " + 
+            "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number` and `expect_pickup_time` >= ? " + 
+            "order by `start_time`;";
+        const result4 = await connection.query(sql4, [number, now]);
         const data4 = result4[0];
 
         res.send({
@@ -122,12 +122,12 @@ router.post('/manager/detail', async function (req, res, next) {
 
 // ===== 매니저 상세 조회 - 개인정보 변경 =====
 router.post('/manager/detail/changeInfo', async function (req, res, next) {
-    const {id, phone, available, salary} = req.body;
+    const {number, phone, available, salary} = req.body;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const spl = "update `netsmanager` set `netsmanager_phone`=?, `netsmanager_possible`=?, `netsmanager_basic_salary`=? where `netsmanager_id`=?;"
-        const result = await connection.query(spl, [phone, available, salary, id]);
+        const spl = "update `netsmanager` set `netsmanager_phone`=?, `netsmanager_possible`=?, `netsmanager_basic_salary`=? where `netsmanager_number`=?;"
+        const result = await connection.query(spl, [phone, available, salary, number]);
         if(result[0].affectedRows == 0) throw err = 0;
         res.status(200).send();
     }
@@ -144,12 +144,12 @@ router.post('/manager/detail/changeInfo', async function (req, res, next) {
 
 // ===== 매니저 상세 조회 - 자격증 등록 =====
 router.post('/manager/detail/addCertificate', async function (req, res, next) {
-    const {id, cert_name, cert_num, cert_obtainDate, cert_expireDate} = req.body;
+    const {number, cert_name, cert_num, cert_obtainDate, cert_expireDate} = req.body;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const spl = "insert into `manager_certificate` values (?,?,?,?,?);"
-        await connection.query(spl, [id, cert_name, cert_num, cert_obtainDate, cert_expireDate]);
+        await connection.query(spl, [number, cert_name, cert_num, cert_obtainDate, cert_expireDate]);
         res.status(200).send();
     }
     catch (err) {
@@ -164,12 +164,12 @@ router.post('/manager/detail/addCertificate', async function (req, res, next) {
 
 // ===== 매니저 상세 조회 - 자격증 삭제 =====
 router.post('/manager/detail/deleteCertificate', async function (req, res, next) {
-    const {id, cert_num} = req.body;
+    const {number, cert_num} = req.body;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const spl = "delete from `manager_certificate` where `netsmanager_id`=? and `netsmanager_certificate_number`=?;"
-        await connection.query(spl, [id, cert_num]);
+        const spl = "delete from `manager_certificate` where `netsmanager_number`=? and `netsmanager_certificate_number`=?;"
+        await connection.query(spl, [number, cert_num]);
         res.status(200).send();
     }
     catch (err) {
@@ -184,12 +184,12 @@ router.post('/manager/detail/deleteCertificate', async function (req, res, next)
 
 // ===== 매니저 상세 조회 - 휴가 승인 =====
 router.post('/manager/detail/admitVacation', async function (req, res, next) {
-    const {id, start, end} = req.body;
+    const {number, start, end} = req.body;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const spl = "update `manager_holiday` set `holiday_certified`=1 where `netsmanager_id`=? and `start_holiday_date`=? and `end_holiday_date`=?;"
-        const result = await connection.query(spl, [id, start, end]);
+        const spl = "update `manager_holiday` set `holiday_certified`=1 where `netsmanager_number`=? and `start_holiday_date`=? and `end_holiday_date`=?;"
+        const result = await connection.query(spl, [number, start, end]);
         if(result[0].affectedRows == 0) throw err = 0;
         res.status(200).send();
     }
@@ -206,12 +206,12 @@ router.post('/manager/detail/admitVacation', async function (req, res, next) {
 
 // ===== 매니저 상세 조회 - 휴가 삭제 =====
 router.post('/manager/detail/deleteVacation', async function (req, res, next) {
-    const {id, start, end} = req.body;
+    const {number, start, end} = req.body;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const spl = "delete from `manager_holiday` where `netsmanager_id`=? and `start_holiday_date`=? and `end_holiday_date`=?;"
-        await connection.query(spl, [id, start, end]);
+        const spl = "delete from `manager_holiday` where `netsmanager_number`=? and `start_holiday_date`=? and `end_holiday_date`=?;"
+        await connection.query(spl, [number, start, end]);
         res.status(200).send();
     }
     catch (err) {
@@ -226,12 +226,12 @@ router.post('/manager/detail/deleteVacation', async function (req, res, next) {
 
 // ===== 매니저 상세 조회 - 매니저 삭제 =====
 router.post('/manager/detail/deleteManager', async function (req, res, next) {
-    const id = req.body.id;
+    const number = req.body.number;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const spl = "delete from `netsmanager` where `netsmanager_id`=?;"
-        await connection.query(spl, [id]);
+        const spl = "delete from `netsmanager` where `netsmanager_number`=?;"
+        await connection.query(spl, [number]);
         res.status(200).send();
     }
     catch (err) {
@@ -249,7 +249,7 @@ router.post('/admin', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql1 = "select `admin_id` as `id`, `admin_name` as `name`, `admin_join_date` as `date` from `administrator`;";
+        const sql1 = "select `admin_id` as `id`, `admin_number` as `number`, `admin_name` as `name`, `admin_join_date` as `date` from `administrator`;";
         const result1 = await connection.query(sql1, []);
         res.send(result1[0]);
     }
@@ -265,13 +265,13 @@ router.post('/admin', async function (req, res, next) {
 
 // ===== 관리자 상세 조회 =====
 router.post('/admin/detail', async function (req, res, next) {
-    const id = req.body.id;
+    const number = req.body.number;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql1 = "select `admin_id` as `id`, `admin_name` as `name`, `admin_join_date` as `date`, `admin_phone` as `phone`, " + 
-            "`admin_birth` as `birth`, `admin_picture_path` as `path_pic` from `administrator` where `admin_id`=?;";
-        const result1 = await connection.query(sql1, [id]);
+        const sql1 = "select `admin_id` as `id`, `admin_number` as `number`, `admin_name` as `name`, `admin_join_date` as `date`, `admin_phone` as `phone`, " + 
+            "`admin_birth` as `birth`, `admin_picture_path` as `path_pic` from `administrator` where `admin_number`=?;";
+        const result1 = await connection.query(sql1, [number]);
         const data1 = result1[0];
         if(data1.length == 0) throw err = 0;
         res.send(data1[0]);
@@ -289,12 +289,12 @@ router.post('/admin/detail', async function (req, res, next) {
 
 // ===== 관리자 상세 조회 - 관리자 삭제 =====
 router.post('/admin/detail/deleteAdmin', async function (req, res, next) {
-    const id = req.body.id;
+    const number = req.body.number;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const spl = "delete from `administrator` where `admin_id`=?;"
-        await connection.query(spl, [id]);
+        const spl = "delete from `administrator` where `admin_number`=?;"
+        await connection.query(spl, [number]);
         res.status(200).send();
     }
     catch (err) {
@@ -320,7 +320,7 @@ router.post('/admin/addAdmin', (upload(uplPath.admin_picture)).single('file') ,a
         const now = new Date();
         const hashedPW = await bcrypt.hash(password, saltRounds);
 
-        const spl = "insert into `administrator` values (?,?,?,?,?,?,?,?);"
+        const spl = "insert into `administrator`(`admin_id`,`admin_password`,`admin_name`,`admin_phone`,`admin_birth`,`admin_picture_path`,`admin_join_date`) values (?,?,?,?,?,?,?);"
         await connection.query(spl, [id, hashedPW, name, phone, birth, path_picture, now]);
         res.status(200).send();
     }
@@ -340,7 +340,7 @@ router.post('/car', async function (req, res, next) {
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const sql1 = "select `car_id` as `id`, `car_number` as `number`, `car_joined_date` as `date`, `netsmanager_name` as `manager_name` " + 
-            "from `car` as C, `netsmanager` as M where C.`netsmanager_id`=M.`netsmanager_id`;";
+            "from `car` as C, `netsmanager` as M where C.`netsmanager_number`=M.`netsmanager_number`;";
         const result1 = await connection.query(sql1, []);
         res.send(result1[0]);
     }
@@ -361,7 +361,7 @@ router.post('/car/:idx/repair', async function (req, res, next) {
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const sql1 = "select `car_repair_number` as `number`, `car_repair_start_date` as `start`, `car_repair_end_date` as `end`, `netsmanager_name` as `manager_name` " + 
-            "from `car_repair` as C, `netsmanager` as M where `car_id`=? and C.`netsmanager_id`=M.`netsmanager_id`;";
+            "from `car_repair` as C, `netsmanager` as M where `car_id`=? and C.`netsmanager_number`=M.`netsmanager_number`;";
         const result1 = await connection.query(sql1, [idx]);
         res.send(result1[0]);
     }
@@ -377,14 +377,21 @@ router.post('/car/:idx/repair', async function (req, res, next) {
 
 // ===== 차량 등록 =====
 router.post('/car/addCar', async function (req, res, next) {
-    const { number, type, manager_id, garage } = req.body;
+    const { number, type, netsmanager_number, garage_address, garage_x, garage_y } = req.body;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
+        const sql1 = "select * from `address_coordinate` where `address`=?;"
+        const sqlr1 = await connection.query(sql1, [garage_address]);
+        if(sqlr1[0].length == 0)
+        {
+            const sql2 = "insert into `address_coordinate` values (?,?,?);" // 차고지 좌표 추가
+            await connection.query(sql2, [garage_address, garage_x, garage_y]);
+        }
+
         const now = new Date();
-        const sql1 = "insert into `car` (`car_number`,`car_kind`,`netsmanager_id`,`garage_detail_address`, " + 
-            "`car_joined_date`,`car_state_id`) values(?,?,?,?,?,1);";
-        await connection.query(sql1, [number, type, manager_id, garage, now]);
+        const sql3 = "insert into `car` (`car_number`,`car_kind`,`netsmanager_number`,`garage_detail_address`,`car_joined_date`,`car_state_id`) values(?,?,?,?,?,1);";
+        await connection.query(sql3, [number, type, netsmanager_number, garage_address, now]);
         res.send();
     }
     catch (err) {
