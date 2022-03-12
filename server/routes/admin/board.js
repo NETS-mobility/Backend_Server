@@ -55,7 +55,7 @@ router.post('/manager/write', async function (req, res, next) {
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const now = new Date();
-        const sql1 = "insert into `manager_notice` (`post_title`,`post_writer_id`,`post_content`,`post_date`,`view_number`,`is_end_post`,`admin_id`) values(?,?,?,?,0,0,?);";
+        const sql1 = "insert into `manager_notice` (`post_title`,`post_writer_id`,`post_content`,`post_date`,`view_number`,`is_end_post`,`admin_number`) values(?,?,?,?,0,0,?);";
         await connection.query(sql1, [title, writer_id, content, now, writer_id]);
         res.send();
     }
@@ -162,7 +162,7 @@ router.post('/customer/write', async function (req, res, next) {
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const now = new Date();
-        const sql1 = "insert into `customer_notice` (`post_title`,`post_writer_id`,`post_content`,`post_date`,`view_number`,`is_end_post`,`admin_id`) values(?,?,?,?,0,0,?);";
+        const sql1 = "insert into `customer_notice` (`post_title`,`post_writer_id`,`post_content`,`post_date`,`view_number`,`is_end_post`,`admin_number`) values(?,?,?,?,0,0,?);";
         await connection.query(sql1, [title, writer_id, content, now, writer_id]);
         res.send();
     }
