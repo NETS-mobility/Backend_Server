@@ -9,6 +9,11 @@ const pool2 = require('../../modules/mysql2');
 // ===== 토큰을 통해 이름 반환 =====
 router.post('/getName', async function (req, res, next) {
     const token = req.body.jwtToken;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });

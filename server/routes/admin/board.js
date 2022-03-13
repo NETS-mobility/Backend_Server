@@ -7,6 +7,11 @@ const pool2 = require('../../modules/mysql2');
 
 // ===== 매니저 공지사항 - 목록 조회 =====
 router.post('/manager', async function (req, res, next) {
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -27,6 +32,11 @@ router.post('/manager', async function (req, res, next) {
 // ===== 매니저 공지사항 - 내용 조회 =====
 router.post('/manager/read/:idx', async function (req, res, next) {
     const idx = req.params.idx;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -51,6 +61,11 @@ router.post('/manager/read/:idx', async function (req, res, next) {
 // ===== 매니저 공지사항 - 작성 =====
 router.post('/manager/write', async function (req, res, next) {
     const { title, writer_id, content } = req.body;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -72,6 +87,11 @@ router.post('/manager/write', async function (req, res, next) {
 // ===== 매니저 공지사항 - 편집 =====
 router.post('/manager/edit', async function (req, res, next) {
     const { title, id, content } = req.body;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -94,6 +114,11 @@ router.post('/manager/edit', async function (req, res, next) {
 // ===== 매니저 공지사항 - 삭제 =====
 router.post('/manager/delete', async function (req, res, next) {
     const { id } = req.body;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -114,6 +139,11 @@ router.post('/manager/delete', async function (req, res, next) {
 
 // ===== 고객 공지사항 - 목록 조회 =====
 router.post('/customer', async function (req, res, next) {
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -134,6 +164,11 @@ router.post('/customer', async function (req, res, next) {
 // ===== 고객 공지사항 - 내용 조회 =====
 router.post('/customer/read/:idx', async function (req, res, next) {
     const idx = req.params.idx;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -158,6 +193,11 @@ router.post('/customer/read/:idx', async function (req, res, next) {
 // ===== 고객 공지사항 - 작성 =====
 router.post('/customer/write', async function (req, res, next) {
     const { title, writer_id, content } = req.body;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -179,6 +219,11 @@ router.post('/customer/write', async function (req, res, next) {
 // ===== 고객 공지사항 - 편집 =====
 router.post('/customer/edit', async function (req, res, next) {
     const { title, id, content } = req.body;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -201,6 +246,11 @@ router.post('/customer/edit', async function (req, res, next) {
 // ===== 고객 공지사항 - 삭제 =====
 router.post('/customer/delete', async function (req, res, next) {
     const { id } = req.body;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {

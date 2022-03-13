@@ -13,6 +13,11 @@ const service_state = require('../../config/service_state');
 router.post('/serviceList/:listType/:listDate', async function (req, res, next) {
     const listType = req.params.listType;
     const listDate = req.params.listDate; // 전체 날짜 출력시 "NONE"
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -61,6 +66,11 @@ router.post('/serviceList/:listType/:listDate', async function (req, res, next) 
 // ===== 서비스 상세보기 =====
 router.post('/serviceDetail/:service_id', async function (req, res, next) {
     const service_id = req.params.service_id;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -125,6 +135,11 @@ router.post('/serviceDetail/:service_id/changeProg', async function (req, res, n
     const service_id = req.params.service_id;
     const next_state = req.body.service_state;
     const recTime = req.body.service_state_time;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -152,6 +167,11 @@ router.post('/serviceDetail/:service_id/changeProg', async function (req, res, n
 // ===== 서비스 상세보기 - 네츠매니저 목록 반환 =====
 router.post('/serviceDetail/:service_id/getNetsmanList', async function (req, res, next) {
     const service_id = req.params.service_id;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -186,6 +206,11 @@ router.post('/serviceDetail/:service_id/getNetsmanList', async function (req, re
 router.post('/serviceDetail/:service_id/changeNetsman', async function (req, res, next) {
     const dispatch_id = req.body.dispatch_id;
     const manager_number = req.body.manager_number;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {

@@ -16,6 +16,11 @@ DB - table `extra_cost`
 심야할증, 주말할증, 매니저 추가수당은 추후 추가
 */
 router.post('', async function (req, res, next) {
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -75,6 +80,11 @@ router.post('', async function (req, res, next) {
 // ===== 추가요금 설정 =====
 router.post('/setting', async function (req, res, next) {
     const {movement_cost, accompany_extra_cost, accompany_over_cost, car_delay_cost, matching_delay_refund} = req.body.extra_cost;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {

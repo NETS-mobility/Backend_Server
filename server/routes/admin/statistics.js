@@ -9,6 +9,11 @@ const pool2 = require('../../modules/mysql2');
 router.post('/service', async function (req, res, next) {
     const start = req.body.start;
     const end = req.body.end;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {

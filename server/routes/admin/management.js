@@ -3,6 +3,7 @@ const router = express.Router();
 
 const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
+const token_checker = require('../../modules/admin_token');
 const upload = require('../../modules/fileupload');
 const bcrypt = require('bcryptjs');
 
@@ -13,6 +14,11 @@ const saltRounds = bcrypt_option.saltRounds;
 
 // ===== 고객 리스트 조회 =====
 router.post('/customer', async function (req, res, next) {
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -33,6 +39,11 @@ router.post('/customer', async function (req, res, next) {
 // ===== 고객 상세 조회 =====
 router.post('/customer/detail', async function (req, res, next) {
     const number = req.body.number;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -40,7 +51,27 @@ router.post('/customer/detail', async function (req, res, next) {
         const result1 = await connection.query(sql1, [number]);
         const data1 = result1[0];
         if(data1.length == 0) throw err = 0;
-        res.send(data1[0]);
+
+        const sql2 = "select R.`reservation_id` as `service_id`, S.`service_kind` as `service_type`, `hope_reservation_date` as `rev_date`, `expect_pickup_time` as `pickup_time`, " + 
+            "`hope_hospital_arrival_time` as `hos_arv_time`, `hope_hospital_departure_time` as `hos_dep_time`, `expect_terminate_service_time` as `end_time` " + 
+            "from `reservation` as R, `service_info` as S, `user` as U " + 
+            "where U.`user_number`=? and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number` " + 
+            "order by `hope_reservation_date`;";
+        const result2 = await connection.query(sql2, [number]);
+        const data2 = result2[0];
+
+        for(let i = 0; i < data1.length; i++) // 매니저 구하기
+        {
+            const sqlm = "select NM.`netsmanager_id` as `id`, NM.`netsmanager_number` as `number`, NM.`netsmanager_name` as `name` from `reservation` as R, `car_dispatch`as D, `netsmanager` as NM " + 
+                "where R.`reservation_id`=? and R.`reservation_id`=D.`reservation_id` and D.`netsmanager_number`=NM.`netsmanager_number`;";
+            const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
+            data2[i].netsmanager = sqlmr[0];
+        }
+
+        res.send({
+            user: data1[0],
+            rev: data2
+        });
     }
     catch (err) {
         console.error("err : " + err);
@@ -55,6 +86,11 @@ router.post('/customer/detail', async function (req, res, next) {
 
 // ===== 매니저 리스트 조회 =====
 router.post('/manager', async function (req, res, next) {
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -75,6 +111,11 @@ router.post('/manager', async function (req, res, next) {
 // ===== 매니저 상세 조회 =====
 router.post('/manager/detail', async function (req, res, next) {
     const number = req.body.number;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -123,6 +164,11 @@ router.post('/manager/detail', async function (req, res, next) {
 // ===== 매니저 상세 조회 - 개인정보 변경 =====
 router.post('/manager/detail/changeInfo', async function (req, res, next) {
     const {number, phone, available, salary} = req.body;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -145,6 +191,11 @@ router.post('/manager/detail/changeInfo', async function (req, res, next) {
 // ===== 매니저 상세 조회 - 자격증 등록 =====
 router.post('/manager/detail/addCertificate', async function (req, res, next) {
     const {number, cert_name, cert_num, cert_obtainDate, cert_expireDate} = req.body;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -165,6 +216,11 @@ router.post('/manager/detail/addCertificate', async function (req, res, next) {
 // ===== 매니저 상세 조회 - 자격증 삭제 =====
 router.post('/manager/detail/deleteCertificate', async function (req, res, next) {
     const {number, cert_num} = req.body;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -185,6 +241,11 @@ router.post('/manager/detail/deleteCertificate', async function (req, res, next)
 // ===== 매니저 상세 조회 - 휴가 승인 =====
 router.post('/manager/detail/admitVacation', async function (req, res, next) {
     const {number, start, end} = req.body;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -207,6 +268,11 @@ router.post('/manager/detail/admitVacation', async function (req, res, next) {
 // ===== 매니저 상세 조회 - 휴가 삭제 =====
 router.post('/manager/detail/deleteVacation', async function (req, res, next) {
     const {number, start, end} = req.body;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -227,6 +293,11 @@ router.post('/manager/detail/deleteVacation', async function (req, res, next) {
 // ===== 매니저 상세 조회 - 매니저 삭제 =====
 router.post('/manager/detail/deleteManager', async function (req, res, next) {
     const number = req.body.number;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -246,6 +317,11 @@ router.post('/manager/detail/deleteManager', async function (req, res, next) {
 
 // ===== 관리자 리스트 조회 =====
 router.post('/admin', async function (req, res, next) {
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -266,6 +342,11 @@ router.post('/admin', async function (req, res, next) {
 // ===== 관리자 상세 조회 =====
 router.post('/admin/detail', async function (req, res, next) {
     const number = req.body.number;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -290,6 +371,11 @@ router.post('/admin/detail', async function (req, res, next) {
 // ===== 관리자 상세 조회 - 관리자 삭제 =====
 router.post('/admin/detail/deleteAdmin', async function (req, res, next) {
     const number = req.body.number;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -309,6 +395,12 @@ router.post('/admin/detail/deleteAdmin', async function (req, res, next) {
 
 // ===== 관리자 등록 =====
 router.post('/admin/addAdmin', (upload(uplPath.admin_picture)).single('file') ,async function (req, res, next) {
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
+
     const file = req.file;
     const {id, password, name, phone, birth} = JSON.parse(req.body.json);
 
@@ -336,6 +428,11 @@ router.post('/admin/addAdmin', (upload(uplPath.admin_picture)).single('file') ,a
 
 // ===== 차량 리스트 조회 =====
 router.post('/car', async function (req, res, next) {
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -357,6 +454,11 @@ router.post('/car', async function (req, res, next) {
 // ===== 차량 수리 리스트 조회 =====
 router.post('/car/:idx/repair', async function (req, res, next) {
     const idx = req.params.idx;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -378,6 +480,11 @@ router.post('/car/:idx/repair', async function (req, res, next) {
 // ===== 차량 등록 =====
 router.post('/car/addCar', async function (req, res, next) {
     const { number, type, netsmanager_number, garage_address, garage_x, garage_y } = req.body;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
