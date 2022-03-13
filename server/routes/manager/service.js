@@ -5,6 +5,7 @@ const router = express.Router();
 const jwt = require('../../modules/jwt');
 const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
+const evidence_checker = require('../../modules/user_evidence_check');
 const upload = require('../../modules/fileupload');
 
 const reservation_state = require('../../config/reservation_state');
@@ -20,7 +21,7 @@ router.post('/serviceList/:listType', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const manager_id = token_res.id; // 이용자 id
+    const manager_id = token_res.id;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -28,13 +29,11 @@ router.post('/serviceList/:listType', async function (req, res, next) {
             throw err = 0;
 
         let param = [manager_id];
-        let sql1 = "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_base_address` as `pickup_address`, " + 
-            "`hospital_base_address` as `hos_name`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " + 
-            "U.`user_name` as `user_name`, `gowithmanager_name` as `gowithumanager`, " + 
-            "`reservation_state_id` as `reservation_state`, P.`is_need_extra_payment` as `isNeedExtraPay`, P.`is_complete_extra_payment` as `isCompleteExtraPay` " + 
-            "from `reservation` as R, `service_info` as S, `user` as U, `netsmanager` as NM, `payment` as P " + 
-            "where R.`netsmanager_id`=? and R.`service_kind_id`=S.`service_kind_id` and R.`netsmanager_id`=NM.`netsmanager_id` " + 
-            "and R.`user_id`=U.`user_id` and R.`reservation_id`=P.`reservation_id` ";
+        let sql1 = "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, " + 
+            "`hospital_name` as `hos_name`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " + 
+            "U.`user_name` as `user_name`, `gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " + 
+            "from `car_dispatch` as C, `reservation` as R, `service_info` as S, `user` as U, `netsmanager` as NM " + 
+            "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and C.`netsmanager_number`=NM.`netsmanager_number` and R.`user_number`=U.`user_number` ";
 
         // 서비스 진행상태 분기점
         if(listType == 0)
@@ -48,7 +47,7 @@ router.post('/serviceList/:listType', async function (req, res, next) {
             param.push(reservation_state.complete);
         }
         
-        sql1 += "order by `expect_pickup_time`;";
+        sql1 += "order by `rev_date` and `pickup_time`;";
         const result1 = await connection.query(sql1, param);
         const data1 = result1[0];
 
@@ -68,23 +67,26 @@ router.post('/serviceList/:listType', async function (req, res, next) {
 // ===== 서비스 상세보기 =====
 router.post('/serviceDetail/:service_id', async function (req, res, next) {
     const service_id = req.params.service_id;
+    const token = req.body.jwtToken;
+
+    const token_res = await jwt.verify(token);
+    if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
+    if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
+    const manager_id = token_res.id;
+
+    if(!(await evidence_checker(service_id)))
+       return res.send({ document_isSubmit: false }); // 필수 서류 미제출
 
     const connection = await pool2.getConnection(async conn => conn);
-    try {
-        // 필수서류 제출확인
-        const spl_doc = "select `valid_target_evidence_path` as `path` from `reservation_user` where `reservation_id`=?;"
-        const result_doc = await connection.query(spl_doc, [service_id]);
-        const data_doc = result_doc[0];
-        if(data_doc[0].path === null) return res.send({ document_isSubmit: false }); // 필수 서류 미제출
-
+    try{
     	// 서비스 정보
-        const sql_service = "select `pickup_base_address` as `pickup_address`, `hospital_base_address` as `hos_name`, U.`user_name` as `user_name`, " + 
-            "`expect_pickup_time` as `timeRange_start`, `hope_hospital_departure_time` as `timeRange_end`, S.`service_kind` as `service_type`, " + 
-            "`reservation_state_id` as `reservation_state`, P.`is_need_extra_payment` as `isNeedExtraPay`, P.`is_complete_extra_payment` as `isCompleteExtraPay` " + 
-            "from `reservation` as R, `service_info` as S, `user` as U, `payment` as P " + 
-            "where R.`reservation_id`=? and R.`service_kind_id`=S.`service_kind_id` and R.`user_id`=U.`user_id` and R.`reservation_id`=P.`reservation_id`;";
+        const sql_service = "select `pickup_address`, `hospital_name` as `hos_name`, U.`user_name` as `user_name`, `reservation_state_id` as `reservation_state`, " + 
+            "`expect_pickup_time` as `start_time`, `hope_hospital_departure_time` as `end_time`, S.`service_kind` as `service_type`, `hope_reservation_date` as `rev_date` " + 
+            "from `reservation` as R, `service_info` as S, `user` as U " + 
+            "where R.`reservation_id`=? and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number`;";
         const result_service = await connection.query(sql_service, [service_id]);
         const data_service = result_service[0];
+        console.log(service_id);
 
         if(data_service.length == 0)
             throw err = 0;
@@ -100,24 +102,24 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
         const data_prog = result_prog[0];
         if(data_prog.length == 0) throw err = 1;
 
-        const service_state = data_prog[0].service_state_id;
-        const service_state_time = [];
-        service_state_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
-        service_state_time[service_state.arrivalHos] = data_prog[0].real_hospital_arrival_time; // 병원도착
-        service_state_time[service_state.carReady] = data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
-        service_state_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
-        service_state_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
+        const sstate = data_prog[0].service_state_id;
+        const sstate_time = [];
+        sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
+        sstate_time[service_state.arrivalHos] = data_prog[0].real_hospital_arrival_time; // 병원도착
+        sstate_time[service_state.carReady] = data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
+        sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
+        sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
 
         // 매니저 정보
         const sql_manager = "select `netsmanager_name` as `name`, `netsmanager_notice` as `mention` " + 
-            "from `reservation` as R, `netsmanager` as NM where `reservation_id`=? and R.`netsmanager_id`=NM.`netsmanager_id`;";
-        const result_manager = await connection.query(sql_manager, [service_id]);
+            "from `netsmanager` as NM where NM.`netsmanager_number`=?;";
+        const result_manager = await connection.query(sql_manager, [manager_id]);
         const data_manager = result_manager[0];
         
         res.send({
         	document_isSubmit: true,
-            service_state: service_state,
-            service_state_time: service_state_time,
+            service_state: sstate,
+            service_state_time: sstate_time,
             manager: data_manager[0],
             service: data_service[0],
         });
