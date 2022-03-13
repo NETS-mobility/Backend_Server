@@ -21,36 +21,23 @@ router.post('', upload(uplPath.customer_document).single('file'), async function
     const id = token_res.id; // 고객 id
     const name = token_res.name; // 고객 이름
 
-    let isNeedLift = 0; // 리프트 서비스 이용 여부
-    let isGowithHospital = 0; // 병원 동행 서비스 이용 여부
     let gowithHospitalTime = 0; // 병원 동행 시간
-    let isOverPoint = 0; // 병원 동행 시간 2시간 초과 여부
+    let moveDirectionId;
     let protectorName, protectorPhone;
+ 
+    gowithHospitalTime = user.gowithHospitalTime; // 병원 동행 시간
 
-    // 서비스 유형에 따라->리프트, 동행 여부 판단
-    if (user.serviceKindId == 4 || user.serviceKindId == 5) { // 네츠 휠체어 플러스->리프트, 병원 동행
-        isNeedLift = 1;
-        isGowithHospital = 1;
-        gowithHospitalTime = user.gowithHospitalTime;
-    }
-    else if (user.serviceKindId == 2 || user.serviceKindId == 3) { // 네츠 휠체어->병원 동행
-        isGowithHospital = 1;
-        gowithHospitalTime = user.gowithHospitalTime;
-    } // 네츠 무브->리프트 없음, 병원 동행 없음
-
-    // 병원 동행 2시간(120분) 초과 여부
-    if (gowithHospitalTime > 120)
+    // 이동 방향 확인
+    if (user.moveDirection == "집-병원")
     {
-        isOverPoint = 1;
+        moveDirectionId = 1;
     }
-
-    // 왕복인지 편도인지 판단
-    if (user.moveDirection == "집-집")
+    else if (user.moveDirection == "병원-집")
     {
-        moveMethod = "왕복";
+        moveDirectionId = 2;
     }
-    else {
-        moveMethod = "편도";
+    else if (user.moveDirection == "집-집") {
+        moveDirectionId = 3;
     }
 
     const connection = await pool2.getConnection(async conn => conn);
@@ -58,12 +45,11 @@ router.post('', upload(uplPath.customer_document).single('file'), async function
         const sql1 = `SELECT user_number, user_phone FROM user WHERE user_id=?;`;
         
         const sql2 = `INSERT INTO reservation(reservation_id, user_number,
-                    is_need_lift, is_gowith_hospital, move_method, move_direction, service_kind_id,
-                    gowith_hospital_time, is_over_point,
+                    move_direction_id, service_kind_id, gowith_hospital_time,
                     pickup_address, drop_address, hospital_address,
                     hope_reservation_date, hope_hospital_arrival_time, fixed_medical_time, hope_hospital_departure_time,
-                    fixed_medical_detail, hope_requires, reservation_submit_date 
-                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
+                    fixed_medical_detail, hope_requires
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
         
         const sql3 = `INSERT INTO reservation_user(reservation_id, patient_name, patient_phone, protector_name, protector_phone, valid_target_kind
                     ) VALUES(?,?,?,?,?,?);`;
@@ -92,11 +78,10 @@ router.post('', upload(uplPath.customer_document).single('file'), async function
         const reservationId = Number(now.substring(2, 4)+now.substring(5, 7)+now.substring(8, 10)+now.substring(11, 13)+now.substring(14, 16)+now.substring(17));
 
         const result2 = await connection.query(sql2, [reservationId, userNumber,
-                    isNeedLift, isGowithHospital, moveMethod, user.moveDirection, user.serviceKindId,
-                    gowithHospitalTime, isOverPoint,
+                    moveDirectionId, user.serviceKindId, gowithHospitalTime,
                     user.pickupAddr, user.dropAddr, user.hospitalAddr,
                     user.hopeReservationDate, user.hopeHospitalArrivalTime, user.fixedMedicalTime, user.hopeHospitalDepartureTime,
-                    user.fixedMedicalDetail, user.hopeRequires, now]);
+                    user.fixedMedicalDetail, user.hopeRequires]);
 
         const result3 = await connection.query(sql3, [reservationId, user.patientName, user.patientPhone, protectorName, protectorPhone, user.validTargetKind]);
        
