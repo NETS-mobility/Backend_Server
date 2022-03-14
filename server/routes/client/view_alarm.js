@@ -6,7 +6,7 @@ const jwt = require("../../modules/jwt");
 const pool2 = require("../../modules/mysql2");
 
 // ===== 알람 조회 =====
-router.post("", async function (req, res, next) {
+router.post("/alarmList/", async function (req, res, next) {
   const token = req.body.jwtToken;
 
   const token_res = await jwt.verify(token);
@@ -15,7 +15,7 @@ router.post("", async function (req, res, next) {
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
   const user_number = token_res.id; // 이용자 id
-
+  console.log("server_test");
   const connection = await pool2.getConnection(async (conn) => conn);
 
   try {
@@ -43,4 +43,24 @@ router.post("", async function (req, res, next) {
     connection.release();
   }
 });
+
+router.post("/alarmList/:alarm_id/", async function (req, res, next) {
+  const connection = await pool2.getConnection(async (conn) => conn);
+
+  try {
+    const alarm_id = req.params.alarm_id;
+
+    const sql = "select * from customer_alarm where alarm_id =?";
+    const result = await connection.query(sql, [alarm_id]);
+    const data = result[0];
+
+    res.send(data);
+  } catch (err) {
+    console.error("err : " + err);
+    res.status(500).send({ err: "서버 오류" });
+  } finally {
+    connection.release();
+  }
+});
+
 module.exports = router;
