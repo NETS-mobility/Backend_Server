@@ -7,5 +7,5 @@ module.exports = {
   repair_wheel_document: "/user_data/repair_wheel_document/", // 휠체어/리프트 수리/점검 증명서류
   repair_car_document: "/user_data/repair_car_document/", // 차량 수리/점검 증명서류
   admin_picture: "/user_data/admin_profile/", // 관리자 프로필 사진
-  accompany: "/user_data/accompany_picture/", // 동행 사진
+  accompany_picture: "/user_data/accompany_picture/", // 동행 사진
 };

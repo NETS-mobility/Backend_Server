@@ -1,12 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const { user } = require("../../config/database");
+const upload = require("../../modules/fileupload");
 
 const jwt = require("../../modules/jwt");
 const pool2 = require("../../modules/mysql2");
+const uplPath = require("../../config/upload_path");
 
 // ===== 알림 조회 =====
-router.post("", async function (req, res, next) {
+router.post("/alarmList/", async function (req, res, next) {
   const token = req.body.jwtToken;
 
   const token_res = await jwt.verify(token);
@@ -47,4 +49,50 @@ router.post("", async function (req, res, next) {
   }
 });
 
+// === 예약 상세 조회 ====
+router.post("/alarmList/:alarm_id/", async function (req, res, next) {
+  try {
+    const alarm_id = req.params.alarm_id;
+
+    const connection = await pool2.getConnection(async (conn) => conn);
+
+    const sql = "select * from manager_alarm where alarm_id =?";
+    const result = await connection.query(sql, [alarm_id]);
+    const data = result[0];
+
+    res.send(data);
+  } catch (err) {
+    console.error("err : " + err);
+    res.status(500).send({ err: "서버 오류" });
+  } finally {
+    connection.release();
+  }
+});
+
+// ==== 동행 파일 업로드 ====
+router.post(
+  "/alarmDetail/:service_id/submitAccompanyPicture",
+  upload(uplPath.customer_document).single("file"),
+  async function (req, res, next) {
+    const file = req.file;
+    if (file === undefined)
+      return res.status(400).send({ err: "파일이 업로드되지 않았습니다." });
+
+    const service_id = req.params.service_id;
+    const filepath = uplPath.accompany_picture + file.filename; // 업로드 파일 경로
+
+    const connection = await pool2.getConnection(async (conn) => conn);
+    try {
+      const spl =
+        "update `reservation` set `accompany_picture_path`=? where `reservation_id`=?;";
+      await connection.query(spl, [filepath, service_id]);
+      res.send();
+    } catch (err) {
+      console.error("err : " + err);
+      res.status(500).send({ err: "서버 오류" });
+    } finally {
+      connection.release();
+    }
+  }
+);
 module.exports = router;
