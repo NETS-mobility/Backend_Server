@@ -36,12 +36,12 @@ router.post('/changeInfo', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql1 = "select * from `netsmanager` where `netsmanager_id`=?;";
+        const sql1 = "select * from `netsmanager` where `netsmanager_number`=?;";
         const result1 = await connection.query(sql1, [id]);
         const data1 = result1[0];
         if(data1.length == 0) throw err = 0;
 
-        const sql2 = "select `netsmanager_certificate_name` as `name` from `manager_certificate` where `netsmanager_id`=?;";
+        const sql2 = "select `netsmanager_certificate_name` as `name` from `manager_certificate` where `netsmanager_number`=?;";
         const result2 = await connection.query(sql2, [id]);
         const data2 = result2[0];
 
@@ -82,7 +82,7 @@ router.post('/changeInfo/checkDup', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql = "select * from `netsmanager` where `netsmanager_id`=?;";
+        const sql = "select * from `netsmanager` where `netsmanager_number`=?;";
         const sql_result = await connection.query(sql, [user_newId]);
         const sql_data = sql_result[0];
 
@@ -113,7 +113,7 @@ router.post('/changeInfo/UploadProfile', (upload(uplPath.manager_picture)).singl
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const filepath = uplPath.manager_picture + file.filename; // 업로드 파일 경로
-        const spl = "update `netsmanager` set `netsmanager_picture_path`=? where `netsmanager_id`=?;"
+        const spl = "update `netsmanager` set `netsmanager_picture_path`=? where `netsmanager_number`=?;"
         await connection.query(spl, [filepath, id]);
         res.send();
     }
@@ -141,7 +141,7 @@ router.post('/changeInfo/UploadIntroimage', (upload(uplPath.manager_introimage))
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const filepath = uplPath.manager_introimage + file.filename; // 업로드 파일 경로
-        const spl = "update `netsmanager` set `netsmanager_notice_picture_url`=? where `netsmanager_id`=?;"
+        const spl = "update `netsmanager` set `netsmanager_notice_picture_url`=? where `netsmanager_number`=?;"
         await connection.query(spl, [filepath, id]);
         res.send();
     }
@@ -168,7 +168,7 @@ router.post('/changeInfo/changeInfo', async function (req, res, next) {
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const sql = "update `netsmanager` set `netsmanager_name`=?, `netsmanager_phone`=?, " + 
-            "`netsmanager_about_me`=?, `netsmanager_notice`=? where `netsmanager_id`=?;";
+            "`netsmanager_about_me`=?, `netsmanager_notice`=? where `netsmanager_number`=?;";
         const result = await connection.query(sql, [name, phone, intro, notice, id]);
         if(result[0].affectedRows == 0) throw err = 0;
         res.status(200).send();
@@ -197,7 +197,7 @@ router.post('/changePw', async function (req, res, next) {
     const connection = await pool2.getConnection(async conn => conn);
     try {
         // 비밀번호 일치 검사
-        const sql_ck = "select `netsmanager_password` from `netsmanager` where `netsmanager_id`=?;";
+        const sql_ck = "select `netsmanager_password` from `netsmanager` where `netsmanager_number`=?;";
         const res_ck = await connection.query(sql_ck, [user_id]);
         const data_ck = res_ck[0];
         if(data_ck.length == 0) throw err = 0;
@@ -208,7 +208,7 @@ router.post('/changePw', async function (req, res, next) {
 
         // 새 비밀번호 변경
         const user_hashedNewPw = await bcrypt.hash(user_newPw, saltRounds);
-        const sql_ch = "update `netsmanager` set `netsmanager_password`=? where `netsmanager_id`=?;";
+        const sql_ch = "update `netsmanager` set `netsmanager_password`=? where `netsmanager_number`=?;";
         const res_ch = await connection.query(sql_ch, [user_hashedNewPw, user_id]);
 
         if(res_ch[0].affectedRows == 0) throw err = 2;
@@ -238,12 +238,12 @@ router.post('/vacation', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql1 = "select `netsmanager_rest_holiday` as `restDay` from `netsmanager` where `netsmanager_id`=?;";
+        const sql1 = "select `netsmanager_rest_holiday` as `restDay` from `netsmanager` where `netsmanager_number`=?;";
         const result1 = await connection.query(sql1, [id]);
         const data1 = result1[0];
         if(data1.length == 0) throw err = 0;
 
-        const sql2 = "select * from `manager_holiday` where `netsmanager_id`=?;";
+        const sql2 = "select * from `manager_holiday` where `netsmanager_number`=?;";
         const result2 = await connection.query(sql2, [id]);
         const data2 = result2[0];
 
@@ -334,7 +334,7 @@ router.post('/repairWheel/register', (upload(uplPath.repair_wheel_document)).sin
     try {
         const filepath = uplPath.repair_wheel_document + file.filename; // 업로드 파일 경로
         const sql1 = "insert into `equipment_repair`(`equip_id`,`equip_repair_cost`,`equip_repair_reason`," + 
-            "`equip_repair_start_date`,`equip_repair_end_date`,`equip_repair_evidence_path`,`netsmanager_id`) values (?,?,?,?,?,?,?);";
+            "`equip_repair_start_date`,`equip_repair_end_date`,`equip_repair_evidence_path`,`netsmanager_number`) values (?,?,?,?,?,?,?);";
         await connection.query(sql1, [wheel_id, cost, why, start, end, filepath, user_id]);
         res.status(200).send();
     }
@@ -359,7 +359,7 @@ router.post('/repairCar', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql1 = "select `car_id` as `id`, `car_number` as `number`, `car_kind` as `type` from `car` where `netsmanager_id`=?;";
+        const sql1 = "select `car_id` as `id`, `car_number` as `number`, `car_kind` as `type` from `car` where `netsmanager_number`=?;";
         const result1 = await connection.query(sql1, [id]);
         const data1 = result1[0];
         res.status(200).send(data1);
@@ -392,7 +392,7 @@ router.post('/repairCar/register', (upload(uplPath.repair_car_document)).single(
     try {
         const filepath = uplPath.repair_car_document + file.filename; // 업로드 파일 경로
         const sql1 = "insert into `car_repair`(`car_id`,`car_repair_cost`,`car_repair_reason`," + 
-            "`car_repair_start_date`,`car_repair_end_date`,`car_repair_evidence_path`,`netsmanager_id`) values (?,?,?,?,?,?,?);";
+            "`car_repair_start_date`,`car_repair_end_date`,`car_repair_evidence_path`,`netsmanager_number`) values (?,?,?,?,?,?,?);";
         await connection.query(sql1, [car_id, cost, why, start, end, filepath, user_id]);
         res.status(200).send();
     }
