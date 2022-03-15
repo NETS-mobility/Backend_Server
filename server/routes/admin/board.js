@@ -3,6 +3,7 @@ const router = express.Router();
 
 const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
+const token_checker = require('../../modules/admin_token');
 
 
 // ===== 매니저 공지사항 - 목록 조회 =====
