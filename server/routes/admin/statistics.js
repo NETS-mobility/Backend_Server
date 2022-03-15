@@ -48,6 +48,10 @@ router.post('/service', async function (req, res, next) {
         const result7 = await connection.query(sql7, [start, end]);
         const data7 = result7[0];
 
+        const sql9 = "select avg(`gowith_hospital_time`) as `avg` from `reservation` where `hope_reservation_date`>=? and `hope_reservation_date`<=?;";
+        const result9 = await connection.query(sql9, [start, end]);
+        const data9 = result9[0];
+
         const sql8 = "select `hospital_name` as `name`, count(`hospital_name`) as `cnt` from `reservation` where `hope_reservation_date`>=? and `hope_reservation_date`<=? and `reservation_state_id`=3 " + 
             "group by `hospital_name` order by `cnt` desc;";
         const result8 = await connection.query(sql8, [start, end]);
@@ -61,6 +65,7 @@ router.post('/service', async function (req, res, next) {
             customer_new: data5[0].cnt,
             total_distance: data6[0],
             total_time: data7[0],
+            gowith_time: data9[0].avg,
             rank_hospital: data8
         });
     }
