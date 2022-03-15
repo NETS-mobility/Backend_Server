@@ -4,12 +4,8 @@ module.exports = {
     connectionLimit: 5,
     host: 'localhost',              // 로컬계정
     user: 'root',
-    password: '1234',               // 비밀번호
+    password: '9575837106',               // gcp 테스트 시
+//    password: '1234'                    // localhost 테스트 시
     database: 'nets',
     multipleStatements: true
 }
-
-/* === gcp 클라우드 계정 ===
- * host: 34.64.115.208
- * password: 638877926
-*/
