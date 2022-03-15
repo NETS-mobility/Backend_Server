@@ -23,6 +23,7 @@ const route_admin_board = require("./routes/admin/board");
 const route_admin_cost = require("./routes/admin/cost");
 const route_admin_login = require("./routes/admin/login");
 const route_admin_register = require("./routes/admin/register");
+const route_admin_alarm = require("./routes/admin/view_alarm");
 
 const route_dispatch = require('./routes/dispatch/dispatch');
 
@@ -55,7 +56,6 @@ app.use("/client", route_client_home);
 app.use("/client/login", route_client_login);
 app.use("/client/register", route_client_register);
 app.use("/client/reserve", route_client_reserve);
-
 app.use("/client/view_alarm", route_client_alarm);
 //app.use('/client/feedback', route_client_feedback);
 //app.use('/client/pay', route_client_pay);
@@ -66,7 +66,6 @@ app.use("/manager", route_manager_home);
 app.use("/manager/login", route_manager_login);
 app.use("/manager/view_alarm", route_manager_alarm);
 
-
 app.use("/admin/service", route_admin_service);
 app.use("/admin", route_admin_home);
 app.use("/admin/statistics", route_admin_statistics);
@@ -75,6 +74,7 @@ app.use("/admin/board", route_admin_board);
 app.use("/admin/cost", route_admin_cost);
 app.use("/admin/login", route_admin_login);
 app.use("/admin/register", route_admin_register);
+app.use("/admin/view_alarm", route_admin_alarm);
 
 app.use("/dispatch", route_dispatch);
 /*

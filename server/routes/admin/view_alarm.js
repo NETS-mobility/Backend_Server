@@ -1,11 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const { user } = require("../../config/database");
+const upload = require("../../modules/fileupload");
 
 const jwt = require("../../modules/jwt");
 const pool2 = require("../../modules/mysql2");
+const uplPath = require("../../config/upload_path");
 
-// ===== 알람 조회 =====
+// ===== 알림 조회 =====
 router.post("/alarmList/", async function (req, res, next) {
   const token = req.body.jwtToken;
 
@@ -14,16 +16,14 @@ router.post("/alarmList/", async function (req, res, next) {
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
-  const user_number = token_res.id; // 이용자 id
-  console.log("server_test");
+  const admin_id = token_res.id; // 관리자 id
   const connection = await pool2.getConnection(async (conn) => conn);
 
   try {
-    let param = [user_number];
-
     const sql =
-      "select *, u.`user_name` from `customer_alarm` as ca left join `user` as u on ca.`user_number` = u.`user_number` " +
-      "where u.user_id =? " +
+      "select ca.*, u.`user_name`, cd.`netsmanager_number` " +
+      "from `customer_alarm` as ca left join user as u on ca.`user_number` = u.`user_number` left join car_dispatch as cd on ca.`reservation_id` = cd.`reservation_id` " +
+      "where ca.`alarm_kind` = '결제요청' or ca.`alarm_kind` = '취소안내' or ca.`alarm_kind` = '20분이상지연' or ca.`alarm_kind` = '병원동행추가요금결제' or ca.`alarm_kind` = '대기요금결제' " +
       "order by ca.`alarm_id` desc";
     const result = await connection.query(sql, param);
     const data = result[0];
@@ -38,5 +38,4 @@ router.post("/alarmList/", async function (req, res, next) {
     connection.release();
   }
 });
-
 module.exports = router;
