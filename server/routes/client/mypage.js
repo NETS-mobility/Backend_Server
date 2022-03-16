@@ -46,17 +46,15 @@ router.post('/changeInfo/checkDup', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const user_id = token_res.id; // 이용자 기존 id
-
-    if(user_id == user_newId) return res.send({isDup: false}); // 기존 아이디 변경없이 제출한 경우
+    const user_number = token_res.id;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql = "select `user_id` from `user` where `user_number`=?;";
-        const sql_result = await connection.query(sql, [user_newId]);
+        const sql = "select `user_id` as `id` from `user` where `user_id`=? and `user_number`!=?;";
+        const sql_result = await connection.query(sql, [user_newId, user_number]);
         const sql_data = sql_result[0];
 
-        if(sql_data.length == 0) res.send({isDup: false});
+        if(sql_data.length == 0) res.send({isDup: false}); 
         else res.send({isDup: true});
     }
     catch (err) {
@@ -98,22 +96,38 @@ router.post('/changeInfo', async function (req, res, next) {
 
 
 // ===== 마이페이지 비밀번호 변경 - 아이디 확인 =====
-router.post('/changePw/checkId/', async function (req, res, next) {
+router.post('/changePw/checkId', async function (req, res, next) {
     const token = req.body.jwtToken;
     const user_id = req.body.user_id;
 
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const user_tokenId = token_res.id; // 이용자 id
+    const user_number = token_res.id;
 
-    if(user_id == user_tokenId) res.send({ ok : true });
-    else res.send({ ok : false });
+    const connection = await pool2.getConnection(async conn => conn);
+    try {
+        const sql = "select `user_id` as `id` from `user` where `user_number`=?;";
+        const sql_result = await connection.query(sql, [user_number]);
+        const sql_data = sql_result[0];
+        if(sql_data.length == 0) throw err = 0;
+
+        if(sql_data[0].id == user_id) res.send({ ok : true });
+        else res.send({ ok : false });
+    }
+    catch (err) {
+        console.error("err : " + err);
+        if(err == 0) res.status(400).send({ err : "회원정보가 존재하지 않습니다." });
+        else res.status(500).send({ err : "서버 오류" });
+    }
+    finally {
+        connection.release();
+    }
 });
 
 
 // ===== 마이페이지 비밀번호 변경 - 비밀번호 변경 =====
-router.post('/changePw/', async function (req, res, next) {
+router.post('/changePw', async function (req, res, next) {
     const token = req.body.jwtToken;
     const user_pw = req.body.user_pw;
     console.log(req.body);
