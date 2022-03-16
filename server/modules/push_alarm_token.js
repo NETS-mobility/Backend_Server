@@ -3,11 +3,11 @@ const Alarm = require("./setting_alarm");
 const admin = require("firebase-admin");
 
 // SDK 초기화
-let serviceAccount = require("../../public/gcp-nets-firebase-adminsdk-wxtyz-182d6e8ee9.json");
+let serviceAccount = require("../../public/nets-339714-firebase-adminsdk-w7rz6-cbc6b343db.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  //databaseURL: "https://nets-339714.firebaseio.com",
+  databaseURL: "https://nets-339714.firebaseio.com",
 });
 
 const registrationToken = ""; // 기기의 개별 토큰  (해당 토큰은 앱 설치시 입력받는 것이라고 함)
