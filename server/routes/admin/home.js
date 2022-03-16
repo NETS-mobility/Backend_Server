@@ -37,7 +37,7 @@ router.post('/changePw', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const admin_id = token_res.id; // 이용자 id
+    const admin_id = token_res.id; // 관리자 id
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
