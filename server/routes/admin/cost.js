@@ -3,6 +3,59 @@ const router = express.Router();
 
 const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
+const token_checker = require('../../modules/admin_token');
+
+
+// ===== 서비스 요금 조회 ====
+router.post('/service', async function (req, res, next) {
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
+
+    const connection = await pool2.getConnection(async conn => conn);
+    try {
+        const sql1 = "select `service_kind_id` as `id`, `service_kind` as `name`, `service_base_move_distance` as `dist`, `service_base_hospital_gowith_time` as `time`, `service_base_cost` as `cost` from `service_info`;";
+        const result1 = await connection.query(sql1, []);
+        const data1 = result1[0];
+        res.send(data1);
+    }
+    catch (err) {
+        console.error("err : " + err);
+        res.status(500).send({ err : "서버 오류" });
+    }
+    finally {
+        connection.release();
+    }
+});
+
+
+// ===== 서비스 요금 설정 ====
+router.post('/service/setting', async function (req, res, next) {
+    const { id, cost } = req.body;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
+
+    const connection = await pool2.getConnection(async conn => conn);
+    try {
+        const sql1 = "update `service_info` set `service_base_cost`=? where `service_kind_id`=?;";
+        const result1 = await connection.query(sql1, [cost, id]);
+        if(result1[0].affectedRows == 0) throw err = 0;
+        res.send();
+    }
+    catch (err) {
+        console.error("err : " + err);
+        if(err == 0) res.status(500).send({ err : "변경 실패!" });
+        else res.status(500).send({ err : "서버 오류" });
+    }
+    finally {
+        connection.release();
+    }
+});
 
 
 // ===== 추가요금 정보 반환 =====
@@ -15,7 +68,12 @@ DB - table `extra_cost`
 (5, "배차 지연 환불", "min", 20, 9000, 0)
 심야할증, 주말할증, 매니저 추가수당은 추후 추가
 */
-router.post('', async function (req, res, next) {
+router.post('/extra', async function (req, res, next) {
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -73,8 +131,13 @@ router.post('', async function (req, res, next) {
 
 
 // ===== 추가요금 설정 =====
-router.post('/setting', async function (req, res, next) {
+router.post('/extra/setting', async function (req, res, next) {
     const {movement_cost, accompany_extra_cost, accompany_over_cost, car_delay_cost, matching_delay_refund} = req.body.extra_cost;
+    if(!(await token_checker(req.body.jwtToken)))
+    {
+        res.status(401).send({ err : "접근 권한이 없습니다." });
+        return;
+    }
 
     const connection = await pool2.getConnection(async conn => conn);
     try {

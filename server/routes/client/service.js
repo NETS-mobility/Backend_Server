@@ -25,13 +25,11 @@ router.post('/serviceList/:listType', async function (req, res, next) {
             throw err = 0;
 
         let param = [user_id];
-        let sql1 = "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_base_address` as `pickup_address`, " + 
-            "`hospital_base_address` as `hos_name`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " + 
-            "NM.`netsmanager_name` as `netsmanager`, C.`car_number` as `car_number`, `gowithmanager_name` as `gowithumanager`, " + 
-            "`reservation_state_id` as `reservation_state`, P.`is_need_extra_payment` as `isNeedExtraPay`, P.`is_complete_extra_payment` as `isCompleteExtraPay` " + 
-            "from `reservation` as R, `service_info` as S, `netsmanager` as NM, `car` as C, `payment` as P " + 
-            "where `user_id`=? and R.`service_kind_id`=S.`service_kind_id` and R.`netsmanager_id`=NM.`netsmanager_id` " + 
-            "and R.`car_id`=C.`car_id` and R.`reservation_id`=P.`reservation_id` ";
+        let sql1 = "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, " + 
+            "`hospital_name` as `hos_name`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " + 
+            "`gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " + 
+            "from `reservation` as R, `service_info` as S " + 
+            "where `user_number`=9 and R.`service_kind_id`=S.`service_kind_id` ";
 
         // 서비스 진행상태 분기점
         if(listType == 0)
@@ -45,9 +43,19 @@ router.post('/serviceList/:listType', async function (req, res, next) {
             param.push(reservation_state.complete);
         }
         
-        sql1 += "order by `expect_pickup_time`;";
+        sql1 += "order by `rev_date` and `pickup_time`;";
         const result1 = await connection.query(sql1, param);
         const data1 = result1[0];
+
+        // 매니저 & 차량 구하기
+        for(let i = 0; i < data1.length; i++)
+        {
+            const sqlm = "select C.`car_id`, `car_number`, NM.`netsmanager_id`, NM.`netsmanager_number`, NM.`netsmanager_name` " + 
+                "from `reservation` as R, `car_dispatch`as D, `netsmanager` as NM, `car` as C " + 
+                "where R.`reservation_id`=? and R.`reservation_id`=D.`reservation_id` and D.`netsmanager_number`=NM.`netsmanager_number` and D.`car_id`=C.`car_id`;";
+            const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
+            data1[i].dispatch = sqlmr[0];
+        }
 
         res.send(data1);
     }
@@ -69,22 +77,14 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
     const connection = await pool2.getConnection(async conn => conn);
     try {
         // 서비스 정보
-        const sql_service = "select cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_base_address` as `pickup_address`, `hospital_base_address` as `hos_name`, " + 
-            "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " + 
-            "NM.`netsmanager_name` as `netsmanager`, C.`car_number` as `car_number`, `gowithmanager_name` as `gowithumanager`, " + 
-            "`reservation_state_id` as `reservation_state`, P.`is_need_extra_payment` as `isNeedExtraPay`, P.`is_complete_extra_payment` as `isCompleteExtraPay` " + 
-            "from `reservation` as R, `netsmanager` as NM, `car` as C, `payment` as P " + 
-            "where R.`reservation_id`=? and R.`car_id`=C.`car_id` and R.`netsmanager_id`=NM.`netsmanager_id` and R.`reservation_id`=P.`reservation_id`;";
+        const sql_service = "select cast(`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address` as `pickup_address`, `hospital_name` as `hos_name`, " + 
+            "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " + 
+            "from `reservation` where `reservation_id`=?;";
         const result_service = await connection.query(sql_service, [service_id]);
         const data_service = result_service[0];
 
         if(data_service.length == 0)
             throw err = 0;
-
-        // 차량정보
-        // const sql_car = "select `car_number` from `reservation` as R, `car` as C where `reservation_id`=? and R.`car_id`=C.`car_id`;";
-        // const result_car = await connection.query(sql_car, [service_id]);
-        // const data_car = result_car[0];
 
         // 서비스 상태정보
         const sql_prog = "select * from `service_progress` where `reservation_id`=?;";
@@ -92,32 +92,32 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
         const data_prog = result_prog[0];
         if(data_prog.length == 0) throw err = 1;
 
-        const service_state = data_prog[0].service_state_id;
-        const service_state_time = [];
-        service_state_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
-        service_state_time[service_state.arrivalHos] = data_prog[0].real_hospital_arrival_time; // 병원도착
-        service_state_time[service_state.carReady] = data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
-        service_state_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
-        service_state_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
+        const sstate = data_prog[0].service_state_id;
+        const sstate_time = [];
+        sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
+        sstate_time[service_state.arrivalHos] = data_prog[0].real_hospital_arrival_time; // 병원도착
+        sstate_time[service_state.carReady] = data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
+        sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
+        sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
 
         // 매니저 정보
-        const sql_manager = "select `netsmanager_name` as `name`, `netsmanager_about_me` as `intro`, `netsmanager_phone` as `tel`, `netsmanager_notice` as `mention` " + 
-            "from `reservation` as R, `netsmanager` as NM where `reservation_id`=? and R.`netsmanager_id`=NM.`netsmanager_id`;";
-        const result_manager = await connection.query(sql_manager, [service_id]);
-        const data_manager = result_manager[0];
+        const sqld = "select C.`car_id`, `car_number`, NM.`netsmanager_id`, NM.`netsmanager_number`, NM.`netsmanager_name`, " + 
+                "`netsmanager_about_me` as `netsmanager_intro`, `netsmanager_phone` as `netsmanager_tel`, `netsmanager_notice` as `netsmanager_mention` " + 
+                "from `reservation` as R, `car_dispatch`as D, `netsmanager` as NM, `car` as C " + 
+                "where R.`reservation_id`=? and R.`reservation_id`=D.`reservation_id` and D.`netsmanager_number`=NM.`netsmanager_number` and D.`car_id`=C.`car_id`;";
+        const sqldr = await connection.query(sqld, [service_id]);
 
         // 결제 정보
-        const sql_pay = "select `base_payment_amount` as `charge`, `extra_payment_amount` as `extraPay` " + 
+        /*const sql_pay = "select `base_payment_amount` as `charge`, `extra_payment_amount` as `extraPay` " + 
             "from `reservation` as R, `payment` as P where R.`reservation_id`=? and R.`reservation_id`=P.`reservation_id`;";
         const result_pay = await connection.query(sql_pay, [service_id]);
-        const data_pay = result_pay[0];
+        const data_pay = result_pay[0];*/
         
         res.send({
-            manager: data_manager[0],
+            dispatch: sqldr[0],
             service: data_service[0],
-            payment: data_pay[0],
-            service_state: service_state,
-            service_state_time: service_state_time
+            service_state: sstate,
+            service_state_time: sstate_time
         });
     }
     catch (err) {

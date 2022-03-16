@@ -25,6 +25,8 @@ const route_admin_login = require("./routes/admin/login");
 const route_admin_register = require("./routes/admin/register");
 const route_admin_alarm = require("./routes/admin/view_alarm");
 
+const route_dispatch = require('./routes/dispatch/dispatch');
+
 //const route_client_feedback = require('./routes/client/feedback');
 //const route_client_pay = require('./routes/client/pay');
 
@@ -73,6 +75,8 @@ app.use("/admin/cost", route_admin_cost);
 app.use("/admin/login", route_admin_login);
 app.use("/admin/register", route_admin_register);
 app.use("/admin/view_alarm", route_admin_alarm);
+
+app.use("/dispatch", route_dispatch);
 /*
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

@@ -21,7 +21,7 @@ router.post('', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql = "select `user_id` as `id`, `user_name` as `name`, `user_phone` as `phone` from `user` where `user_id`=?;";
+        const sql = "select `user_id` as `id`, `user_name` as `name`, `user_phone` as `phone` from `user` where `user_number`=?;";
         const sql_result = await connection.query(sql, [user_id]);
         const sql_data = sql_result[0];
         if(sql_data.length == 0) throw err = 0;
@@ -52,7 +52,7 @@ router.post('/changeInfo/checkDup', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql = "select `user_id` from `user` where `user_id`=?;";
+        const sql = "select `user_id` from `user` where `user_number`=?;";
         const sql_result = await connection.query(sql, [user_newId]);
         const sql_data = sql_result[0];
 
@@ -83,9 +83,8 @@ router.post('/changeInfo', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        // const sql = "update `user` set `user_id`=?, `user_name`=?, `user_phone`=? where `user_id`=?;";
-        const sql = "update `user` set `user_name`=?, `user_phone`=? where `user_id`=?;";
-        await connection.query(sql, [user_name, user_phone, user_id]);
+        const sql = "update `user` set `user_id`=?, `user_name`=?, `user_phone`=? where `user_number`=?;";
+        await connection.query(sql, [user_newId, user_name, user_phone, user_id]);
         res.status(200).send();
     }
     catch (err) {
@@ -127,7 +126,7 @@ router.post('/changePw/', async function (req, res, next) {
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const user_hashedPw = await bcrypt.hash(user_pw, saltRounds);
-        const sql = "update `user` set `user_password`=? where `user_id`=?;";
+        const sql = "update `user` set `user_password`=? where `user_number`=?;";
         await connection.query(sql, [user_hashedPw, user_id]);
         res.status(200).send();
     }
