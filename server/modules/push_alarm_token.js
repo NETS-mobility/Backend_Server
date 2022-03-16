@@ -1,16 +1,13 @@
 // === push 알림 전송 ===
-const Alarm = require("./setting_alarm");
 const admin = require("firebase-admin");
 
 // SDK 초기화
-let serviceAccount = require("../../public/nets-339714-firebase-adminsdk-w7rz6-cbc6b343db.json");
+let serviceAccount = require("../config/nets-339714-firebase-adminsdk-w7rz6-cbc6b343db.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://nets-339714.firebaseio.com",
+  // databaseURL: "https://nets-339714.firebaseio.com",
 });
-
-const registrationToken = ""; // 기기의 개별 토큰  (해당 토큰은 앱 설치시 입력받는 것이라고 함)
 
 /*getMessaging()
   .sendToDevice(registrationToken, message)
@@ -23,24 +20,35 @@ const registrationToken = ""; // 기기의 개별 토큰  (해당 토큰은 앱 
     console.log("Error sending message:", error);
   });*/
 
-async function push_alarm(reservation_id, alarm_kind, user_name, pickup_time) {
+exports.pushAlarm = async function (req, res) {
+  const { registrationToken, push_alarm_body, push_alarm_title } = req.body;
   // 알림 setting
-  let alarm = Alarm.set_alarm(
-    reservation_id,
-    alarm_kind,
-    user_name,
-    pickup_time
-  );
   const message = {
-    notification: {
+    priority: high,
+    Notification: {
       // 알림 화면에서 표시될 내용
-      title: alarm.get_push_title(),
-      body: alarm.get_push_text(),
+      title: push_alarm_title,
+      body: push_alarm_body,
     },
-    token: registrationToken,
+    data: {
+      // 알림 화면에서 표시될 내용
+      title: push_alarm_title,
+      body: push_alarm_body,
+    },
+    token: registrationToken, // 기기의 개별 토큰  (해당 토큰은 앱 설치시 입력받는 것이라고 함)
   };
-}
-module.exports.push_alarm = push_alarm;
+
+  // fcm으로 push message 전송
+  admin
+    .messaging()
+    .send(message)
+    .then(function (response) {
+      console.log("successfully sent push message: ", response);
+    })
+    .catch(function (err) {
+      console.log("Error Sending Push Message!!: ", err);
+    });
+};
 /////////////////////////////////////////
 //const channel;
 /*exports.push_alarm = async function (req, res) {};
