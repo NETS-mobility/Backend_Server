@@ -86,15 +86,9 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
             "where R.`reservation_id`=? and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number`;";
         const result_service = await connection.query(sql_service, [service_id]);
         const data_service = result_service[0];
-        console.log(service_id);
 
         if(data_service.length == 0)
             throw err = 0;
-
-        // 차량정보
-        // const sql_car = "select `car_number` from `reservation` as R, `car` as C where `reservation_id`=? and R.`car_id`=C.`car_id`;";
-        // const result_car = await connection.query(sql_car, [service_id]);
-        // const data_car = result_car[0];
 
         // 서비스 상태정보
         const sql_prog = "select * from `service_progress` where `reservation_id`=?;";
@@ -190,13 +184,15 @@ router.post('/serviceDetail/:service_id/submitDoc', (upload(uplPath.customer_doc
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const spl = "update `reservation_user` set `valid_target_evidence_path`=? where `reservation_id`=?;"
-        await connection.query(spl, [filepath, service_id]);
+        const spl = "update `reservation_user` set `valid_target_evidence_path`=?, `is_submit_evidence`=1 where `reservation_id`=?;"
+        const sqlr = await connection.query(spl, [filepath, service_id]);
+        if(sqlr[0].affectedRows == 0) throw err = 0;
         res.send();
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        if(err == 0) res.status(500).send({ err : "파일 업로드 등록 실패!" });
+        else res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();

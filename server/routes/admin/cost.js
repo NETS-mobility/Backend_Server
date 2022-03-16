@@ -59,15 +59,6 @@ router.post('/service/setting', async function (req, res, next) {
 
 
 // ===== 추가요금 정보 반환 =====
-/*
-DB - table `extra_cost`
-(1, "이동거리 추가요금", "km", 5, 11000, 0)
-(2, "동행 추가요금 (예약 시)", "min", 30, 11000, 0)
-(3, "동행 초과요금 (초과 시)", "min", 20, 9000, 0)
-(4, "승차 지연 대기요금", "min", 10, 5500, 0)
-(5, "배차 지연 환불", "min", 20, 9000, 0)
-심야할증, 주말할증, 매니저 추가수당은 추후 추가
-*/
 router.post('/extra', async function (req, res, next) {
     if(!(await token_checker(req.body.jwtToken)))
     {
