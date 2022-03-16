@@ -17,7 +17,7 @@ router.post('', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql = `SELECT netsmanager_password, netsmanager_name FROM netsmanager WHERE netsmanager_id=?;`;
+        const sql = `SELECT netsmanager_password, netsmanager_name, is_check_phone FROM netsmanager WHERE netsmanager_id=?;`;
         const result = await connection.query(sql, [id]);
         const sql_data = result[0];
         
@@ -34,7 +34,12 @@ router.post('', async function (req, res, next) {
             };
 
             const token_res = await jwt.sign(payload); // 토큰 생성
-            res.status(200).send({ success : true, token : token_res });
+            if (sql_data[0].is_check_phone == 1){
+                res.status(200).send({ success : true, token : token_res, checkPhone : "휴대폰 인증 완료" });
+            }
+            else {
+                res.status(200).send({ success : true, token : token_res, checkPhone : "최초 로그인 휴대폰 인증 필요" });
+            }
         }
     }
     catch (err) {
@@ -47,12 +52,38 @@ router.post('', async function (req, res, next) {
 });
 
 
-// ===== 휴대폰 인증-인증번호 반환 =====
+// ===== 로그인 이후 휴대폰 인증-인증번호 반환 =====
 router.post('/checkPhone', async function (req, res, next) {
     const phone = req.body.phone;
     const message_res = await message.sendMessage(phone); // 메세지 생성, 결과 얻음
     if (message_res == -1) res.status(500).send({ err : "메세지 전송 실패"});
     else res.status(200).send({ success : true, randomNumber : message_res }); // 인증번호 반환
+});
+
+
+// ===== 로그인 이후 휴대폰 인증 완료 시-인증 완료 설정(최초 로그인 시에만), 휴대폰 번호 업데이트 =====
+router.post('/SuccessCheckPhone', async function (req, res, next) {
+    const token = req.body.jwtToken;
+    const phone = req.body.phone;
+    
+    const token_res = await jwt.verify(token);
+    if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
+    if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
+    const id = token_res.id; // 매니저 id
+
+    const connection = await pool2.getConnection(async conn => conn);
+    try {
+        const sql = `UPDATE netsmanager SET is_check_phone=?, netsmanager_phone=? WHERE netsmanager_id=?;`;
+        await connection.query(sql, [1, phone, id]);
+        res.status(200).send({ success : true });
+    }
+    catch (err) {
+        console.error("err : " + err);
+        res.status(500).send({ err : "서버 오류" });
+    }
+    finally {
+        connection.release();
+    }
 });
 
 
