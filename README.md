@@ -7,11 +7,11 @@ https://app.swaggerhub.com/apis/NETS-mobility1/Backend_Server/1.0.0
 
 
 ## DB-main
-2022.03.14 NETS_db_v2.19.mwb
+2022.03.17 NETS_db_v2.22.mwb
 
 
 ## DB-base_setting(need to import)
-2022.02.24 service_info_data_v1.csv
+2022.02.24 service_info_data.csv
 
 
 ## Installation
