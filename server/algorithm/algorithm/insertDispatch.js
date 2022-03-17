@@ -1,5 +1,9 @@
 // === DB에 배차 정보를 저장하는 모듈 ===
 
+
+// === 미사용 모듈 ===
+
+
 // dispatchResult: 배차 목록 (배열)
 // revData: 예약 데이터 (= 클라이언트 입력)
 // direction: 방향 목록 (배열, 인덱스는 dispatchResult와 동일)
@@ -18,13 +22,8 @@
 
 // 성공시 true 반환
 
-// === 배차 선택 ===
-// 픽업장소 출발 => 픽업에서 가장 가까운 곳에 있는 최적 차량 선택
-// 병원에서 출발 => 병원과 가장 가까운 곳에 있는 최적 차량 선택
-// prevDepartureTime이 가장 큰 순서대로 정렬되어 있으므로, 최적 차량 = dispatch[0]
 
-
-const pool2 = require("../util/mysql2");
+/*const pool2 = require("../util/mysql2");
 const rev_id = "200209000000"; // 예약 아이디 (수정 필요)
 
 const InsertDispatch = async (dispatchResult, revData, direction, is3) => {
@@ -98,4 +97,4 @@ const InsertDispatch = async (dispatchResult, revData, direction, is3) => {
   }
 };
 
-module.exports = InsertDispatch;
+module.exports = InsertDispatch;*/
