@@ -11,9 +11,12 @@ const GetArrangeTime = async (service_kind_id) => {
   let result;
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
-    const sql =
-      "select `service_free_time` as `freeTime` from `service_info` where `service_kind_id`=?;";
-    const sql_result = await connection.query(sql, [service_kind_id]);
+    let time_id;
+    if(service_kind_id == 2 || service_kind_id == 3) time_id = 2;
+    else time_id = 1;
+
+    const sql = "select `extratime_data` as `freeTime` from `service_extratime` where `extratime_id`=?;";
+    const sql_result = await connection.query(sql, [time_id]);
     const sql_data = sql_result[0];
     result = sql_data[0].freeTime;
   } catch (err) {
