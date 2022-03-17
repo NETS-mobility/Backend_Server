@@ -49,6 +49,14 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     const result1 = await connection.query(sql1, param);
     const data1 = result1[0];
 
+    // 결제 구하기
+      for(let i = 0; i < data1.length; i++)
+      {
+          const sqlm = "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
+          const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
+          data1[i].isNeedExtraPay = (sqlmr[0].length > 0);
+      }
+
     res.send(data1);
   } catch (err) {
     console.error("err : " + err);
@@ -111,12 +119,18 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     const result_manager = await connection.query(sql_manager, [manager_id]);
     const data_manager = result_manager[0];
 
+    // 결제 구하기
+    const sqlm = "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
+    const sqlmr = await connection.query(sqlm, [service_id]);
+    const isNeedExtraPay = (sqlmr[0].length > 0);
+
     res.send({
       document_isSubmit: true,
       service_state: sstate,
       service_state_time: sstate_time,
       manager: data_manager[0],
       service: data_service[0],
+      isNeedExtraPay: isNeedExtraPay,
     });
   } catch (err) {
     console.error("err : " + err);

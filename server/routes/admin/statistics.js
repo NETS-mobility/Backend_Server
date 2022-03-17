@@ -30,12 +30,10 @@ router.post('/service', async function (req, res, next) {
         const result3 = await connection.query(sql3, [start, end]);
         const data3 = result3[0];
 
-        /*const sql4 = "select sum(`payment_amount`) as `sales` from `payment` where `complete_payment_date`>=? and `complete_payment_date`<=?;";
+        const sql4 = "select sum(`payment_amount`) as `sales` from `payment` where `payment_state_id`=2 and `complete_payment_date`>=? and `complete_payment_date`<=?;";
         const result4 = await connection.query(sql4, [start, end]);
-        const data4 = result4[0];*/
-        /*const sql4_2 = "select sum(`extra_payment_amount`) as `sales` from `payment` where `complete_extra_payment_date`>=? and `complete_extra_payment_date`<=?;";
-        const result4_2 = await connection.query(sql4_2, [start, end]);
-        const data4_2 = result4_2[0];*/
+        const data4 = result4[0];
+        if(data4[0].sales === null) data4[0].sales = 0;
 
         const sql5 = "select count(*) as `cnt` from `user` where `user_join_date`>=? and `user_join_date`<=?;";
         const result5 = await connection.query(sql5, [start, end]);
@@ -62,7 +60,7 @@ router.post('/service', async function (req, res, next) {
             reservation_count: data1[0].cnt,
             service_count: data2[0].cnt,
             cancel_count: data3[0].cnt,
-            sales: 0, //data4[0].sales,
+            sales: data4[0].sales,
             customer_new: data5[0].cnt,
             total_distance: data6[0],
             total_time: data7[0],

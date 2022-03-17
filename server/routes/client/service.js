@@ -57,6 +57,14 @@ router.post('/serviceList/:listType', async function (req, res, next) {
             data1[i].dispatch = sqlmr[0];
         }
 
+        // 결제 구하기
+        for(let i = 0; i < data1.length; i++)
+        {
+            const sqlm = "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
+            const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
+            data1[i].isNeedExtraPay = (sqlmr[0].length > 0);
+        }
+
         res.send(data1);
     }
     catch (err) {
@@ -108,16 +116,18 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
         const sqldr = await connection.query(sqld, [service_id]);
 
         // 결제 정보
-        /*const sql_pay = "select `base_payment_amount` as `charge`, `extra_payment_amount` as `extraPay` " + 
-            "from `reservation` as R, `payment` as P where R.`reservation_id`=? and R.`reservation_id`=P.`reservation_id`;";
-        const result_pay = await connection.query(sql_pay, [service_id]);
-        const data_pay = result_pay[0];*/
+        const sqlp = "select `payment_amount` as `cost` from `payment` where  `reservation_id`=? order by `payment_type`;";
+        const sqlpr = await connection.query(sqlp, [service_id]);
         
         res.send({
             dispatch: sqldr[0],
             service: data_service[0],
             service_state: sstate,
-            service_state_time: sstate_time
+            service_state_time: sstate_time,
+            payment: {
+                charge: sqlpr[0][0].cost,
+                extraPay: sqlpr[0][1].cost,
+            }
         });
     }
     catch (err) {
