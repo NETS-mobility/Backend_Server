@@ -34,7 +34,7 @@ router.post("", async function (req, res, next) {
     console.error("err : " + err);
     if (err == 0)
       res.status(400).send({ err: "회원정보가 존재하지 않습니다." });
-    else res.status(500).send({ err: "서버 오류" });
+    else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
   } finally {
     connection.release();
   }
@@ -63,7 +63,8 @@ router.post("/changeInfo/checkDup", async function (req, res, next) {
     else res.send({ isDup: true });
   } catch (err) {
     console.error("err : " + err);
-    res.status(500).send({ err: "서버 오류" });
+    // res.status(500).send({ err : "서버 오류" });
+    res.status(500).send({ err: "오류-" + err });
   } finally {
     connection.release();
   }
@@ -91,7 +92,8 @@ router.post("/changeInfo", async function (req, res, next) {
     res.status(200).send();
   } catch (err) {
     console.error("err : " + err);
-    res.status(500).send({ err: "서버 오류" });
+    // res.status(500).send({ err : "서버 오류" });
+    res.status(500).send({ err: "오류-" + err });
   } finally {
     connection.release();
   }
@@ -122,7 +124,7 @@ router.post("/changePw/checkId", async function (req, res, next) {
     console.error("err : " + err);
     if (err == 0)
       res.status(400).send({ err: "회원정보가 존재하지 않습니다." });
-    else res.status(500).send({ err: "서버 오류" });
+    else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
   } finally {
     connection.release();
   }
@@ -149,7 +151,8 @@ router.post("/changePw", async function (req, res, next) {
     res.status(200).send();
   } catch (err) {
     console.error("err : " + err);
-    res.status(500).send({ err: "서버 오류" });
+    // res.status(500).send({ err : "서버 오류" });
+    res.status(500).send({ err: "오류-" + err });
   } finally {
     connection.release();
   }

@@ -28,7 +28,8 @@ router.post('/customer', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -76,7 +77,7 @@ router.post('/customer/detail', async function (req, res, next) {
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(400).send({ err : "회원정보가 없습니다." });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -100,7 +101,8 @@ router.post('/manager', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -153,7 +155,7 @@ router.post('/manager/detail', async function (req, res, next) {
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(400).send({ err : "회원정보가 없습니다." });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -180,7 +182,7 @@ router.post('/manager/detail/changeInfo', async function (req, res, next) {
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(400).send({ err : "개인정보 변경실패" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -205,7 +207,8 @@ router.post('/manager/detail/addCertificate', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -230,7 +233,8 @@ router.post('/manager/detail/deleteCertificate', async function (req, res, next)
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -257,7 +261,7 @@ router.post('/manager/detail/admitVacation', async function (req, res, next) {
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(400).send({ err : "휴가 승인 실패" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -282,7 +286,8 @@ router.post('/manager/detail/deleteVacation', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -307,7 +312,8 @@ router.post('/manager/detail/deleteManager', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -331,7 +337,8 @@ router.post('/admin', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -360,7 +367,7 @@ router.post('/admin/detail', async function (req, res, next) {
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(400).send({ err : "회원정보가 없습니다." });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -385,7 +392,8 @@ router.post('/admin/detail/deleteAdmin', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -418,7 +426,8 @@ router.post('/admin/addAdmin', (upload(uplPath.admin_picture)).single('file') ,a
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -443,7 +452,8 @@ router.post('/car', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -469,7 +479,8 @@ router.post('/car/:idx/repair', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -503,7 +514,8 @@ router.post('/car/addCar', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();

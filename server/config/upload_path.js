@@ -8,4 +8,6 @@ module.exports = {
   repair_car_document: "/user_data/repair_car_document/", // 차량 수리/점검 증명서류
   admin_picture: "/user_data/admin_profile/", // 관리자 프로필 사진
   accompany_picture: "/user_data/accompany_picture/", // 동행 사진
+  manager_notice_file: "/user_data/manager_notice_file/", // 매니저 공지사항 업로드파일
+  customer_notice_file: "/user_data/customer_notice_file/", // 고객 공지사항 업로드파일
 };

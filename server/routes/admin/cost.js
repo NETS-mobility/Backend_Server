@@ -23,7 +23,8 @@ router.post('/service', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -50,7 +51,7 @@ router.post('/service/setting', async function (req, res, next) {
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(500).send({ err : "변경 실패!" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -84,7 +85,8 @@ router.post('/extra', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -149,7 +151,7 @@ router.post('/extra/setting', async function (req, res, next) {
         await connection.rollback();
         console.error("err : " + err);
         if(err == 0) res.status(500).send({ err : "변경 실패!" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -174,7 +176,8 @@ router.post('/service/extratime', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -209,7 +212,7 @@ router.post('/service/extratime/setting', async function (req, res, next) {
         await connection.rollback();
         console.error("err : " + err);
         if(err == 0) res.status(500).send({ err : "변경 실패!" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();

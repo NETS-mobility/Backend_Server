@@ -44,7 +44,8 @@ router.post('', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -79,7 +80,8 @@ router.post('/SuccessCheckPhone', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -102,7 +104,8 @@ router.post('/findId', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -132,7 +135,8 @@ router.post('/changePw', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
