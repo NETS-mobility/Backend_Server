@@ -1,18 +1,19 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const bcrypt = require("bcryptjs");
+const bcrypt = require('bcryptjs');
 
-const jwt = require("../../modules/jwt");
-const pool = require("../../modules/mysql");
-const pool2 = require("../../modules/mysql2");
-const message = require("../../modules/message");
+const jwt = require('../../modules/jwt');
+const pool = require('../../modules/mysql');
+const pool2 = require('../../modules/mysql2');
+const message = require('../../modules/message');
 
-const bcrypt_option = require("../../config/bcrypt");
+const bcrypt_option = require('../../config/bcrypt');
 const saltRounds = bcrypt_option.saltRounds;
+
 
 // ===== 로그인 =====
 router.post('', async function (req, res, next) {
-     const { id, password, device_token } = req.body;
+    const { id, password } = req.body;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -39,10 +40,6 @@ router.post('', async function (req, res, next) {
             else {
                 res.status(200).send({ success : true, token : token_res, checkPhone : "최초 로그인 휴대폰 인증 필요" });
             }
-          // 매니저의 디바이스 토큰값 갱신(push 알림에 사용)
-          sql =
-            "update netsmanager set `netsmanager_device_token` =? where `netsmanager_id` =?;";
-          result = await connection.query(sql, [device_token]);
         }
     }
     catch (err) {
@@ -52,7 +49,7 @@ router.post('', async function (req, res, next) {
     }
     finally {
         connection.release();
-  }
+    }
 });
 
 
@@ -115,6 +112,7 @@ router.post('/findId', async function (req, res, next) {
     }
 });
 
+
 // ===== 비밀번호 변경 =====
 router.post('/changePw', async function (req, res, next) {
     const { id, password } = req.body;
@@ -142,14 +140,7 @@ router.post('/changePw', async function (req, res, next) {
     }
     finally {
         connection.release();
-
     }
-  } catch (err) {
-    console.error("err : " + err);
-    res.status(500).send({ err: "서버 오류" });
-  } finally {
-    connection.release();
-  }
 });
 
 module.exports = router;
