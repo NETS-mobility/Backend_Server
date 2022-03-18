@@ -25,6 +25,8 @@ const resultDispatch = async (dispatchResult, revData, direction, is3) => {
         if(dire == 1) time_end = revData.rev_date + " " + revData.old_hos_arr_time; // case 3일 경우, 병원 도착 시간을 기준으로 2개로 분할
         if(dire == 2) time_start = revData.rev_date + " " + revData.old_hos_arr_time; // case 3 후반 배차의 출발 시각은 동행 시작 시간으로 설정
       }
+      time_start = time_start.substr(0, 10) + " " + time_start.substr(11, 8);
+      time_end = time_end.substr(0, 10) + " " + time_end.substr(11, 8);
 
       result = {
         netsmanagerNum: sqlmd[0][0].netsmanager_number,
