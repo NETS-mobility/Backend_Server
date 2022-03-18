@@ -32,17 +32,17 @@ router.post('/changeInfo', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const id = token_res.id; // 이용자 id
+    const user_num = token_res.num;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const sql1 = "select * from `netsmanager` where `netsmanager_number`=?;";
-        const result1 = await connection.query(sql1, [id]);
+        const result1 = await connection.query(sql1, [user_num]);
         const data1 = result1[0];
         if(data1.length == 0) throw err = 0;
 
         const sql2 = "select `netsmanager_certificate_name` as `name` from `manager_certificate` where `netsmanager_number`=?;";
-        const result2 = await connection.query(sql2, [id]);
+        const result2 = await connection.query(sql2, [user_num]);
         const data2 = result2[0];
 
         // const picture = await fs.readFile("public/" + data1[0].netsmanager_picture_path);
@@ -77,17 +77,16 @@ router.post('/changeInfo/checkDup', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const user_id = token_res.id; // 이용자 기존 id
-    if(user_id == user_newId) return res.send({isDup: false}); // 기존 아이디 변경없이 제출한 경우
+    const user_num = token_res.num;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const sql = "select * from `netsmanager` where `netsmanager_number`=?;";
-        const sql_result = await connection.query(sql, [user_newId]);
+        const sql ="select `netsmanager_id` as `id` from `netsmanager` where `netsmanager_id`=? and `netsmanager_number`!=?;";
+        const sql_result = await connection.query(sql, [user_newId, user_num]);
         const sql_data = sql_result[0];
 
-        if(sql_data.length == 0) res.send({isDup: false});
-        else res.send({isDup: true});
+        if (sql_data.length == 0) res.send({ isDup: false });
+        else res.send({ isDup: true });
     }
     catch (err) {
         console.error("err : " + err);
@@ -109,13 +108,13 @@ router.post('/changeInfo/UploadProfile', (upload(uplPath.manager_picture)).singl
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const id = token_res.id;
+    const user_num = token_res.num;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const filepath = uplPath.manager_picture + file.filename; // 업로드 파일 경로
         const spl = "update `netsmanager` set `netsmanager_picture_path`=? where `netsmanager_number`=?;"
-        await connection.query(spl, [filepath, id]);
+        await connection.query(spl, [filepath, user_num]);
         res.send();
     }
     catch (err) {
@@ -138,13 +137,13 @@ router.post('/changeInfo/UploadIntroimage', (upload(uplPath.manager_introimage))
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const id = token_res.id;
+    const user_num = token_res.num;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const filepath = uplPath.manager_introimage + file.filename; // 업로드 파일 경로
         const spl = "update `netsmanager` set `netsmanager_notice_picture_url`=? where `netsmanager_number`=?;"
-        await connection.query(spl, [filepath, id]);
+        await connection.query(spl, [filepath, user_num]);
         res.send();
     }
     catch (err) {
@@ -166,13 +165,13 @@ router.post('/changeInfo/changeInfo', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const id = token_res.id; // 이용자 id
+    const user_num = token_res.num;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const sql = "update `netsmanager` set `netsmanager_name`=?, `netsmanager_phone`=?, " + 
             "`netsmanager_about_me`=?, `netsmanager_notice`=? where `netsmanager_number`=?;";
-        const result = await connection.query(sql, [name, phone, intro, notice, id]);
+        const result = await connection.query(sql, [name, phone, intro, notice, user_num]);
         if(result[0].affectedRows == 0) throw err = 0;
         res.status(200).send();
     }
@@ -195,13 +194,13 @@ router.post('/changePw', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const user_id = token_res.id; // 이용자 id
+    const user_num = token_res.num;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
         // 비밀번호 일치 검사
         const sql_ck = "select `netsmanager_password` from `netsmanager` where `netsmanager_number`=?;";
-        const res_ck = await connection.query(sql_ck, [user_id]);
+        const res_ck = await connection.query(sql_ck, [user_num]);
         const data_ck = res_ck[0];
         if(data_ck.length == 0) throw err = 0;
 
@@ -212,7 +211,7 @@ router.post('/changePw', async function (req, res, next) {
         // 새 비밀번호 변경
         const user_hashedNewPw = await bcrypt.hash(user_newPw, saltRounds);
         const sql_ch = "update `netsmanager` set `netsmanager_password`=? where `netsmanager_number`=?;";
-        const res_ch = await connection.query(sql_ch, [user_hashedNewPw, user_id]);
+        const res_ch = await connection.query(sql_ch, [user_hashedNewPw, user_num]);
 
         if(res_ch[0].affectedRows == 0) throw err = 2;
         res.status(200).send({ok: true});
@@ -237,17 +236,17 @@ router.post('/vacation', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const id = token_res.id; // 이용자 id
+    const user_num = token_res.num; // 이용자 id
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const sql1 = "select `netsmanager_rest_holiday` as `restDay` from `netsmanager` where `netsmanager_number`=?;";
-        const result1 = await connection.query(sql1, [id]);
+        const result1 = await connection.query(sql1, [user_num]);
         const data1 = result1[0];
         if(data1.length == 0) throw err = 0;
 
         const sql2 = "select * from `manager_holiday` where `netsmanager_number`=?;";
-        const result2 = await connection.query(sql2, [id]);
+        const result2 = await connection.query(sql2, [user_num]);
         const data2 = result2[0];
 
         let useDay = 0;
@@ -282,7 +281,7 @@ router.post('/vacation/register', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const id = token_res.id; // 이용자 id
+    const user_num = token_res.num;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
@@ -330,7 +329,7 @@ router.post('/repairWheel/register', (upload(uplPath.repair_wheel_document)).sin
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const user_id = token_res.id;
+    const user_num = token_res.num;
 
     const file = req.file;
     if(file === undefined) return res.status(400).send({ err : "파일이 업로드되지 않았습니다." });
@@ -340,7 +339,7 @@ router.post('/repairWheel/register', (upload(uplPath.repair_wheel_document)).sin
         const filepath = uplPath.repair_wheel_document + file.filename; // 업로드 파일 경로
         const sql1 = "insert into `equipment_repair`(`equip_id`,`equip_repair_cost`,`equip_repair_reason`," + 
             "`equip_repair_start_date`,`equip_repair_end_date`,`equip_repair_evidence_path`,`netsmanager_number`) values (?,?,?,?,?,?,?);";
-        await connection.query(sql1, [wheel_id, cost, why, start, end, filepath, user_id]);
+        await connection.query(sql1, [wheel_id, cost, why, start, end, filepath, user_num]);
         res.status(200).send();
     }
     catch (err) {
@@ -361,12 +360,12 @@ router.post('/repairCar', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const id = token_res.id; // 이용자 id
+    const user_num = token_res.num;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
         const sql1 = "select `car_id` as `id`, `car_number` as `number`, `car_kind` as `type` from `car` where `netsmanager_number`=?;";
-        const result1 = await connection.query(sql1, [id]);
+        const result1 = await connection.query(sql1, [user_num]);
         const data1 = result1[0];
         res.status(200).send(data1);
     }
@@ -390,7 +389,7 @@ router.post('/repairCar/register', (upload(uplPath.repair_car_document)).single(
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const user_id = token_res.id;
+    const user_num = token_res.num;
 
     const file = req.file;
     if(file === undefined) return res.status(400).send({ err : "파일이 업로드되지 않았습니다." });
@@ -400,7 +399,7 @@ router.post('/repairCar/register', (upload(uplPath.repair_car_document)).single(
         const filepath = uplPath.repair_car_document + file.filename; // 업로드 파일 경로
         const sql1 = "insert into `car_repair`(`car_id`,`car_repair_cost`,`car_repair_reason`," + 
             "`car_repair_start_date`,`car_repair_end_date`,`car_repair_evidence_path`,`netsmanager_number`) values (?,?,?,?,?,?,?);";
-        await connection.query(sql1, [car_id, cost, why, start, end, filepath, user_id]);
+        await connection.query(sql1, [car_id, cost, why, start, end, filepath, user_num]);
         res.status(200).send();
     }
     catch (err) {

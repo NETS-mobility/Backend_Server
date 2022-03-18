@@ -17,14 +17,14 @@ router.post('/serviceList/:listType', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const user_id = token_res.id; // 이용자 id
+    const user_num = token_res.num;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
         if(!(listType >= 0 && listType <= 1))
             throw err = 0;
 
-        let param = [user_id];
+        let param = [user_num];
         let sql1 = "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, " + 
             "`hospital_name` as `hos_name`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " + 
             "`gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " + 

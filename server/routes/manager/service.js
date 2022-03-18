@@ -22,13 +22,13 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
-  const manager_id = token_res.id;
+  const user_num = token_res.num;
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     if (!(listType >= 0 && listType <= 1)) throw (err = 0);
 
-    let param = [manager_id];
+    let param = [user_num];
     let sql1 =
       "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, " +
       "`hospital_name` as `hos_name`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " +
@@ -77,7 +77,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
-  const manager_id = token_res.id;
+  const user_num = token_res.num;
 
   if (!(await evidence_checker(service_id)))
     return res.send({ document_isSubmit: false }); // 필수 서류 미제출
@@ -116,7 +116,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     const sql_manager =
       "select `netsmanager_name` as `name`, `netsmanager_notice` as `mention` " +
       "from `netsmanager` as NM where NM.`netsmanager_number`=?;";
-    const result_manager = await connection.query(sql_manager, [manager_id]);
+    const result_manager = await connection.query(sql_manager, [user_num]);
     const data_manager = result_manager[0];
 
     // 결제 구하기

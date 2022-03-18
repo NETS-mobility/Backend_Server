@@ -13,9 +13,7 @@ const saltRounds = bcrypt_option.saltRounds;
 router.post("", async function (req, res, next) {
   const token = req.body.jwtToken;
 
-  console.log("token==", token);
   const token_res = await jwt.verify(token);
-  console.log("token_res==========", token_res);
   if (token_res == jwt.TOKEN_EXPIRED)
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
@@ -50,7 +48,7 @@ router.post("/changeInfo/checkDup", async function (req, res, next) {
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
-  const user_number = token_res.id;
+  const user_number = token_res.num;
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
@@ -82,13 +80,13 @@ router.post("/changeInfo", async function (req, res, next) {
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
-  const user_id = token_res.id; // 이용자 id
+  const user_num = token_res.num;
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql =
       "update `user` set `user_id`=?, `user_name`=?, `user_phone`=? where `user_number`=?;";
-    await connection.query(sql, [user_newId, user_name, user_phone, user_id]);
+    await connection.query(sql, [user_newId, user_name, user_phone, user_num]);
     res.status(200).send();
   } catch (err) {
     console.error("err : " + err);
@@ -109,7 +107,7 @@ router.post("/changePw/checkId", async function (req, res, next) {
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
-  const user_number = token_res.id;
+  const user_number = token_res.num;
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
@@ -134,20 +132,19 @@ router.post("/changePw/checkId", async function (req, res, next) {
 router.post("/changePw", async function (req, res, next) {
   const token = req.body.jwtToken;
   const user_pw = req.body.user_pw;
-  console.log(req.body);
 
   const token_res = await jwt.verify(token);
   if (token_res == jwt.TOKEN_EXPIRED)
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
-  const user_id = token_res.id; // 이용자 id
+  const user_num = token_res.num;
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const user_hashedPw = await bcrypt.hash(user_pw, saltRounds);
     const sql = "update `user` set `user_password`=? where `user_number`=?;";
-    await connection.query(sql, [user_hashedPw, user_id]);
+    await connection.query(sql, [user_hashedPw, user_num]);
     res.status(200).send();
   } catch (err) {
     console.error("err : " + err);
