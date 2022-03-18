@@ -56,7 +56,7 @@ router.post('/serviceList/:listType/:listDate', async function (req, res, next) 
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(401).send({ err : "잘못된 인자 전달" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -107,23 +107,30 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
         const sqldr = await connection.query(sqld, [service_id]);
 
         // 결제
-        const sqlp = "select * from `reservation` as R, `payment` as P " + 
-                "where R.`reservation_id`=? and R.`reservation_id`=P.`reservation_id`";
-        const sqlpr = await connection.query(sqlp, [service_id]);
+        const sqlm = "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
+        const sqlmr = await connection.query(sqlm, [service_id]);
+        const isNeedExtraPay = (sqlmr[0].length > 0);
+
+        const sqlm2 = "select `payment_method` from `payment` where `payment_type`=1 and `reservation_id`=?;";
+        const sqlmr2 = await connection.query(sqlm2, [service_id]);
+        if(sqlmr2[0].length == 0) throw err = 2;
+        const payMethod = sqlmr2[0][0].payment_method;
 
         res.send({
             service_state: sstate,
             service_state_time: sstate_time,
             service: data_service[0],
             dispatch: sqldr[0],
-            payment: sqlpr[0]
+            isNeedExtraPay: isNeedExtraPay,
+            payMethod: payMethod,
         });
     }
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(401).send({ err : "해당 서비스 정보가 존재하지 않습니다." });
         else if(err == 1) res.status(401).send({ err : "해당 서비스 진행정보가 존재하지 않습니다." });
-        else res.status(500).send({ err : "서버 오류" });
+        else if(err == 2) res.status(401).send({ err : "해당 서비스 결제정보가 존재하지 않습니다." });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -157,7 +164,7 @@ router.post('/serviceDetail/:service_id/changeProg', async function (req, res, n
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(500).send({ err : "정보 변경 실패" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -195,7 +202,7 @@ router.post('/serviceDetail/:service_id/getNetsmanList', async function (req, re
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(500).send({ err : "검색 실패" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -223,7 +230,7 @@ router.post('/serviceDetail/:service_id/changeNetsman', async function (req, res
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(500).send({ err : "매니저 변경 실패" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();

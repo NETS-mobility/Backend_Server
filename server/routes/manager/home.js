@@ -13,7 +13,7 @@ router.post('', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const user_id = token_res.id; // 이용자 id
+    const user_num = token_res.num;
     const user_name = token_res.name;
 
     const connection = await pool2.getConnection(async conn => conn);
@@ -23,7 +23,7 @@ router.post('', async function (req, res, next) {
             "from `car_dispatch` as C, `reservation` as R, `service_info` as S " + 
             "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`hope_reservation_date`>=? " + 
             "order by `pickup_time`;";
-        const sql_result = await connection.query(sql, [user_id, "2020-02-01"]);
+        const sql_result = await connection.query(sql, [user_num, "2020-02-01"]);
         const sql_data = sql_result[0];
 
         /*const service_list = [];
@@ -40,7 +40,8 @@ router.post('', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();

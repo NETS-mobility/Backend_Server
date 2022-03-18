@@ -17,14 +17,14 @@ router.post('/serviceList/:listType', async function (req, res, next) {
     const token_res = await jwt.verify(token);
     if(token_res == jwt.TOKEN_EXPIRED) return res.status(401).send({ err : "만료된 토큰입니다." });
     if(token_res == jwt.TOKEN_INVALID) return res.status(401).send({ err : "유효하지 않은 토큰입니다." });
-    const user_id = token_res.id; // 이용자 id
+    const user_num = token_res.num;
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
         if(!(listType >= 0 && listType <= 1))
             throw err = 0;
 
-        let param = [user_id];
+        let param = [user_num];
         let sql1 = "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, " + 
             "`hospital_name` as `hos_name`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " + 
             "`gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " + 
@@ -57,12 +57,20 @@ router.post('/serviceList/:listType', async function (req, res, next) {
             data1[i].dispatch = sqlmr[0];
         }
 
+        // 결제 구하기
+        for(let i = 0; i < data1.length; i++)
+        {
+            const sqlm = "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
+            const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
+            data1[i].isNeedExtraPay = (sqlmr[0].length > 0);
+        }
+
         res.send(data1);
     }
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(401).send({ err : "잘못된 인자 전달" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -108,23 +116,25 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
         const sqldr = await connection.query(sqld, [service_id]);
 
         // 결제 정보
-        /*const sql_pay = "select `base_payment_amount` as `charge`, `extra_payment_amount` as `extraPay` " + 
-            "from `reservation` as R, `payment` as P where R.`reservation_id`=? and R.`reservation_id`=P.`reservation_id`;";
-        const result_pay = await connection.query(sql_pay, [service_id]);
-        const data_pay = result_pay[0];*/
+        const sqlp = "select `payment_amount` as `cost` from `payment` where  `reservation_id`=? order by `payment_type`;";
+        const sqlpr = await connection.query(sqlp, [service_id]);
         
         res.send({
             dispatch: sqldr[0],
             service: data_service[0],
             service_state: sstate,
-            service_state_time: sstate_time
+            service_state_time: sstate_time,
+            payment: {
+                charge: sqlpr[0][0].cost,
+                extraPay: sqlpr[0][1].cost,
+            }
         });
     }
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(401).send({ err : "해당 서비스 정보가 존재하지 않습니다." });
         else if(err == 1) res.status(401).send({ err : "해당 서비스 진행정보가 존재하지 않습니다." });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();

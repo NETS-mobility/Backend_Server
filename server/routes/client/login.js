@@ -34,6 +34,7 @@ router.post("", async function (req, res, next) {
         // 고객 정보
         id: id,
         name: sql_data[0].user_name,
+        num: sql_data[0].user_number,
       };
 
       const token_res = await jwt.sign(payload); // 토큰 생성
@@ -45,7 +46,8 @@ router.post("", async function (req, res, next) {
     }
   } catch (err) {
     console.error("err : " + err);
-    res.status(500).send({ err: "서버 오류" });
+    // res.status(500).send({ err : "서버 오류" });
+    res.status(500).send({ err: "오류-" + err });
   } finally {
     connection.release();
   }
@@ -74,7 +76,9 @@ router.post("/findId", async function (req, res, next) {
     else res.status(200).send({ success: true, id: sql_data[0].user_id }); // 아이디 반환
   } catch (err) {
     console.error("err : " + err);
-    res.status(500).send({ err: "서버 오류" });
+    
+    // res.status(500).send({ err : "서버 오류" });
+    res.status(500).send({ err: "오류-" + err });
   } finally {
     connection.release();
   }
@@ -102,7 +106,9 @@ router.post("/changePw", async function (req, res, next) {
     }
   } catch (err) {
     console.error("err : " + err);
-    res.status(500).send({ err: "서버 오류" });
+
+    // res.status(500).send({ err : "서버 오류" });
+    res.status(500).send({ err: "오류-" + err });
   } finally {
     connection.release();
   }

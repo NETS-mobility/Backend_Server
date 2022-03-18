@@ -1,9 +1,9 @@
 const { Case1, Case2, Case3 } = require("./case");
 const ToKoreanTime = require("./util/toKoreanTime");
-const insertDispatch = require("./algorithm/insertDispatch");
+const resultDispatch = require("./algorithm/resultDispatch");
 
 const Algo = async (revData) => {
-  let success = false;
+  let finalDispatch1, finalDispatch2;
   let isOverPoint = 0;
 
   await new Promise((resolve) => setTimeout(resolve, 500));
@@ -21,30 +21,32 @@ const Algo = async (revData) => {
       console.log(dispatchResult4_1);
       console.log(dispatchResult4_2);
       if (dispatchResult4_1 != -1 && dispatchResult4_2 != -1) {
-        success = await insertDispatch([dispatchResult4_1, dispatchResult4_2], revData, [1, 2], false);
+        finalDispatch1 = await resultDispatch(dispatchResult4_1, revData, 1, false);
+        finalDispatch2 = await resultDispatch(dispatchResult4_2, revData, 2, false);
       }
     } else {
       let dispatchResult3 = await Case3(revData);
       console.log(dispatchResult3);
       if (dispatchResult3 != -1) {
-        success = await insertDispatch([dispatchResult3, dispatchResult3], revData, [1, 2], true);
+        finalDispatch1 = await resultDispatch(dispatchResult3, revData, 1, true);
+        finalDispatch2 = await resultDispatch(dispatchResult3, revData, 2, true);
       }
     }
   } else if (revData.dire == "집-병원") {
     let dispatchResult1 = await Case1(revData, true);
     console.log(dispatchResult1);
     if (dispatchResult1 != -1) {
-      success = await insertDispatch([dispatchResult1], revData, [1], false);
+      finalDispatch1 = await resultDispatch(dispatchResult1, revData, 1, false);
     }
   } else if (revData.dire == "병원-집") {
     let dispatchResult2 = await Case2(revData, true);
     console.log(dispatchResult2);
     if (dispatchResult2 != -1) {
-      success = await insertDispatch([dispatchResult2], revData, [2], false);
+      finalDispatch1 = await resultDispatch(dispatchResult2, revData, 2, false);
     }
   }
   console.log("Done!");
-  return success;
+  return {dispatch1: finalDispatch1, dispatch2: finalDispatch2};
 };
 
 module.exports = Algo;
