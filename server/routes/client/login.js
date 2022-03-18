@@ -12,11 +12,11 @@ const saltRounds = bcrypt_option.saltRounds;
 
 // ===== 로그인 =====
 router.post("", async function (req, res, next) {
-  const { id, password } = req.body;
+  const { id, password, device_token } = req.body;
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
-    const sql = `SELECT user_password, user_name,user_number FROM user WHERE user_id=?;`;
+    const sql = `SELECT user_password, user_name FROM user WHERE user_id=?;`;
     const result = await connection.query(sql, [id]);
     const sql_data = result[0];
 
@@ -39,6 +39,10 @@ router.post("", async function (req, res, next) {
 
       const token_res = await jwt.sign(payload); // 토큰 생성
       res.status(200).send({ success: true, token: token_res });
+
+      // 유저의 디바이스 토큰값 갱신(push 알림에 사용)
+      sql = "update user set `user_device_token` =? where `user_id` =?;";
+      result = await connection.query(sql, [device_token]);
     }
   } catch (err) {
     console.error("err : " + err);
@@ -72,6 +76,7 @@ router.post("/findId", async function (req, res, next) {
     else res.status(200).send({ success: true, id: sql_data[0].user_id }); // 아이디 반환
   } catch (err) {
     console.error("err : " + err);
+    
     // res.status(500).send({ err : "서버 오류" });
     res.status(500).send({ err: "오류-" + err });
   } finally {
@@ -101,6 +106,7 @@ router.post("/changePw", async function (req, res, next) {
     }
   } catch (err) {
     console.error("err : " + err);
+
     // res.status(500).send({ err : "서버 오류" });
     res.status(500).send({ err: "오류-" + err });
   } finally {
