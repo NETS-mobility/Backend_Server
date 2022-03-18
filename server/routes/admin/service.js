@@ -56,7 +56,7 @@ router.post('/serviceList/:listType/:listDate', async function (req, res, next) 
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(401).send({ err : "잘못된 인자 전달" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -130,7 +130,7 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
         if(err == 0) res.status(401).send({ err : "해당 서비스 정보가 존재하지 않습니다." });
         else if(err == 1) res.status(401).send({ err : "해당 서비스 진행정보가 존재하지 않습니다." });
         else if(err == 2) res.status(401).send({ err : "해당 서비스 결제정보가 존재하지 않습니다." });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -164,7 +164,7 @@ router.post('/serviceDetail/:service_id/changeProg', async function (req, res, n
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(500).send({ err : "정보 변경 실패" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -202,7 +202,7 @@ router.post('/serviceDetail/:service_id/getNetsmanList', async function (req, re
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(500).send({ err : "검색 실패" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -230,7 +230,7 @@ router.post('/serviceDetail/:service_id/changeNetsman', async function (req, res
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(500).send({ err : "매니저 변경 실패" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();

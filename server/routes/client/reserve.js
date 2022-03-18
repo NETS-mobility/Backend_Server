@@ -145,6 +145,7 @@ router.post('', upload(uplPath.customer_document).single('file'), async function
     }
     catch (err) {
         console.error("err : " + err);
+        // res.status(500).send({ err : "서버 오류" });
         res.status(500).send({ err : "오류-" + err });
     }
     finally {

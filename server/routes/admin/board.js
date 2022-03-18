@@ -22,7 +22,8 @@ router.post('/manager', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -51,7 +52,7 @@ router.post('/manager/read/:idx', async function (req, res, next) {
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(500).send({ err : "해당 게시글을 불러올 수 없습니다." });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -77,7 +78,8 @@ router.post('/manager/write', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -104,7 +106,7 @@ router.post('/manager/edit', async function (req, res, next) {
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(500).send({ err : "편집 실패!" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -130,7 +132,8 @@ router.post('/manager/delete', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -154,7 +157,8 @@ router.post('/customer', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -183,7 +187,7 @@ router.post('/customer/read/:idx', async function (req, res, next) {
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(500).send({ err : "해당 게시글을 불러올 수 없습니다." });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -209,7 +213,8 @@ router.post('/customer/write', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
@@ -236,7 +241,7 @@ router.post('/customer/edit', async function (req, res, next) {
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(500).send({ err : "편집 실패!" });
-        else res.status(500).send({ err : "서버 오류" });
+        else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -262,7 +267,8 @@ router.post('/customer/delete', async function (req, res, next) {
     }
     catch (err) {
         console.error("err : " + err);
-        res.status(500).send({ err : "서버 오류" });
+        // res.status(500).send({ err : "서버 오류" });
+        res.status(500).send({ err : "오류-" + err });
     }
     finally {
         connection.release();
