@@ -44,12 +44,12 @@ router.post('', upload(uplPath.customer_document).single('file'), async function
     // 예상 픽업 시각, 예상 서비스 종료 시각 확인(전체 기준)
     if (user.serviceKindId == 3 || user.serviceKindId == 5) // 왕복
     {
-        expPickupTime = dp1.expCarPickupTime;
-        expTerminateServiceTime = dp2.expCarTerminateServiceTime;
+        expPickupTime = (dp1.expCarPickupTime).substring(11);
+        expTerminateServiceTime = (dp2.expCarTerminateServiceTime).substring(11);
     }
     else { // 편도
-        expPickupTime = dp1.expCarPickupTime;
-        expTerminateServiceTime = dp1.expCarTerminateServiceTime;
+        expPickupTime = (dp1.expCarPickupTime).substring(11);
+        expTerminateServiceTime = (dp1.expCarTerminateServiceTime).substring(11);
     }
 
     const connection = await pool2.getConnection(async conn => conn);
