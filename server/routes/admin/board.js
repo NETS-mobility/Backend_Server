@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
 
 const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
 const token_checker = require('../../modules/admin_token');
+const upload = require('../../modules/fileupload');
+const uplPath = require('../../config/upload_path');
 
 
 // ===== 매니저 공지사항 - 목록 조회 =====
@@ -61,25 +64,41 @@ router.post('/manager/read/:idx', async function (req, res, next) {
 
 
 // ===== 매니저 공지사항 - 작성 =====
-router.post('/manager/write', async function (req, res, next) {
-    const { title, writer_id, content } = req.body;
-    if(!(await token_checker(req.body.jwtToken)))
-    {
-        res.status(401).send({ err : "접근 권한이 없습니다." });
-        return;
-    }
+router.post('/manager/write', (upload(uplPath.manager_notice_file)).array('files'), async function (req, res, next) {
+    const files = req.files;
+    const { title, writer_id, content } = JSON.parse(req.body.json);
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
+        await connection.beginTransaction();
+
+        if(!(await token_checker(req.body.jwtToken)))
+            throw err = 0;
+
         const now = new Date();
         const sql1 = "insert into `manager_notice` (`post_title`,`post_writer_id`,`post_content`,`post_date`,`view_number`,`is_end_post`,`admin_number`) values(?,?,?,?,0,0,?);";
-        await connection.query(sql1, [title, writer_id, content, now, writer_id]);
+        const result1 = await connection.query(sql1, [title, writer_id, content, now, writer_id]);
+        const post_id = result1[0].insertId;
+
+        for (var i = 0; i < req.files.length; i++) {
+            const filepath = uplPath.manager_notice_file + files[i].filename;
+            const sql2 = "insert into `manager_notice_file` (`post_id`,`file_path`,`file_name`) values(?,?,?);"
+            await connection.query(sql2, [post_id, filepath, files[i].originalname]);
+        }
+
+        await connection.commit();
         res.send();
     }
     catch (err) {
+        await connection.rollback();
+        for (var i = 0; i < req.files.length; i++) {
+            fs.unlinkSync("./public" + uplPath.manager_notice_file + files[i].filename);
+        }
+
         console.error("err : " + err);
-        // res.status(500).send({ err : "서버 오류" });
-        res.status(500).send({ err : "오류-" + err });
+        if(err == 0) res.status(401).send({ err : "접근 권한이 없습니다." });
+        else res.status(500).send({ err : "오류-" + err });
+        // else res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -125,9 +144,19 @@ router.post('/manager/delete', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
+        const sql2 = "select `file_path` from `manager_notice_file` where `post_id`=?;";
+        const result2 = await connection.query(sql2, [id]);
+        const data2 = result2[0];
+
+        for (var i = 0; i < data2.length; i++) {
+            const path = "./public" + data2[i].file_path;
+            if(fs.existsSync(path)) fs.unlinkSync(path);
+        }
+
         const now = new Date();
         const sql1 = "delete from `manager_notice` where `post_id`=?;";
         await connection.query(sql1, [id]);
+
         res.send();
     }
     catch (err) {
@@ -196,25 +225,41 @@ router.post('/customer/read/:idx', async function (req, res, next) {
 
 
 // ===== 고객 공지사항 - 작성 =====
-router.post('/customer/write', async function (req, res, next) {
-    const { title, writer_id, content } = req.body;
-    if(!(await token_checker(req.body.jwtToken)))
-    {
-        res.status(401).send({ err : "접근 권한이 없습니다." });
-        return;
-    }
+router.post('/customer/write', (upload(uplPath.customer_notice_file)).array('files'), async function (req, res, next) {
+    const files = req.files;
+    const { title, writer_id, content } = JSON.parse(req.body.json);
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
+        await connection.beginTransaction();
+
+        if(!(await token_checker(req.body.jwtToken)))
+            throw err = 0;
+
         const now = new Date();
         const sql1 = "insert into `customer_notice` (`post_title`,`post_writer_id`,`post_content`,`post_date`,`view_number`,`is_end_post`,`admin_number`) values(?,?,?,?,0,0,?);";
-        await connection.query(sql1, [title, writer_id, content, now, writer_id]);
+        const result1 = await connection.query(sql1, [title, writer_id, content, now, writer_id]);
+        const post_id = result1[0].insertId;
+
+        for (var i = 0; i < req.files.length; i++) {
+            const filepath = uplPath.customer_notice_file + files[i].filename;
+            const sql2 = "insert into `customer_notice_file` (`post_id`,`file_path`,`file_name`) values(?,?,?);"
+            await connection.query(sql2, [post_id, filepath, files[i].originalname]);
+        }
+
+        await connection.commit();
         res.send();
     }
     catch (err) {
+        await connection.rollback();
+        for (var i = 0; i < req.files.length; i++) {
+            fs.unlinkSync("./public" + uplPath.customer_notice_file + files[i].filename);
+        }
+
         console.error("err : " + err);
-        // res.status(500).send({ err : "서버 오류" });
-        res.status(500).send({ err : "오류-" + err });
+        if(err == 0) res.status(401).send({ err : "접근 권한이 없습니다." });
+        else res.status(500).send({ err : "오류-" + err });
+        // else res.status(500).send({ err : "서버 오류" });
     }
     finally {
         connection.release();
@@ -260,6 +305,15 @@ router.post('/customer/delete', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
+        const sql2 = "select `file_path` from `customer_notice_file` where `post_id`=?;";
+        const result2 = await connection.query(sql2, [id]);
+        const data2 = result2[0];
+
+        for (var i = 0; i < data2.length; i++) {
+            const path = "./public" + data2[i].file_path;
+            if(fs.existsSync(path)) fs.unlinkSync(path);
+        }
+
         const now = new Date();
         const sql1 = "delete from `customer_notice` where `post_id`=?;";
         await connection.query(sql1, [id]);
