@@ -76,7 +76,7 @@ router.post("/findId", async function (req, res, next) {
     else res.status(200).send({ success: true, id: sql_data[0].user_id }); // 아이디 반환
   } catch (err) {
     console.error("err : " + err);
-    
+
     // res.status(500).send({ err : "서버 오류" });
     res.status(500).send({ err: "오류-" + err });
   } finally {
