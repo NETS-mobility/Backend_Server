@@ -14,12 +14,11 @@ router.post("/alarmList/", async function (req, res, next) {
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
-  const user_number = token_res.id; // 이용자 id
-  console.log("server_test");
+  const user_id = token_res.id; // 이용자 id
   const connection = await pool2.getConnection(async (conn) => conn);
 
   try {
-    let param = [user_number];
+    let param = [user_id];
 
     const sql =
       "select *, u.`user_name` from `customer_alarm` as ca left join `user` as u on ca.`user_number` = u.`user_number` " +
@@ -33,7 +32,7 @@ router.post("/alarmList/", async function (req, res, next) {
   } catch (err) {
     console.error("err : " + err);
     if (err == 0) res.status(401).send({ err: "잘못된 인자 전달" });
-    else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
+    else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
   } finally {
     connection.release();
   }
