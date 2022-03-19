@@ -488,7 +488,6 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
           try {
             let sql = "select netsmanager_device_token from netsmanager where netsmanager_id =?";
             let sql_res = await connection1.query(sql, [user_id]);
-            console.log(sql_res);
             let res = Object.values(sql_res[0][0]);
             
             device_token = res[0];
