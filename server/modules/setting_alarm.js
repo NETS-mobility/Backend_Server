@@ -14,8 +14,9 @@ const url = require("../config/url");
 const pool = require("./mysql");
 const pool2 = require("./mysql2");
 //const cron = require("node-cron");
-
 const push_alarm = require("./push_alarm");
+const token = require("../config/token");
+const reciever_kind = require("../config/push_alarm_reciever");
 
 class Alarm {
   constructor(user_number, reservation_id, alarm_kind, device_token) {
@@ -59,34 +60,43 @@ class Alarm {
   }
 }
 
-async function set_alarm(reservation_id, alarm_kind, user_id, temp) {
+async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
+  let alarm, sql, sql_res;
   const connection1 = await pool2.getConnection(async (conn) => conn);
-  // user_number, device token 추출
-  let sql = "select user_number, user_device_token from user where user_id =?";
-  let sql_res = await connection1.query(sql, [user_id]);
+    if(reciever == reciever_kind.customer)
+    {
+      // user_number, device token 추출
+      sql = "select `user_number`, `user_device_token` from `user` where `user_id` =?";
+      sql_res = await connection1.query(sql, user_id);
+
+      
+      }
+      else{
+        // user_number, device token 추출
+        sql = "select netsmanager_number, netsmanager_device_token from netsmanager where netsmanager_id =?";
+        sql_res = await connection1.query(sql, [user_id]);
+        
+      }
   let res = Object.values(sql_res[0][0]);
   let user_number = res[0];
   let device_token = res[1];
+  alarm = new Alarm(user_number, reservation_id, alarm_kind, device_token);
 
-  let alarm = new Alarm(user_number, reservation_id, alarm_kind, device_token);
   try {
-    // DB에서 pickup time 추출
-    let sql_get_reservation_time =
-      "select min(expect_car_pickup_time) as pickup_time from car_dispatch where reservation_id =?";
 
-    let sql_res = await connection1.query(sql_get_reservation_time, [
-      reservation_id,
-    ]);
-
-    let res = util.inspect(sql_res[0]);
-
-    alarm.set_time(res.substr(17, 19)); // 결과에서 timestamp값만 추출
+    //alarm.set_time(res.substr(17, 19)); // 결과에서 timestamp값만 추출
 
     switch (parseInt(alarm.alarm_kind)) {
       // = 관리자, 고객용 알림 =
       // 결제 요청
       case alarm_kind_number.request_payment:
         {
+          let sql = "select `hope_reservation_date`, `expect_pickup_time` from reservation where `reservation_id` =?";
+          let sql_res = await connection1.query(sql, [reservation_id]);
+          let res = Object.values(sql_res[0][0]);
+          let reservation_date = res[0];
+          let pickup_time = res[1];
+
           alarm.set_context(
             "네츠서비스가 매칭되었습니다. \n" +
               "예약 확정을 위해 결제 부탁드립니다.\n" +
@@ -94,9 +104,9 @@ async function set_alarm(reservation_id, alarm_kind, user_id, temp) {
               "서비스번호: " +
               reservation_id +
               "\n예약일정:" +
-              alarm.get_reservDate() +
+              reservation_date +
               "\n픽업 예정시간: " +
-              alarm.get_pickupTime()
+              pickup_time
           );
           alarm.set_push(
             "매칭 완료\n",
@@ -139,6 +149,12 @@ async function set_alarm(reservation_id, alarm_kind, user_id, temp) {
       // 결제 독촉
       case alarm_kind_number.press_payment:
         {
+          let sql = "select `hope_reservation_date`, `expect_pickup_time` from reservation where `reservation_id` =?";
+          let sql_res = await connection1.query(sql, [reservation_id]);
+          let res = Object.values(sql_res[0][0]);
+          let reservation_date = res[0];
+          let pickup_time = res[1];
+
           alarm.set_context(
             "네츠서비스가 매칭되었습니다.\n" +
               "예약 확정을 위해 결제 부탁드립니다.\n" +
@@ -146,9 +162,9 @@ async function set_alarm(reservation_id, alarm_kind, user_id, temp) {
               "서비스번호: " +
               reservation_id +
               "\n예약일정: " +
-              alarm.get_reservDate() +
+              reservation_date +
               "\n픽업 예정시간: " +
-              alarm.get_pickupTime()
+              pickup_time
           );
           alarm.set_push(
             "결제 요청",
@@ -294,11 +310,13 @@ async function set_alarm(reservation_id, alarm_kind, user_id, temp) {
       // 20분 이상 지연
       case alarm_kind_number.delay_over_20min:
         {
-          let sql =
-            "select ru.patient_name, ru.patient_phone, ru.protector_name, ru.protector_phone,m.netsmanager_name " +
-            "from car_dispatch as cd inner join reservation as r inner join netsmanager as m inner join reservation_user as ru " +
-            "where cd.reservation_id = r.reservation_id and m.netsmanager_number = cd.netsmanager_number and ru.reservation_id = r.reservation_id and " +
-            "r.reservation_id =?;";
+          
+          try{
+            sql =
+            "select ru.`patient_name`, ru.`patient_phone`, ru.`protector_name`, ru.`protector_phone`,m.`netsmanager_name` " +
+            "from `car_dispatch` as cd inner join `reservation` as r inner join `netsmanager` as m inner join `reservation_user` as ru " +
+            "where cd.`reservation_id` = r.`reservation_id` and m.`netsmanager_number` = cd.`netsmanager_number` and ru.`reservation_id` = r.`reservation_id` and " +
+            "r.`reservation_id` =?;";
 
           let patient_name,
             patient_phone,
@@ -306,9 +324,8 @@ async function set_alarm(reservation_id, alarm_kind, user_id, temp) {
             protector_phone,
             netsmanager_name;
 
-          try{
+
             sql_res = await connection1.query(sql, [reservation_id]);
-            console.log(sql_res[0])
             let res = Object.values(sql_res[0][0]);
   
             patient_name = res[0];
@@ -386,20 +403,19 @@ async function set_alarm(reservation_id, alarm_kind, user_id, temp) {
           user_name = util.inspect(user_name[0]).slice(16, -5);
           // 서비스 내용 찾기
           sql =
-            "select fixed_medical_detail from reservation where reservation_id =?";
-          res = await connection1.query(sql, [reservation_id]);
-          let service_context = util.inspect(res[0]);
-          service_context = service_context.slice(27, -5);
-
-          let picture_path = "../../dlfkdsfj"; // 저장 경로 삽입
+          "select fixed_medical_detail, accompany_picture_path from reservation where reservation_id =?";
+          let sql_res = await connection1.query(sql, reservation_id);
+          let res = Object.values(sql_res[0][0]);
+          let fixed_medical_detail = res[0];
+          let accompany_picture_path = res[1];
 
           alarm.set_context(
             user_name +
               "고객님 동행 상황 보고\n" +
               "네츠 서비스 내용" +
-              service_context + // 서비스 내용을 타입으로 해도 되는지?
+              fixed_medical_detail + // 서비스 내용을 타입으로 해도 되는지?
               "\n첨부된 사진" +
-              picture_path + // TODO: 사진 연결
+              accompany_picture_path + // TODO: 사진 연결
               "\n[오늘 동행은 어떠셨을까요?]\n" +
               "서비스 품질 개선을 위해 고객님의 의견을 듣고자 합니다.\n" +
               "잠시 시간을 허락하시어 설문해 주신다면 편안하고 안전한 동행을 위해 더 나은 서비스로 노력하겠습니다.\n" +
@@ -469,33 +485,45 @@ async function set_alarm(reservation_id, alarm_kind, user_id, temp) {
       // 예약 확정
       case alarm_kind_number.m_confirm_reservation:
         {
-          sql =
-            "select pickup_address from reservation where reservation_id =?";
-          res = await connection1.query(sql, [reservation_id]);
-          pickup_address = util.inspect(res[0]).slice(20, -3);
-
-          sql = "select user_name from user where user_number =?";
-          user_name = await connection1.query(sql, user_number);
-          user_name = util.inspect(user_name[0]).slice(16, -5);
-
-          alarm.set_context(
-            "네츠 예약이 확정되었습니다.\n" +
-              "서비스번호: " +
-              reservation_id +
-              "\n예약일정: " +
-              alarm.get_reservDate() +
-              "\n픽업 예정시간: " +
-              alarm.get_pickupTime() +
-              "\n픽업주소: " +
-              pickup_address +
-              "\n고객 이름: " +
-              user_name +
-              "\n네츠 매니저가 예약 확인을 위해 전화드릴 예정입니다.\n" +
-              "예약 확정 후, 코로나 의심 증상이 있거나 확진자 접촉 시 고객센터로 연락해주시기 바랍니다.\n" +
-              "고객님의 쾌유를 기원합니다.\n"
-          );
-          alarm.set_push("예약 확정", "네츠 예약이 확정되었습니다.");
-
+          try {
+            let sql = "select netsmanager_device_token from netsmanager where netsmanager_id =?";
+            let sql_res = await connection1.query(sql, [user_id]);
+            console.log(sql_res);
+            let res = Object.values(sql_res[0][0]);
+            
+            device_token = res[0];
+  
+            sql = "select r.`hope_reservation_date`, r.`expect_pickup_time`, r.`pickup_address`, u.`user_name` from reservation as r left join user as u on u.`user_number` = r.`user_number` where `reservation_id` =?;";
+            sql_res = await connection1.query(sql, [reservation_id]);
+  
+            res = Object.values(sql_res[0][0]);
+            alarm.reservation_date = res[0];  // 날짜만 추출 필요
+            alarm.pickup_time = res[1];  
+            alarm.pickup_address = res[2];
+            const customer_name = res[3];    
+  
+            alarm.set_context(
+              "네츠 예약이 확정되었습니다.\n" +
+                "서비스번호: " +
+                reservation_id +
+                "\n예약일정: " +
+                alarm.get_reservDate() +
+                "\n픽업 예정시간: " +
+                alarm.get_pickupTime() +
+                "\n픽업주소: " +
+                alarm.pickup_address +
+                "\n고객 이름: " +
+                customer_name +
+                "\n네츠 매니저가 예약 확인을 위해 전화드릴 예정입니다.\n" +
+                "예약 확정 후, 코로나 의심 증상이 있거나 확진자 접촉 시 고객센터로 연락해주시기 바랍니다.\n" +
+                "고객님의 쾌유를 기원합니다.\n"
+            );
+          }catch(err){
+            console.error("alarm setting err : " + err);
+          }
+          finally{
+            alarm.set_push("예약 확정", "네츠 예약이 확정되었습니다.");
+          }
           // 하루 전 알림 설정
 
           //////////////////////////////////
@@ -504,16 +532,13 @@ async function set_alarm(reservation_id, alarm_kind, user_id, temp) {
       // 하루 전 알림
       case alarm_kind_number.m_prev_notice:
         {
-          // 픽업 주소 추출
+          // 픽업 주소, 고객 이름 추출
           sql =
-            "select pickup_address from reservation where reservation_id =?";
-          res = await connection1.query(sql, [reservation_id]);
-          pickup_address = util.inspect(res[0]).slice(20, -3);
-
-          // 고객 이름 추출
-          sql = "select user_name from user where user_number =?";
-          user_name = await connection1.query(sql, user_number);
-          user_name = util.inspect(user_name[0]).slice(16, -5);
+          "select r.`pickup_address`, u.`user_name` from reservation as r left join user as u on u.`user_number` = r.`user_number` where `reservation_id` =?;";
+          sql_res = await connection1.query(sql, [reservation_id]);
+          res = Object.values(sql_res[0][0]);
+          const pickup_address = res[0];  // 날짜만 추출 필요
+          const customer_name = res[1];  
 
           alarm.set_context(
             "네츠서비스가 내일(" +
@@ -526,7 +551,7 @@ async function set_alarm(reservation_id, alarm_kind, user_id, temp) {
               "\n픽업주소: " +
               pickup_address +
               "\n고객이름: " +
-              user_name
+              customer_name
           );
           alarm.set_push(
             "서비스 알림",
@@ -538,7 +563,7 @@ async function set_alarm(reservation_id, alarm_kind, user_id, temp) {
     
     // 알림 db에 저장
   } catch (err) {
-    console.error("err : " + err);
+    console.error("alarm err : " + err);
     if (err == 0) res.status(401).send({ err: "잘못된 인자 전달" });
     else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
   } finally {
@@ -567,7 +592,7 @@ async function set_alarm(reservation_id, alarm_kind, user_id, temp) {
       }
       finally{
         // push 알림
-        push_alarm.pushAlarm(alarm.get_push_text(), alarm.get_push_title(), alarm.device_token);
+        push_alarm.pushAlarm(alarm.push_text, alarm.push_title, alarm.device_token);
 
         connection1.release();
       return alarm;

@@ -2,7 +2,7 @@
 const admin = require("firebase-admin");
 
 // SDK 초기화
-let serviceAccount = require("../config/testing-nets-firebase-adminsdk-uznrv-2dd27198c0.json");
+let serviceAccount = require("../config/nets-339714-firebase-adminsdk-w7rz6-cbc6b343db.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
