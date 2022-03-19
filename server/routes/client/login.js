@@ -12,7 +12,7 @@ const saltRounds = bcrypt_option.saltRounds;
 
 // ===== 로그인 =====
 router.post("", async function (req, res, next) {
-  const { id, password } = req.body;
+  const { id, password, device_token } = req.body;
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
@@ -39,6 +39,11 @@ router.post("", async function (req, res, next) {
 
       const token_res = await jwt.sign(payload); // 토큰 생성
       res.status(200).send({ success: true, token: token_res });
+
+      // 고객의 디바이스 토큰값 갱신(push 알림에 사용)
+      sql =
+        "update user set `user_device_token` =? where `user_id` =?;";
+      result = await connection.query(sql, [device_token]);
     }
   } catch (err) {
     console.error("err : " + err);
