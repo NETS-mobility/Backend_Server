@@ -8,6 +8,8 @@
     "express": "^4.17.2",
     "express-mysql-session": "^2.1.7",
     "express-session": "^1.17.2",
+    "firebase": "^9.6.9",
+    "firebase-admin": "^10.0.2",
     "http": "^0.0.1-security",
     "http-proxy-middleware": "^2.0.2",
     "jsonwebtoken": "^8.5.1",

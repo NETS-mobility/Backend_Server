@@ -14,6 +14,7 @@ const url = require("../config/url");
 const pool = require("./mysql");
 const pool2 = require("./mysql2");
 const cron = require("node-cron");
+const push_alarm = require("./push_alarm");
 
 class Alarm {
   constructor(user_number, reservation_id, alarm_kind) {
@@ -507,7 +508,7 @@ async function set_alarm(reservation_id, alarm_kind, user_number, temp) {
   } catch (err) {
     console.error("err : " + err);
     if (err == 0) res.status(401).send({ err: "잘못된 인자 전달" });
-    else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
+    else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
   } finally {
     {
       let sql_save;
