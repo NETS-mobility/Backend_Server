@@ -13,6 +13,8 @@ router.post("/serviceList/:listType", async function (req, res, next) {
   const token = req.body.jwtToken;
   const listType = req.params.listType;
 
+  console.log("req=", req);
+
   const token_res = await jwt.verify(token);
   if (token_res == jwt.TOKEN_EXPIRED)
     return res.status(401).send({ err: "만료된 토큰입니다." });
