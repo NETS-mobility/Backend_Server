@@ -13,20 +13,24 @@ router.post("/serviceList/:listType", async function (req, res, next) {
   const token = req.body.jwtToken;
   const listType = req.params.listType;
 
-  console.log("req=", req);
+  console.log("token==", token);
+  console.log("listType==", listType);
 
   const token_res = await jwt.verify(token);
+  console.log("token_res==", token_res);
   if (token_res == jwt.TOKEN_EXPIRED)
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
   const user_num = token_res.num;
+  console.log("user_num==", user_num);
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     if (!(listType >= 0 && listType <= 1)) throw (err = 0);
 
     let param = [user_num];
+    console.log("param==", param);
     let sql1 =
       "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, " +
       "`hospital_name` as `hos_name`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " +
@@ -42,6 +46,8 @@ router.post("/serviceList/:listType", async function (req, res, next) {
       sql1 += "and `reservation_state_id`=? ";
       param.push(reservation_state.complete);
     }
+    console.log("sql1 after concat==", sql1);
+    console.log("param after push==", param);
 
     sql1 += "order by `rev_date` and `pickup_time`;";
     const result1 = await connection.query(sql1, param);
