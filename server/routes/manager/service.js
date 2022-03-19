@@ -31,7 +31,7 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     let param = [user_num];
     let sql1 =
       "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, " +
-      "`hospital_name` as `hos_name`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " +
+      "`hospital_address` as `hos_address`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " +
       "U.`user_name` as `user_name`, `gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " +
       "from `car_dispatch` as C, `reservation` as R, `service_info` as S, `user` as U, `netsmanager` as NM " +
       "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and C.`netsmanager_number`=NM.`netsmanager_number` and R.`user_number`=U.`user_number` ";
@@ -86,7 +86,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
   try {
     // 서비스 정보
     const sql_service =
-      "select `pickup_address`, `hospital_name` as `hos_name`, U.`user_name` as `user_name`, `reservation_state_id` as `reservation_state`, " +
+      "select `pickup_address`, `hospital_address` as `hos_address`, U.`user_name` as `user_name`, `reservation_state_id` as `reservation_state`, " +
       "`expect_pickup_time` as `start_time`, `hope_hospital_departure_time` as `end_time`, S.`service_kind` as `service_type`, `hope_reservation_date` as `rev_date` " +
       "from `reservation` as R, `service_info` as S, `user` as U " +
       "where R.`reservation_id`=? and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number`;";
