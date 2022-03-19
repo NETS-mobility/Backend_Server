@@ -44,6 +44,7 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     sql1 += "order by `rev_date` and `pickup_time`;";
     const result1 = await connection.query(sql1, param);
     const data1 = result1[0];
+    console.log("data1 (sql1)", data1);
 
     // 매니저 & 차량 구하기
     for (let i = 0; i < data1.length; i++) {
@@ -54,6 +55,7 @@ router.post("/serviceList/:listType", async function (req, res, next) {
       const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
       data1[i].dispatch = sqlmr[0];
     }
+    console.log("data1 (sqlm)", data1);
 
     // 결제 구하기
     for (let i = 0; i < data1.length; i++) {
@@ -62,7 +64,7 @@ router.post("/serviceList/:listType", async function (req, res, next) {
       const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
       data1[i].isNeedExtraPay = sqlmr[0].length > 0;
     }
-
+    console.log("data1 (sqlmr)", data1);
     res.send(data1);
   } catch (err) {
     console.error("err : " + err);
