@@ -11,6 +11,7 @@ module.exports = async function (token) {
     if (token_res == jwt.TOKEN_EXPIRED) throw (err = "유효하지 않은 토큰");
     if (token_res == jwt.TOKEN_INVALID) throw (err = "유효하지 않은 토큰");
     const user_num = token_res.num;
+    console.log("user_num==", user_num);
 
     const sql = "select * from `administrator` where `admin_number`=?;";
     const sqlr = await connection.query(sql, [user_num]);
