@@ -13,10 +13,12 @@ const alarm_kind_number = require("../config/alarm_kind");
 const url = require("../config/url");
 const pool = require("./mysql");
 const pool2 = require("./mysql2");
-const cron = require("node-cron");
+//const cron = require("node-cron");
+
+const push_alarm = require("./push_alarm");
 
 class Alarm {
-  constructor(user_number, reservation_id, alarm_kind) {
+  constructor(user_number, reservation_id, alarm_kind, device_token) {
     this.user_number = user_number;
     this.reservation_id = reservation_id;
     this.alarm_kind = alarm_kind;
@@ -25,6 +27,7 @@ class Alarm {
     this.context;
     this.push_title;
     this.push_text;
+    this.device_token = device_token;
   }
 
   set_time(timestamp) {
@@ -56,9 +59,16 @@ class Alarm {
   }
 }
 
-async function set_alarm(reservation_id, alarm_kind, user_number, temp) {
-  let alarm = new Alarm(user_number, reservation_id, alarm_kind);
+async function set_alarm(reservation_id, alarm_kind, user_id, temp) {
   const connection1 = await pool2.getConnection(async (conn) => conn);
+  // user_number, device token 추출
+  let sql = "select user_number, user_device_token from user where user_id =?";
+  let sql_res = await connection1.query(sql, [user_id]);
+  let res = Object.values(sql_res[0][0]);
+  let user_number = res[0];
+  let device_token = res[1];
+
+  let alarm = new Alarm(user_number, reservation_id, alarm_kind, device_token);
   try {
     // DB에서 pickup time 추출
     let sql_get_reservation_time =
@@ -93,6 +103,7 @@ async function set_alarm(reservation_id, alarm_kind, user_number, temp) {
             "예약 확정을 위해 결제 부탁드립니다.\n" +
               "1시간 이내에 결제되지 않을 경우 예약이 취소될 수 있습니다. "
           );
+          
           /*
           const task = cron.schedule(
             "30 1 * * * ", // 1시간 30분 뒤에 실행됨 (초, 분, 시, 일, 월, 주?)
@@ -195,7 +206,10 @@ async function set_alarm(reservation_id, alarm_kind, user_number, temp) {
             "r.reservation_id = ?";
 
           let sql_res = await connection1.query(sql, [reservation_id]);
-          console.log(sql_res[0]);
+
+          let res = Object.values(sql_res[0][0]);
+          car_id = res[0];
+          netsmanager_name = res[1];   
 
           alarm.set_context(
             "네츠 예약이 확정되었습니다.\n" +
@@ -236,7 +250,7 @@ async function set_alarm(reservation_id, alarm_kind, user_number, temp) {
               "입니다.\n" +
               "금일 예약하신 서비스를 위해 " +
               temp + // temp는 방문 예정시간을 인자로 입력받음
-              "방문드릴 예정입니다.\n" +
+              "에 방문드릴 예정입니다.\n" +
               "감사합니다."
           );
           alarm.set_push(
@@ -292,44 +306,60 @@ async function set_alarm(reservation_id, alarm_kind, user_number, temp) {
             protector_phone,
             netsmanager_name;
 
-          res = await connection1.query(sql, [reservation_id]);
-          console.log(res[0]);
-
-          alarm.set_context(
-            "네츠 차량 픽업이 20분이상 지연되었습니다.\n" +
-              "서비스번호: " +
-              reservation_id +
-              "\n픽업 시간: " +
-              alarm.pickup_time +
-              "\n고객 성함: " +
-              patient_name +
-              "\n고객 전화: " +
-              patient_phone +
-              "\n보호자 성함: " +
-              protector_name +
-              "\n보호자 전화: " +
-              protector_phone +
-              "\n네츠 매니저: " +
-              netsmanager_name
-          );
-          alarm.set_push(
-            "지연 알림",
-            "네츠 차량 픽업이 20분이상 지연되었습니다."
-          );
+          try{
+            sql_res = await connection1.query(sql, [reservation_id]);
+            console.log(sql_res[0])
+            let res = Object.values(sql_res[0][0]);
+  
+            patient_name = res[0];
+            patient_phone = res[1];
+            protector_name = res[2];
+            protector_phone = res[3];
+            netsmanager_name = res[4];
+  
+            alarm.set_context(
+              "네츠 차량 픽업이 20분이상 지연되었습니다.\n" +
+                "서비스번호: " +
+                reservation_id +
+                "\n픽업 시간: " +
+                alarm.pickup_time +
+                "\n고객 성함: " +
+                patient_name +
+                "\n고객 전화: " +
+                patient_phone +
+                "\n보호자 성함: " +
+                protector_name +
+                "\n보호자 전화: " +
+                protector_phone +
+                "\n네츠 매니저: " +
+                netsmanager_name
+            );
+            
+          }catch(err){
+            console.log("ALARM Error!!(delay_over_20min)");
+          }
+          finally{
+            alarm.set_push(
+              "지연 알림",
+              "네츠 차량 픽업이 20분이상 지연되었습니다."
+            );
+          }
+          
         }
         break;
       // 동행 상황 보고
       case alarm_kind_number.report_progress:
         {
-          let service_context, picture_path, user_name;
+          let user_name;
 
           // 서비스 내용 찾기
           sql =
-            "select fixed_medical_detail from reservation where reservation_id =?";
-          res = await connection1.query(sql, [reservation_id]);
-          service_context = util.inspect(res[0]);
-          service_context = service_context.slice(27, -5);
-          picture_path = "../../dlfkdsfj"; // 저장 경로 삽입
+            "select fixed_medical_detail, accompany_picture_path from reservation where reservation_id =?";
+          sql_res = await connection1.query(sql, [reservation_id]);
+
+          let res = Object.values(sql_res[0][0]);
+          let fixed_medical_detail = res[0];
+          let accompany_picture_path = res[1];
 
           // user 이름 찾기
           sql = "select user_name from user where user_number =?";
@@ -340,8 +370,9 @@ async function set_alarm(reservation_id, alarm_kind, user_number, temp) {
             user_name +
               "고객님 동행 상황 보고\n" +
               "네츠 서비스 내용: " +
-              service_context + // 서비스 내용과 첨부하는 사진은 수정? 가능해야한다.
-              picture_path
+              fixed_medical_detail + // 서비스 내용과 첨부하는 사진은 수정? 가능해야한다.
+              ", picture: "+
+              accompany_picture_path
           );
           alarm.set_push("동행 보고", "동행 상황을 보고드립니다.");
         }
@@ -369,11 +400,12 @@ async function set_alarm(reservation_id, alarm_kind, user_number, temp) {
               service_context + // 서비스 내용을 타입으로 해도 되는지?
               "\n첨부된 사진" +
               picture_path + // TODO: 사진 연결
-              "[오늘 동행은 어떠셨을까요?]\n" +
+              "\n[오늘 동행은 어떠셨을까요?]\n" +
               "서비스 품질 개선을 위해 고객님의 의견을 듣고자 합니다.\n" +
               "잠시 시간을 허락하시어 설문해 주신다면 편안하고 안전한 동행을 위해 더 나은 서비스로 노력하겠습니다.\n" +
               "고객님의 쾌유와 가족의 건강을 기원합니다.\n" +
               "네츠 고객 감동실 드림" +
+              "설문조사 링크: "+
               url.servey_url
           );
           alarm.set_push("동행 완료", "네츠 서비스 내용을 안내드립니다.");
@@ -503,32 +535,44 @@ async function set_alarm(reservation_id, alarm_kind, user_number, temp) {
         }
         break;
     }
+    
     // 알림 db에 저장
   } catch (err) {
     console.error("err : " + err);
     if (err == 0) res.status(401).send({ err: "잘못된 인자 전달" });
-    else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
+    else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
   } finally {
     {
-      let sql_save;
+      try{
+        let sql_save;
 
-      if (alarm_kind < 12) {
-        sql_save =
-          "Insert into customer_alarm (alarm_kind, alarm_content, alarm_time, user_number) values (?,?,?,?)";
-      } else {
-        sql_save =
-          "Insert into manager_alarm (alarm_kind, alarm_content, alarm_time, netsmanager_number) values (?,?,?,?);";
+        if (alarm_kind < 12) {
+          sql_save =
+            "Insert into customer_alarm (alarm_kind, alarm_content, alarm_time, user_number, reservation_id) values (?,?,?,?,?)";
+        } else {
+          sql_save =
+            "Insert into manager_alarm (alarm_kind, alarm_content, alarm_time, netsmanager_number, reservation_id) values (?,?,?,?,?);";
+        }
+  
+        await connection1.query(sql_save, [
+          alarm_kind,
+          alarm.context,
+          new Date(),
+          alarm.user_number,
+          reservation_id,
+        ]);
       }
+      catch (err){
+        console.error("alarm setting err : " + err);
+      }
+      finally{
+        // push 알림
+        push_alarm.pushAlarm(alarm.get_push_text(), alarm.get_push_title(), alarm.device_token);
 
-      await connection1.query(sql_save, [
-        alarm_kind,
-        alarm.context,
-        new Date(),
-        user_number,
-      ]);
-    }
-    connection1.release();
-    return alarm;
+        connection1.release();
+      return alarm;
+      }
+    }  
   }
 }
 module.exports.set_alarm = set_alarm;
