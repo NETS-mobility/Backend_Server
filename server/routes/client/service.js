@@ -104,17 +104,19 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       "select * from `service_progress` where `reservation_id`=?;";
     const result_prog = await connection.query(sql_prog, [service_id]);
     const data_prog = result_prog[0];
-    if (data_prog.length == 0) throw (err = 1);
 
-    const sstate = data_prog[0].service_state_id;
-    const sstate_time = [];
-    sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
-    sstate_time[service_state.arrivalHos] =
-      data_prog[0].real_hospital_arrival_time; // 병원도착
-    sstate_time[service_state.carReady] =
-      data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
-    sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
-    sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
+    let sstate = 0;
+    let sstate_time = undefined;
+    if (data_prog.length > 0)
+    {
+      sstate = data_prog[0].service_state_id;
+      sstate_time = [];
+      sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
+      sstate_time[service_state.arrivalHos] = data_prog[0].real_hospital_arrival_time; // 병원도착
+      sstate_time[service_state.carReady] = data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
+      sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
+      sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
+    }
 
     // 매니저 정보
     const sqld =
