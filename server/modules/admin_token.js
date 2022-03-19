@@ -8,10 +8,11 @@ module.exports = async function (token) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const token_res = await jwt.verify(token);
+    console.log("token_res===", token_res);
     if (token_res == jwt.TOKEN_EXPIRED) throw (err = "유효하지 않은 토큰");
     if (token_res == jwt.TOKEN_INVALID) throw (err = "유효하지 않은 토큰");
-    const user_num = token_res.num;
 
+    const user_num = token_res.num;
     const sql = "select * from `administrator` where `admin_number`=?;";
     const sqlr = await connection.query(sql, [user_num]);
 

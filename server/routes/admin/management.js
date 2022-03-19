@@ -87,6 +87,7 @@ router.post('/customer/detail', async function (req, res, next) {
 
 // ===== 매니저 리스트 조회 =====
 router.post('/manager', async function (req, res, next) {
+    console.log("manager Req===",req);
     if(!(await token_checker(req.body.jwtToken)))
     {
         res.status(401).send({ err : "접근 권한이 없습니다." });
