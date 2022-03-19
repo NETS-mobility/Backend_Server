@@ -7,40 +7,40 @@
 
 const pool2 = require("../util/mysql2");
 
-const resultDispatch = async (dispatchResult, revData, direction, is3) => {
+const resultDispatch = async (dispatchResult, revData, dire, is3) => {
   let result = undefined;
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
-      const car_id = dispatchResult.dispatch[0].car_id;
+    const car_id = dispatchResult.dispatch[0].car_id;
 
-      // 매니저 매칭 - 기본적으로 차량의 운전자로 배정
-      const sqlm = "select M.`netsmanager_number` from `car` as C, `netsmanager` as M where C.`car_id`=? and C.`netsmanager_number`=M.`netsmanager_number`;";
-      const sqlmd = await connection.query(sqlm, [car_id]);
-      if(sqlmd[0].length == 0) throw err = "매니저 매칭 실패";
+    // 매니저 매칭 - 기본적으로 차량의 운전자로 배정
+    const sqlm =
+      "select M.`netsmanager_number` from `car` as C, `netsmanager` as M where C.`car_id`=? and C.`netsmanager_number`=M.`netsmanager_number`;";
+    const sqlmd = await connection.query(sqlm, [car_id]);
+    if (sqlmd[0].length == 0) throw (err = "매니저 매칭 실패");
 
-      let time_start = dispatchResult.expect_pickup_time;
-      let time_end = dispatchResult.expect_terminate_service_time;
-      if(is3)
-      {
-        if(dire == 1) time_end = revData.rev_date + " " + revData.old_hos_arr_time; // case 3일 경우, 병원 도착 시간을 기준으로 2개로 분할
-        if(dire == 2) time_start = revData.rev_date + " " + revData.old_hos_arr_time; // case 3 후반 배차의 출발 시각은 동행 시작 시간으로 설정
-      }
-      time_start = time_start.substr(0, 10) + " " + time_start.substr(11, 8);
-      time_end = time_end.substr(0, 10) + " " + time_end.substr(11, 8);
+    let time_start = dispatchResult.expect_pickup_time;
+    let time_end = dispatchResult.expect_terminate_service_time;
+    if (is3) {
+      if (dire == 1)
+        time_end = revData.rev_date + " " + revData.old_hos_arr_time; // case 3일 경우, 병원 도착 시간을 기준으로 2개로 분할
+      if (dire == 2)
+        time_start = revData.rev_date + " " + revData.old_hos_arr_time; // case 3 후반 배차의 출발 시각은 동행 시작 시간으로 설정
+    }
+    time_start = time_start.substr(0, 10) + " " + time_start.substr(11, 8);
+    time_end = time_end.substr(0, 10) + " " + time_end.substr(11, 8);
 
-      result = {
-        netsmanagerNum: sqlmd[0][0].netsmanager_number,
-        carId: car_id,
-        expMoveDistance: dispatchResult.expect_move_distance,
-        expMoveTime: dispatchResult.expect_move_time,
-        expCarPickupTime: time_start,
-        expCarTerminateServiceTime: time_end
-      }
-  }
-  catch (err) {
+    result = {
+      netsmanagerNum: sqlmd[0][0].netsmanager_number,
+      carId: car_id,
+      expMoveDistance: dispatchResult.expect_move_distance,
+      expMoveTime: dispatchResult.expect_move_time,
+      expCarPickupTime: time_start,
+      expCarTerminateServiceTime: time_end,
+    };
+  } catch (err) {
     console.error("err : " + err);
-  }
-  finally {
+  } finally {
     connection.release();
     return result;
   }
