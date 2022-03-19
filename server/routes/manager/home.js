@@ -7,14 +7,17 @@ const pool2 = require("../../modules/mysql2");
 
 // ===== 홈페이지 =====
 router.post("", async function (req, res, next) {
+  console.log("req==", req);
   const token = req.body.jwtToken;
-
+  console.log("token==", token);
   const token_res = await jwt.verify(token);
+  console.log("token_res==", token_res);
   if (token_res == jwt.TOKEN_EXPIRED)
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
   const user_num = token_res.num;
+  console.log("user_num==", user_num);
   const user_name = token_res.name;
 
   const connection = await pool2.getConnection(async (conn) => conn);
@@ -27,7 +30,9 @@ router.post("", async function (req, res, next) {
       "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`hope_reservation_date`>=? " +
       "order by `pickup_time`;";
     const sql_result = await connection.query(sql, [user_num, now]);
+    console.log("sql_result===", sql_result);
     const sql_data = sql_result[0];
+    console.log("sql_data===", sql_data);
 
     /*const service_list = [];
         for(let i = 0; i < sql_data.length; i++) {
