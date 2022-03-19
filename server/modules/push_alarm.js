@@ -2,7 +2,7 @@
 const admin = require("firebase-admin");
 
 // SDK 초기화
-let serviceAccount = require("../config/nets-339714-firebase-adminsdk-w7rz6-cbc6b343db.json");
+let serviceAccount = require("../config/testing-nets-firebase-adminsdk-uznrv-2dd27198c0.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -20,12 +20,12 @@ admin.initializeApp({
     console.log("Error sending message:", error);
   });*/
 
-exports.pushAlarm = async function (req, res) {
-  const { registrationToken, push_alarm_body, push_alarm_title } = req.body;
+exports.pushAlarm = async function (push_alarm_body, push_alarm_title, device_token) {
+  const registrationToken =device_token;
+  
   // 알림 setting
-  const message = {
-    priority: high,
-    Notification: {
+  let message = {
+    notification: {
       // 알림 화면에서 표시될 내용
       title: push_alarm_title,
       body: push_alarm_body,
