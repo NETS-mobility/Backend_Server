@@ -152,7 +152,7 @@ router.post('', upload(uplPath.customer_document).single('file'), async function
         res.status(500).send({ err : "오류-" + err });
     }
     finally {
-        alarm.set_alarm(reciever.customer, reservationId, alarm_kind.request_payment, id);  // 고객에게 예약 알림 전송
+        alarm.set_alarm(reciever.customer, reservationId, alarm_kind.request_payment, id);  // 고객에게 결제 요청 알림 전송
         connection.release();
     }
 });
