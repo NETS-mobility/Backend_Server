@@ -20,12 +20,12 @@ admin.initializeApp({
     console.log("Error sending message:", error);
   });*/
 
-exports.pushAlarm = async function (req, res) {
-  const { registrationToken, push_alarm_body, push_alarm_title } = req.body;
+exports.pushAlarm = async function (push_alarm_body, push_alarm_title, device_token) {
+  const registrationToken =device_token;
+  
   // 알림 setting
-  const message = {
-    priority: high,
-    Notification: {
+  let message = {
+    notification: {
       // 알림 화면에서 표시될 내용
       title: push_alarm_title,
       body: push_alarm_body,
