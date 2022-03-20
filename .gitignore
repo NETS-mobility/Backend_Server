@@ -137,3 +137,10 @@ dist
 
 # SvelteKit build / generate output
 .svelte-kit
+
+#testing app
+my-app
+server/routes/getToken.js
+
+#firebase secret file
+server/config/*.json
