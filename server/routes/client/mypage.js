@@ -7,6 +7,7 @@ const pool2 = require("../../modules/mysql2");
 const bcrypt = require("bcryptjs");
 
 const bcrypt_option = require("../../config/bcrypt");
+const logger = require("../../config/logger");
 const saltRounds = bcrypt_option.saltRounds;
 
 // ===== 마이페이지 입장 =====
@@ -29,7 +30,7 @@ router.post("", async function (req, res, next) {
     if (sql_data.length == 0) throw (err = 0);
     res.send(sql_data[0]);
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     if (err == 0)
       res.status(400).send({ err: "회원정보가 존재하지 않습니다." });
     else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
@@ -60,7 +61,7 @@ router.post("/changeInfo/checkDup", async function (req, res, next) {
     if (sql_data.length == 0) res.send({ isDup: false });
     else res.send({ isDup: true });
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     // res.status(500).send({ err : "서버 오류" });
     res.status(500).send({ err: "오류-" + err });
   } finally {
@@ -89,7 +90,7 @@ router.post("/changeInfo", async function (req, res, next) {
     await connection.query(sql, [user_newId, user_name, user_phone, user_num]);
     res.status(200).send();
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     // res.status(500).send({ err : "서버 오류" });
     res.status(500).send({ err: "오류-" + err });
   } finally {
@@ -119,7 +120,7 @@ router.post("/changePw/checkId", async function (req, res, next) {
     if (sql_data[0].id == user_id) res.send({ ok: true });
     else res.send({ ok: false });
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     if (err == 0)
       res.status(400).send({ err: "회원정보가 존재하지 않습니다." });
     else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
@@ -147,7 +148,7 @@ router.post("/changePw", async function (req, res, next) {
     await connection.query(sql, [user_hashedPw, user_num]);
     res.status(200).send();
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     // res.status(500).send({ err : "서버 오류" });
     res.status(500).send({ err: "오류-" + err });
   } finally {

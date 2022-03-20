@@ -6,6 +6,7 @@ const upload = require("../../modules/fileupload");
 const jwt = require("../../modules/jwt");
 const pool2 = require("../../modules/mysql2");
 const uplPath = require("../../config/upload_path");
+const logger = require("../../config/logger");
 
 // ===== 알림 조회 =====
 router.post("/alarmList/", async function (req, res, next) {
@@ -31,9 +32,9 @@ router.post("/alarmList/", async function (req, res, next) {
 
     res.send(data);
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     if (err == 0) res.status(401).send({ err: "잘못된 인자 전달" });
-    else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
+    else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
   } finally {
     connection.release();
   }
