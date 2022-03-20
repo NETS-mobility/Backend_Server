@@ -7,6 +7,7 @@ const pool2 = require("../../modules/mysql2");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
+const rev_state_msg = require("../../modules/reservation_state_msg");
 
 // ===== 서비스 목록 조회 =====
 router.post("/serviceList/:listType", async function (req, res, next) {
@@ -65,14 +66,16 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     }
     console.log("data1 (sqlm)", data1);
 
-    // 결제 구하기
+    // reservation_state 결정 
     for (let i = 0; i < data1.length; i++) {
       const sqlm =
         "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
       const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
-      data1[i].isNeedExtraPay = sqlmr[0].length > 0;
+      const isNeedExtraPay = sqlmr[0].length > 0;
+      data1[i].reservation_state = rev_state_msg(data1[i].reservation_state, isNeedExtraPay);
     }
     console.log("data1 (sqlmr)", data1);
+
     res.send(data1);
   } catch (err) {
     console.error("err : " + err);
@@ -96,7 +99,6 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       "from `reservation` where `reservation_id`=?;";
     const result_service = await connection.query(sql_service, [service_id]);
     const data_service = result_service[0];
-
     if (data_service.length == 0) throw (err = 0);
 
     // 서비스 상태정보
@@ -131,6 +133,13 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       "select `payment_amount` as `cost` from `payment` where  `reservation_id`=? order by `payment_type`;";
     const sqlpr = await connection.query(sqlp, [service_id]);
 
+    // reservation_state 결정 
+    const sqlm =
+      "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
+    const sqlmr = await connection.query(sqlm, [service_id]);
+    const isNeedExtraPay = sqlmr[0].length > 0;
+    data_service[0].reservation_state = rev_state_msg(data_service[0].reservation_state, isNeedExtraPay);
+
     res.send({
       dispatch: sqldr[0],
       service: data_service[0],
@@ -145,10 +154,6 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     console.error("err : " + err);
     if (err == 0)
       res.status(401).send({ err: "해당 서비스 정보가 존재하지 않습니다." });
-    else if (err == 1)
-      res
-        .status(401)
-        .send({ err: "해당 서비스 진행정보가 존재하지 않습니다." });
     else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
   } finally {
     connection.release();
