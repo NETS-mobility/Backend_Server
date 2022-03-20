@@ -1,4 +1,5 @@
 const express = require("express");
+const ToKoreanTime = require("../../algorithm/util/toKoreanTime");
 const router = express.Router();
 
 const jwt = require("../../modules/jwt");
@@ -24,12 +25,19 @@ router.post("", async function (req, res, next) {
   try {
     const now = new Date();
     console.log("now===", now);
+    console.log(
+      "koreanTime=",
+      ToKoreanTime(now).substring(0, 10) + ToKoreanTime(now).substring(11, 19)
+    );
     const sql =
-        "select distinct S.`service_kind` as `service_type`, cast(C.`expect_car_pickup_time` as time) as `pickup_time`, `hope_reservation_date` as `rev_date`, C.`departure_address`, cast(R.`reservation_id` as char) as `id` " + 
-        "from `car_dispatch` as C, `reservation` as R, `service_info` as S " + 
-        "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`hope_reservation_date`=? " + 
-        "order by `pickup_time`;"
-    const sql_result = await connection.query(sql, [user_num, now]);
+      "select distinct S.`service_kind` as `service_type`, cast(C.`expect_car_pickup_time` as time) as `pickup_time`, `hope_reservation_date` as `rev_date`, C.`departure_address`, cast(R.`reservation_id` as char) as `id` " +
+      "from `car_dispatch` as C, `reservation` as R, `service_info` as S " +
+      "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`hope_reservation_date`=? " +
+      "order by `pickup_time`;";
+    const sql_result = await connection.query(sql, [
+      user_num,
+      `${ToKoreanTime(now).substring(0, 10)}`,
+    ]);
     console.log("sql_result===", sql_result);
     const sql_data = sql_result[0];
     console.log("sql_data===", sql_data);
