@@ -37,10 +37,7 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 const favicon = require("serve-favicon");
-const dotenv = require("dotenv");
 const logger = require("morgan");
-
-dotenv.config();
 
 const app = express();
 app.use(cors());
