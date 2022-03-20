@@ -31,7 +31,10 @@ router.post("", async function (req, res, next) {
       "from `car_dispatch` as C, `reservation` as R, `service_info` as S " +
       "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`hope_reservation_date`=? " +
       "order by `pickup_time`;";
-    const sql_result = await connection.query(sql, [user_num, now]);
+    const sql_result = await connection.query(sql, [
+      user_num,
+      ToKoreanTime(now),
+    ]);
     console.log("sql_result===", sql_result);
     const sql_data = sql_result[0];
     console.log("sql_data===", sql_data);
