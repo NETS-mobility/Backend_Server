@@ -8,6 +8,7 @@ const pool2 = require("../../modules/mysql2");
 const message = require("../../modules/message");
 
 const bcrypt_option = require("../../config/bcrypt");
+const logger = require("../../config/logger");
 const saltRounds = bcrypt_option.saltRounds;
 
 // ===== 로그인 =====
@@ -53,11 +54,12 @@ router.post("", async function (req, res, next) {
         });
       }
       // 매니저의 디바이스 토큰값 갱신(push 알림에 사용)
-      const sql2 = "update netsmanager set `netsmanager_device_token` =? where `netsmanager_id` =?;";
+      const sql2 =
+        "update netsmanager set `netsmanager_device_token` =? where `netsmanager_id` =?;";
       await connection.query(sql2, [device_token, id]);
     }
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     // res.status(500).send({ err : "서버 오류" });
     res.status(500).send({ err: "오류-" + err });
   } finally {
@@ -91,7 +93,7 @@ router.post("/SuccessCheckPhone", async function (req, res, next) {
     await connection.query(sql, [1, phone, id]);
     res.status(200).send({ success: true });
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     // res.status(500).send({ err : "서버 오류" });
     res.status(500).send({ err: "오류-" + err });
   } finally {
@@ -114,7 +116,7 @@ router.post("/findId", async function (req, res, next) {
     else
       res.status(200).send({ success: true, id: sql_data[0].netsmanager_id }); // 아이디 반환
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     // res.status(500).send({ err : "서버 오류" });
     res.status(500).send({ err: "오류-" + err });
   } finally {
@@ -144,7 +146,7 @@ router.post("/changePw", async function (req, res, next) {
       res.status(200).send({ success: true });
     }
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     // res.status(500).send({ err : "서버 오류" });
     res.status(500).send({ err: "오류-" + err });
   } finally {
