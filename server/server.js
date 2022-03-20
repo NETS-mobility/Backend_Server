@@ -1,4 +1,11 @@
 const express = require("express");
+const dotenv = require("dotenv");
+dotenv.config();
+
+console.log("DB_HOST==", process.env.DB_HOST);
+console.log("DB_USER==", process.env.DB_USER);
+console.log("DB_PSWORD==", process.env.DB_PSWORD);
+console.log("DB_DATABASE==", process.env.DB_DATABASE);
 
 // 라우팅 js파일 목록
 const route_client_service = require("./routes/client/service");
@@ -38,15 +45,7 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 const favicon = require("serve-favicon");
-const dotenv = require("dotenv");
 const logger = require("morgan");
-
-dotenv.config();
-
-console.log("DB_HOST==", process.env.DB_HOST);
-console.log("DB_USER==", process.env.DB_USER);
-console.log("DB_PSWORD==", process.env.DB_PSWORD);
-console.log("DB_DATABASE==", process.env.DB_DATABASE);
 
 const app = express();
 app.use(cors());
