@@ -27,10 +27,10 @@ router.post("", async function (req, res, next) {
     console.log("now===", now);
     console.log("koreanTime=", ToKoreanTime(now));
     const sql =
-        "select distinct S.`service_kind` as `service_type`, cast(C.`expect_car_pickup_time` as time) as `pickup_time`, `hope_reservation_date` as `rev_date`, C.`departure_address`, cast(R.`reservation_id` as char) as `id` " + 
-        "from `car_dispatch` as C, `reservation` as R, `service_info` as S " + 
-        "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`hope_reservation_date`=? " + 
-        "order by `pickup_time`;"
+      "select distinct S.`service_kind` as `service_type`, cast(C.`expect_car_pickup_time` as time) as `pickup_time`, `hope_reservation_date` as `rev_date`, C.`departure_address`, cast(R.`reservation_id` as char) as `id` " +
+      "from `car_dispatch` as C, `reservation` as R, `service_info` as S " +
+      "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`hope_reservation_date`=? " +
+      "order by `pickup_time`;";
     const sql_result = await connection.query(sql, [user_num, now]);
     console.log("sql_result===", sql_result);
     const sql_data = sql_result[0];
