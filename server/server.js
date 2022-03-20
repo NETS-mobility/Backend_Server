@@ -6,14 +6,6 @@ const fs = require("fs");
 
 dotenv.config();
 
-logger.info(
-  ".env setting",
-  process.env.DB_HOST,
-  process.env.DB_USER,
-  process.env.DB_PSWORD,
-  process.env.DB_DATABASE
-);
-
 // 기존 combined 포멧에서 timestamp만 제거
 const combined =
   ':remote-addr - :remote-user ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"';
