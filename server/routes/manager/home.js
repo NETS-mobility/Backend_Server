@@ -1,4 +1,5 @@
 const express = require("express");
+const ToKoreanTime = require("../../algorithm/util/toKoreanTime");
 const router = express.Router();
 
 const jwt = require("../../modules/jwt");
@@ -24,6 +25,7 @@ router.post("", async function (req, res, next) {
   try {
     const now = new Date();
     console.log("now===", now);
+    console.log("koreanTime=", ToKoreanTime(now));
     const sql =
       "select S.`service_kind` as `service_type`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address` " +
       "from `car_dispatch` as C, `reservation` as R, `service_info` as S " +
