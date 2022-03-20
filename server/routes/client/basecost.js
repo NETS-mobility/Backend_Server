@@ -120,13 +120,13 @@ router.post('', async function (req, res, next) {
         }
         
         // === 동행 시간 추가요금 계산 ===
-        let overGowithTime; // 추가 동행 시간
+        let overGowithTime; // 추가 동행 시간(분)
         let timelevel; // 추가요금 부과 단계
         let overGowithTimeCost = 0; // 동행 시간 추가요금
 
         if (serviceKindId != 1) // 네츠 무브는 제외
         {
-            overGowithTime = gowithTime-baseGowithTime; // 추가 동행 시간
+            overGowithTime = gowithTime-baseGowithTime; // 추가 동행 시간(분)
 
             if (overGowithTime > 0)
             {
