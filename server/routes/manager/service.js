@@ -219,9 +219,11 @@ router.post(
   upload(uplPath.customer_document).single("file"),
   async function (req, res, next) {
     console.log("req===", req);
+
     const file = req.body.file;
     console.log("req.file===", req.file);
-    console.log("req.body===", req.body);
+    console.log("req.body===", req.body.file);
+
     if (file === undefined)
       return res.status(400).send({ err: "파일이 업로드되지 않았습니다." });
 
