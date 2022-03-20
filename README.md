@@ -13,7 +13,7 @@ https://app.swaggerhub.com/apis/NETS-mobility1/Backend_Server/1.0.0
 
 ## setting DB
 
-1. .env파일 root에 생성
+1. .env파일 root경로에 생성
 2. .env파일에 해당 내용 저장
 
 ```
