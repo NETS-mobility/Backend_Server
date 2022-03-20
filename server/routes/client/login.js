@@ -16,9 +16,9 @@ router.post("", async function (req, res, next) {
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
-    const sql = `SELECT user_password, user_name,user_number FROM user WHERE user_id=?;`;
-    const result = await connection.query(sql, [id]);
-    const sql_data = result[0];
+    const sql1 = `SELECT user_password, user_name,user_number FROM user WHERE user_id=?;`;
+    const result1 = await connection.query(sql1, [id]);
+    const sql_data = result1[0];
 
     if (sql_data.length == 0)
       return res.status(401).send({ msg: "아이디가 존재하지 않음" });
@@ -41,9 +41,8 @@ router.post("", async function (req, res, next) {
       res.status(200).send({ success: true, token: token_res });
 
       // 고객의 디바이스 토큰값 갱신(push 알림에 사용)
-      sql =
-        "update user set `user_device_token` =? where `user_id` =?;";
-      result = await connection.query(sql, [device_token]);
+      const sql2 = "update user set `user_device_token` =? where `user_id` =?;";
+      const result2 = await connection.query(sql2, [device_token]);
     }
   } catch (err) {
     console.error("err : " + err);

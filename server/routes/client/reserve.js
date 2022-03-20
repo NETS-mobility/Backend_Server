@@ -6,8 +6,11 @@ const pool = require('../../modules/mysql');
 const pool2 = require('../../modules/mysql2');
 const upload = require('../../modules/fileupload');
 const formatdate = require('../../modules/formatdate');
+const alarm = require("../../modules/setting_alarm");
 
 const uplPath = require('../../config/upload_path');
+const alarm_kind = require('../../config/alarm_kind');
+const reciever = require('../../config/push_alarm_reciever');
 
 
 // ===== 예약 =====
@@ -149,6 +152,7 @@ router.post('', upload(uplPath.customer_document).single('file'), async function
         res.status(500).send({ err : "오류-" + err });
     }
     finally {
+        alarm.set_alarm(reciever.customer, reservationId, alarm_kind.request_payment, id);  // 고객에게 결제 요청 알림 전송
         connection.release();
     }
 });

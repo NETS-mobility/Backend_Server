@@ -18,17 +18,17 @@ router.post('', async function (req, res, next) {
 
     const connection = await pool2.getConnection(async conn => conn);
     try {
-        const date = new Date();
-        const sql = "select S.`service_kind` as `service_type`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date` " + 
+        const sql = "select S.`service_kind` as `service_type`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, cast(`reservation_id` as char) as `id` " +
             "from `reservation` as R, `service_info` as S " + 
-            "where `user_number`=? and R.`service_kind_id`=S.`service_kind_id` and `hope_reservation_date` >= ? " + 
-            "order by `pickup_time`;";
-        const sql_result = await connection.query(sql, [user_num, date]);
+            "where `user_number`=? and R.`service_kind_id`=S.`service_kind_id` and `reservation_state_id`>=1 " +
+            "and exists(select * from `payment` as P where `payment_state_id`=1 and R.`reservation_id`=P.`reservation_id`) " + 
+            "order by `pickup_time`;"
+        const sql_result = await connection.query(sql, [user_num]);
         const sql_data = sql_result[0];
 
         res.send({
             name: user_name,
-            service: sql_data[0]
+            service: sql_data,
         });
     }
     catch (err) {

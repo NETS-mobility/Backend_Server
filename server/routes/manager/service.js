@@ -7,6 +7,7 @@ const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const evidence_checker = require("../../modules/user_evidence_check");
 const upload = require("../../modules/fileupload");
+const rev_state_msg = require("../../modules/reservation_state_msg");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
@@ -49,13 +50,14 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     const result1 = await connection.query(sql1, param);
     const data1 = result1[0];
 
-    // 결제 구하기
-      for(let i = 0; i < data1.length; i++)
-      {
-          const sqlm = "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
-          const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
-          data1[i].isNeedExtraPay = (sqlmr[0].length > 0);
-      }
+    // reservation_state 결정 
+    for(let i = 0; i < data1.length; i++)
+    {
+        const sqlm = "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
+        const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
+        const isNeedExtraPay = (sqlmr[0].length > 0);
+        data1[i].reservation_state = rev_state_msg(data1[i].reservation_state, isNeedExtraPay);
+    }
 
     res.send(data1);
   } catch (err) {
@@ -66,6 +68,7 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     connection.release();
   }
 });
+
 
 // ===== 서비스 상세보기 =====
 router.post("/serviceDetail/:service_id", async function (req, res, next) {
@@ -92,7 +95,6 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       "where R.`reservation_id`=? and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number`;";
     const result_service = await connection.query(sql_service, [service_id]);
     const data_service = result_service[0];
-
     if (data_service.length == 0) throw (err = 0);
 
     // 서비스 상태정보
@@ -100,17 +102,19 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       "select * from `service_progress` where `reservation_id`=?;";
     const result_prog = await connection.query(sql_prog, [service_id]);
     const data_prog = result_prog[0];
-    if (data_prog.length == 0) throw (err = 1);
 
-    const sstate = data_prog[0].service_state_id;
-    const sstate_time = [];
-    sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
-    sstate_time[service_state.arrivalHos] =
-      data_prog[0].real_hospital_arrival_time; // 병원도착
-    sstate_time[service_state.carReady] =
-      data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
-    sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
-    sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
+    let sstate = 0;
+    let sstate_time = undefined;
+    if (data_prog.length > 0)
+    {
+      sstate = data_prog[0].service_state_id;
+      sstate_time = [];
+      sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
+      sstate_time[service_state.arrivalHos] = data_prog[0].real_hospital_arrival_time; // 병원도착
+      sstate_time[service_state.carReady] = data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
+      sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
+      sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
+    }
 
     // 매니저 정보
     const sql_manager =
@@ -123,6 +127,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     const sqlm = "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
     const sqlmr = await connection.query(sqlm, [service_id]);
     const isNeedExtraPay = (sqlmr[0].length > 0);
+    data_service[0].reservation_state = rev_state_msg(data_service[0].reservation_state, isNeedExtraPay);
 
     res.send({
       document_isSubmit: true,
@@ -130,16 +135,11 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       service_state_time: sstate_time,
       manager: data_manager[0],
       service: data_service[0],
-      isNeedExtraPay: isNeedExtraPay,
     });
   } catch (err) {
     console.error("err : " + err);
     if (err == 0)
       res.status(401).send({ err: "해당 서비스 정보가 존재하지 않습니다." });
-    else if (err == 1)
-      res
-        .status(401)
-        .send({ err: "해당 서비스 진행정보가 존재하지 않습니다." });
     else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
   } finally {
     connection.release();

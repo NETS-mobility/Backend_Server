@@ -8,6 +8,7 @@ const token_checker = require('../../modules/admin_token');
 
 const reservation_state = require('../../config/reservation_state');
 const service_state = require('../../config/service_state');
+const rev_state_msg = require("../../modules/reservation_state_msg");
 
 
 // ===== 서비스 목록 조회 =====
@@ -76,7 +77,7 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
     const connection = await pool2.getConnection(async conn => conn);
     try {
     	// 서비스 정보
-        const sql_service = "select cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_address` as `pickup_address`, `hospital_address` as `hos_name`, `hope_reservation_date` as `rev_date`, " + 
+        const sql_service = "select cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_address` as `pickup_address`, `hospital_address` as `hos_address`, `hope_reservation_date` as `rev_date`, " + 
             "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithmanager_name` as `gowithumanager`," + 
             "`reservation_state_id` as `reservation_state`, R.`user_number` as `customer_number`, U.`user_name` as `customer_name`, S.`service_kind` as `service_type` " + 
             "from `reservation` as R, `user` as U, `service_info` as S " + 
@@ -113,27 +114,31 @@ router.post('/serviceDetail/:service_id', async function (req, res, next) {
         // 결제
         const sqlm = "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
         const sqlmr = await connection.query(sqlm, [service_id]);
-        const isNeedExtraPay = (sqlmr[0].length > 0);
+        const isNeedExtraPay = sqlmr[0].length > 0;
+        data_service[0].reservation_state = rev_state_msg(data_service[0].reservation_state, isNeedExtraPay);
 
-        const sqlm2 = "select `payment_method` from `payment` where `payment_type`=1 and `reservation_id`=?;";
+        const sqlm2 = "select `payment_method`, `payment_amount` from `payment` where `payment_type`=1 and `reservation_id`=?;";
         const sqlmr2 = await connection.query(sqlm2, [service_id]);
-        if(sqlmr2[0].length == 0) throw err = 2;
-        const payMethod = sqlmr2[0][0].payment_method;
+        let payMethod = "";
+        let payCost = 0;
+        if(sqlmr2[0].length == 0)
+        {
+            payMethod = sqlmr2[0][0].payment_method;
+            payCost = sqlmr2[0][0].payment_amount;
+        }
 
         res.send({
             service_state: sstate,
             service_state_time: sstate_time,
             service: data_service[0],
             dispatch: sqldr[0],
-            isNeedExtraPay: isNeedExtraPay,
             payMethod: payMethod,
+            payCost: payCost,
         });
     }
     catch (err) {
         console.error("err : " + err);
         if(err == 0) res.status(401).send({ err : "해당 서비스 정보가 존재하지 않습니다." });
-        else if(err == 1) res.status(401).send({ err : "해당 서비스 진행정보가 존재하지 않습니다." });
-        else if(err == 2) res.status(401).send({ err : "해당 서비스 결제정보가 존재하지 않습니다." });
         else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     }
     finally {
