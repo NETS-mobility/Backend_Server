@@ -1,11 +1,16 @@
 const express = require("express");
 const dotenv = require("dotenv");
+const morgan = require("morgan");
+const logger = require("./config/logger");
+const fs = require("fs");
+
 dotenv.config();
 
-console.log("DB_HOST==", process.env.DB_HOST);
-console.log("DB_USER==", process.env.DB_USER);
-console.log("DB_PSWORD==", process.env.DB_PSWORD);
-console.log("DB_DATABASE==", process.env.DB_DATABASE);
+// 기존 combined 포멧에서 timestamp만 제거
+const combined =
+  ':remote-addr - :remote-user ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"';
+// NOTE: morgan 출력 형태 server.env에서 NODE_ENV 설정 production : 배포 dev : 개발
+const morganFormat = process.env.NODE_ENV !== "production" ? "dev" : combined;
 
 // 라우팅 js파일 목록
 const route_client_service = require("./routes/client/service");
@@ -45,17 +50,17 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 const favicon = require("serve-favicon");
-const logger = require("morgan");
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(morgan(morganFormat, { stream: logger.stream })); // morgan 로그 설정
+
 app.use(cookieParser());
 app.use(express.static("../public")); // 정적 리소스 관리 디렉터리 설정
-app.use(logger("dev"));
 
-const port = 5000; // 포트 설정
+const port = process.env.PORT || 5000; // 포트 설정
 app.listen(port, () => console.log(`${port}`));
 
 // 서버별 도메인 설정 (app.use(bodyParser.json())코드 이후에 추가해야 bodyParser가 적용됨)
