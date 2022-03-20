@@ -8,6 +8,7 @@ const route_client_login = require("./routes/client/login");
 const route_client_register = require("./routes/client/register");
 const route_client_reserve = require("./routes/client/reserve");
 const route_client_basecost = require("./routes/client/basecost");
+const route_client_extracost = require("./routes/client/extracost");
 const route_client_alarm = require("./routes/client/view_alarm");
 
 const route_manager_service = require("./routes/manager/service");
@@ -61,6 +62,7 @@ app.use("/client/login", route_client_login);
 app.use("/client/register", route_client_register);
 app.use("/client/reserve", route_client_reserve);
 app.use("/client/basecost", route_client_basecost);
+app.use("/client/extracost", route_client_extracost);
 app.use("/client/view_alarm", route_client_alarm);
 //app.use('/client/feedback', route_client_feedback);
 //app.use('/client/pay', route_client_pay);
