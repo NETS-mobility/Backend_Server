@@ -234,7 +234,7 @@ router.post(
 
     const service_id = req.params.service_id;
     console.log("service_id===", service_id);
-    const filepath = uplPath.customer_document + file.filename; // 업로드 파일 경로
+    const filepath = uplPath.customer_document + test[1].filename; // 업로드 파일 경로
     console.log("filepath===", filepath);
 
     const connection = await pool2.getConnection(async (conn) => conn);
