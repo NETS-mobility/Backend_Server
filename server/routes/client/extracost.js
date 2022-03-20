@@ -29,7 +29,7 @@ router.post('', async function (req, res, next) {
     // 총 추가요금
     let TotalExtraCost;
 
-    const connection = await pool2.getConnection(async)
+    const connection = await pool2.getConnection(async);
     try {
         const sql1 = `SELECT service_kind_id, gowith_hospital_time, expect_pickup_time, hope_hospital_departure_time, hope_reservation_date
                     FROM reservation WHERE reservation_id=?;`;
