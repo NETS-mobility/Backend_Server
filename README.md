@@ -11,20 +11,6 @@ https://app.swaggerhub.com/apis/NETS-mobility1/Backend_Server/1.0.0
 ## DB-base_setting(need to import)
 2022.03.20 base_setting_v4
 
-## setting DB
-
-1. .env파일 root경로에 생성
-2. .env파일에 해당 내용 저장
-
-```
-PORT='포트 번호'
-
-DB_HOST="DB 호스트"
-DB_USER="DB 사용자명"
-DB_PSWORD="DB 비밀번호"
-DB_DATABASE="DB 데이터베이스명"
-```
-
 ## Installation
 package.json에 등록된 node_modules 설치
 ```
