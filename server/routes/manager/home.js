@@ -36,9 +36,7 @@ router.post("", async function (req, res, next) {
       "order by `pickup_time`;";
     const sql_result = await connection.query(sql, [
       user_num,
-      ToKoreanTime(now).substring(0, 10) +
-        " " +
-        ToKoreanTime(now).substring(11, 19),
+      `${ToKoreanTime(now).substring(0, 10)}`,
     ]);
     console.log("sql_result===", sql_result);
     const sql_data = sql_result[0];
