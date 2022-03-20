@@ -225,6 +225,11 @@ router.post(
     console.log("req.body.file===", req.body.file);
     console.log("req.body.file.parts===", req.body.file._parts);
     console.log("req.body.file.parts[0]===", req.body.file._parts[0]);
+    console.log("(req.body.file.parts[0])[1]===", req.body.file.parts[0][1]);
+    console.log(
+      "(req.body.file.parts[0])[1].filename===",
+      req.body.file.parts[0][1].filename
+    );
 
     if (file === undefined)
       return res.status(400).send({ err: "파일이 업로드되지 않았습니다." });
