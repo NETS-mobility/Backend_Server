@@ -137,6 +137,12 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     const sqlp =
       "select `payment_amount` as `cost` from `payment` where  `reservation_id`=? order by `payment_type`;";
     const sqlpr = await connection.query(sqlp, [service_id]);
+    console.log("sqlpr==", sqlpr);
+    console.log("sqlpr[0]==", sqlpr[0]);
+    console.log("sqlpr[0][0]==", sqlpr[0][0]);
+    console.log("sqlpr[0][1]==", sqlpr[0][1]);
+    console.log("sqlpr[0][0].cost==", sqlpr[0][0].cost);
+    console.log("sqlpr[0][1].cost==", sqlpr[0][1].cost);
 
     // reservation_state 결정
     const sqlm =
