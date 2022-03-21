@@ -160,6 +160,11 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       isNeedExtraPay
     );
 
+    let extraPay = "";
+    if (sqlpr[0].length == 2) {
+      extraPay = sqlpr[0][1].cost;
+    }
+
     res.send({
       dispatch: sqldr[0],
       service: data_service[0],
@@ -167,7 +172,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       service_state_time: sstate_time,
       payment: {
         charge: sqlpr[0][0].cost,
-        extraPay: sqlpr[0][1].cost,
+        extraPay: extraPay,
       },
     });
   } catch (err) {
