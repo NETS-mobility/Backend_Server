@@ -218,6 +218,7 @@ router.post(
   "/serviceDetail/:service_id/submitDoc",
   upload(uplPath.customer_document).single("file"),
   async function (req, res, next) {
+    console.log("req==", req);
     const file = req.file;
     if (file === undefined)
       return res.status(400).send({ err: "파일이 업로드되지 않았습니다." });
