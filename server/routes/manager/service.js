@@ -218,25 +218,12 @@ router.post(
   "/serviceDetail/:service_id/submitDoc",
   upload(uplPath.customer_document).single("file"),
   async function (req, res, next) {
-    console.log("req===", req);
-
-    const file = req.body.file;
-    console.log("req.file===", req.file);
-    console.log("req.body.file===", req.body.file);
-    console.log("req.body.file.parts===", req.body.file._parts);
-    console.log("req.body.file.parts[0]===", req.body.file._parts[0]);
-    const test = req.body.file._parts[0];
-    console.log("(req.body.file.parts[0])[1]===", test[1]);
-    console.log("(req.body.file.parts[0])[1].filename===", test[1].filename);
-    console.log("(req.body.file.parts[0])[1].uri===", test[1].uri);
-
+    const file = req.file;
     if (file === undefined)
       return res.status(400).send({ err: "파일이 업로드되지 않았습니다." });
 
     const service_id = req.params.service_id;
-    console.log("service_id===", service_id);
-    const filepath = uplPath.customer_document + test[1].uri; // 업로드 파일 경로
-    console.log("filepath===", filepath);
+    const filepath = uplPath.customer_document + file.filename; // 업로드 파일 경로
 
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
