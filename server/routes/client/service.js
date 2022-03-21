@@ -132,6 +132,15 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       "from `reservation` as R, `car_dispatch`as D, `netsmanager` as NM, `car` as C " +
       "where R.`reservation_id`=? and R.`reservation_id`=D.`reservation_id` and D.`netsmanager_number`=NM.`netsmanager_number` and D.`car_id`=C.`car_id`;";
     const sqldr = await connection.query(sqld, [service_id]);
+    const sqldd = sqldr[0];
+
+    // 매니저 자격증
+    for(let i = 0; i < sqldd.length; i++)
+    {
+      const sqlmc = "select `netsmanager_certificate_name` as `name` from `manager_certificate` where `netsmanager_number`=?;";
+      const sqlmcr = await connection.query(sqlmc, [sqldd[i].netsmanager_number]);
+      sqldd[i].netsmanager_certificate = sqlmcr[0];
+    }
 
     // 결제 정보
     const sqlp =
@@ -149,7 +158,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     );
 
     res.send({
-      dispatch: sqldr[0],
+      dispatch: sqldd,
       service: data_service[0],
       service_state: sstate,
       service_state_time: sstate_time,
