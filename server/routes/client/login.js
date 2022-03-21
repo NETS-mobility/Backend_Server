@@ -8,6 +8,7 @@ const pool2 = require("../../modules/mysql2");
 const message = require("../../modules/message");
 
 const bcrypt_option = require("../../config/bcrypt");
+const logger = require("../../config/logger");
 const saltRounds = bcrypt_option.saltRounds;
 
 // ===== 로그인 =====
@@ -45,7 +46,7 @@ router.post("", async function (req, res, next) {
       await connection.query(sql2, [device_token, id]);
     }
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     // res.status(500).send({ err : "서버 오류" });
     res.status(500).send({ err: "오류-" + err });
   } finally {
@@ -75,7 +76,7 @@ router.post("/findId", async function (req, res, next) {
       res.status(401).send({ msg: "아이디가 존재하지 않음" });
     else res.status(200).send({ success: true, id: sql_data[0].user_id }); // 아이디 반환
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
 
     // res.status(500).send({ err : "서버 오류" });
     res.status(500).send({ err: "오류-" + err });
@@ -105,7 +106,7 @@ router.post("/changePw", async function (req, res, next) {
       res.status(200).send({ success: true });
     }
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     // res.status(500).send({ err : "서버 오류" });
     res.status(500).send({ err: "오류-" + err });
   } finally {

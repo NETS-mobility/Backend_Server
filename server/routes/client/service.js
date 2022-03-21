@@ -8,6 +8,7 @@ const pool2 = require("../../modules/mysql2");
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
 const rev_state_msg = require("../../modules/reservation_state_msg");
+const logger = require("../../config/logger");
 
 // ===== 서비스 목록 조회 =====
 router.post("/serviceList/:listType", async function (req, res, next) {
@@ -66,19 +67,22 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     }
     console.log("data1 (sqlm)", data1);
 
-    // reservation_state 결정 
+    // reservation_state 결정
     for (let i = 0; i < data1.length; i++) {
       const sqlm =
         "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
       const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
       const isNeedExtraPay = sqlmr[0].length > 0;
-      data1[i].reservation_state = rev_state_msg(data1[i].reservation_state, isNeedExtraPay);
+      data1[i].reservation_state = rev_state_msg(
+        data1[i].reservation_state,
+        isNeedExtraPay
+      );
     }
     console.log("data1 (sqlmr)", data1);
 
     res.send(data1);
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     if (err == 0) res.status(401).send({ err: "잘못된 인자 전달" });
     else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
   } finally {
@@ -109,13 +113,14 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
 
     let sstate = 0;
     let sstate_time = undefined;
-    if (data_prog.length > 0)
-    {
+    if (data_prog.length > 0) {
       sstate = data_prog[0].service_state_id;
       sstate_time = [];
       sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
-      sstate_time[service_state.arrivalHos] = data_prog[0].real_hospital_arrival_time; // 병원도착
-      sstate_time[service_state.carReady] = data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
+      sstate_time[service_state.arrivalHos] =
+        data_prog[0].real_hospital_arrival_time; // 병원도착
+      sstate_time[service_state.carReady] =
+        data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
       sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
       sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
     }
@@ -133,12 +138,15 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       "select `payment_amount` as `cost` from `payment` where  `reservation_id`=? order by `payment_type`;";
     const sqlpr = await connection.query(sqlp, [service_id]);
 
-    // reservation_state 결정 
+    // reservation_state 결정
     const sqlm =
       "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
     const sqlmr = await connection.query(sqlm, [service_id]);
     const isNeedExtraPay = sqlmr[0].length > 0;
-    data_service[0].reservation_state = rev_state_msg(data_service[0].reservation_state, isNeedExtraPay);
+    data_service[0].reservation_state = rev_state_msg(
+      data_service[0].reservation_state,
+      isNeedExtraPay
+    );
 
     res.send({
       dispatch: sqldr[0],
@@ -151,7 +159,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       },
     });
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     if (err == 0)
       res.status(401).send({ err: "해당 서비스 정보가 존재하지 않습니다." });
     else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });

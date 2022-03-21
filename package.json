@@ -24,7 +24,9 @@
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
     "serve-favicon": "^2.5.0",
-    "twilio": "^3.74.0"
+    "twilio": "^3.74.0",
+    "winston": "^3.6.0",
+    "winston-daily-rotate-file": "^4.6.1"
   },
   "scripts": {
     "start": "nodemon ./server/server.js"

@@ -12,6 +12,7 @@ const rev_state_msg = require("../../modules/reservation_state_msg");
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
 const uplPath = require("../../config/upload_path");
+const logger = require("../../config/logger");
 
 // ===== 서비스 목록 조회 =====
 router.post("/serviceList/:listType", async function (req, res, next) {
@@ -64,7 +65,7 @@ router.post("/serviceList/:listType", async function (req, res, next) {
 
     res.send(data1);
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     if (err == 0) res.status(401).send({ err: "잘못된 인자 전달" });
     else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
   } finally {
@@ -91,8 +92,8 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
   try {
     // 서비스 정보
     const sql_service =
-      "select `pickup_address`, `hospital_address` as `hos_address`, U.`user_name` as `user_name`, `reservation_state_id` as `reservation_state`, " +
-      "`expect_pickup_time` as `start_time`, `hope_hospital_departure_time` as `end_time`, S.`service_kind` as `service_type`, `hope_reservation_date` as `rev_date` " +
+      "select cast(R.`reservation_id` as char) as `service_id`, `pickup_address`, `hospital_address` as `hos_address`, U.`user_name` as `user_name`, U.`user_phone` as `user_phone`, `reservation_state_id` as `reservation_state`, " +
+      "`expect_pickup_time` as `pickup_time`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, S.`service_kind` as `service_type`, `hope_reservation_date` as `rev_date`, `gowithmanager_name` as `gowithumanager_name` " +
       "from `reservation` as R, `service_info` as S, `user` as U " +
       "where R.`reservation_id`=? and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number`;";
     const result_service = await connection.query(sql_service, [service_id]);
@@ -144,7 +145,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       service: data_service[0],
     });
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     if (err == 0)
       res.status(401).send({ err: "해당 서비스 정보가 존재하지 않습니다." });
     else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
@@ -152,6 +153,46 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     connection.release();
   }
 });
+
+// ===== 서비스 상세보기 - 서비스 시간 반환 =====
+router.post(
+  "/serviceDetail/:service_id/progress",
+  async function (req, res, next) {
+    const service_id = req.params.service_id;
+    const connection = await pool2.getConnection(async (conn) => conn);
+    try {
+      const sql_prog =
+        "select * from `service_progress` where `reservation_id`=?;";
+      const result_prog = await connection.query(sql_prog, [service_id]);
+      const data_prog = result_prog[0];
+
+      let sstate = 0;
+      let sstate_time = undefined;
+      if (data_prog.length > 0) {
+        sstate = data_prog[0].service_state_id;
+        sstate_time = [];
+        sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
+        sstate_time[service_state.arrivalHos] =
+          data_prog[0].real_hospital_arrival_time; // 병원도착
+        sstate_time[service_state.carReady] =
+          data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
+        sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
+        sstate_time[service_state.complete] =
+          data_prog[0].real_service_end_time; // 서비스종료
+      }
+
+      res.send({
+        service_state: sstate,
+        service_state_time: sstate_time,
+      });
+    } catch (err) {
+      logger.error(__filename + " : " + err);
+      res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
+    } finally {
+      connection.release();
+    }
+  }
+);
 
 // ===== 서비스 상세보기 - 완료 시간 설정 =====
 router.post(
@@ -204,7 +245,7 @@ router.post(
 
       res.send();
     } catch (err) {
-      console.error("err : " + err);
+      logger.error(__filename + " : " + err);
       if (err == 0) res.status(401).send({ err: "잘못된 인자입니다." });
       else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
     } finally {
@@ -218,7 +259,6 @@ router.post(
   "/serviceDetail/:service_id/submitDoc",
   upload(uplPath.customer_document).single("file"),
   async function (req, res, next) {
-    console.log("req==", req);
     const file = req.file;
     if (file === undefined)
       return res.status(400).send({ err: "파일이 업로드되지 않았습니다." });
@@ -234,7 +274,7 @@ router.post(
       if (sqlr[0].affectedRows == 0) throw (err = 0);
       res.send();
     } catch (err) {
-      console.error("err : " + err);
+      logger.error(__filename + " : " + err);
       if (err == 0) res.status(500).send({ err: "파일 업로드 등록 실패!" });
       else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
     } finally {

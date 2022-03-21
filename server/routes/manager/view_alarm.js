@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { user } = require("../../config/database");
 const upload = require("../../modules/fileupload");
+const logger = require("../../config/logger");
 
 const jwt = require("../../modules/jwt");
 const pool2 = require("../../modules/mysql2");
@@ -32,9 +33,9 @@ router.post("/alarmList/", async function (req, res, next) {
 
     res.send(data);
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
     if (err == 0) res.status(401).send({ err: "잘못된 인자 전달" });
-    else res.status(500).send({ err : "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
+    else res.status(500).send({ err: "오류-" + err });
   } finally {
     connection.release();
   }
@@ -59,9 +60,9 @@ router.post(
       await connection.query(spl, [filepath, service_id]);
       res.send();
     } catch (err) {
-      console.error("err : " + err);
+      logger.error(__filename + " : " + err);
       // res.status(500).send({ err: "서버 오류" });
-      res.status(500).send({ err : "오류-" + err });
+      res.status(500).send({ err: "오류-" + err });
     } finally {
       connection.release();
     }
