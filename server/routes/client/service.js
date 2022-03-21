@@ -141,8 +141,8 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     console.log("sqlpr[0]==", sqlpr[0]);
     console.log("sqlpr[0][0]==", sqlpr[0][0]);
     console.log("sqlpr[0][1]==", sqlpr[0][1]);
-    console.log("sqlpr[0][0].cost==", sqlpr[0][0].cost);
-    console.log("sqlpr[0][1].cost==", sqlpr[0][1].cost);
+    // console.log("sqlpr[0][0].cost==", sqlpr[0][0].cost);
+    // console.log("sqlpr[0][1].cost==", sqlpr[0][1].cost);
 
     // reservation_state 결정
     const sqlm =
@@ -153,8 +153,8 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     console.log("sqlmr[0]==", sqlmr[0]);
     console.log("sqlmr[0][0]==", sqlmr[0][0]);
     console.log("sqlmr[0][1]==", sqlmr[0][1]);
-    console.log("sqlmr[0][0].cost==", sqlmr[0][0].cost);
-    console.log("sqlmr[0][1].cost==", sqlmr[0][1].cost);
+    // console.log("sqlmr[0][0].cost==", sqlmr[0][0].cost);
+    // console.log("sqlmr[0][1].cost==", sqlmr[0][1].cost);
     data_service[0].reservation_state = rev_state_msg(
       data_service[0].reservation_state,
       isNeedExtraPay
