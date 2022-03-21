@@ -49,17 +49,17 @@ router.post("/changeInfo", async function (req, res, next) {
     const result2 = await connection.query(sql2, [user_num]);
     const data2 = result2[0];
 
-    // const picture = await fs.readFile("public/" + data1[0].netsmanager_picture_path);
     res.status(200).send({
       info: {
         phone: data1[0].netsmanager_phone,
         notice: data1[0].netsmanager_notice,
         intro: data1[0].netsmanager_about_me,
-        name: token_res.name,
-        id: id,
+        id: data1[0].netsmanager_id,
+        name: data1[0].netsmanager_name,
       },
       certificate: data2,
-      picture: data1[0].netsmanager_picture_path,
+      url_profile: data1[0].netsmanager_picture_path,
+      url_introimg: data1[0].netsmanager_notice_picture_url,
     });
   } catch (err) {
     logger.error(__filename + " : " + err);
