@@ -9,11 +9,11 @@ module.exports = {
     let hopeDate;
     // 서비스 종류, 병원동행 시간, 예상 픽업 시각, 예상 서비스 종료 시각, 예상 이동 거리
     let serviceKindId, gowithTime, expPickupTime, expTerminateServiceTime, expMoveDistance;
-    // 기본 이동 거리, 기본 병원동행 시간, 기본 요금
+    // 기본 이동 거리, 기본 병원동행 시간, 기본요금
     let baseMoveDistance, baseGowithTime, baseCost;
-    // 이동거리 추가요금 단위값, 이동거리 추가요금 단위 금액
+    // 이동 거리 추가요금 단위값, 이동 거리 추가요금 단위 금액
     let moveDistanceUnit, moveDistanceUnitValue;
-    // 동행 추가요금 단위값, 동행 추가요금 단위 금액
+    // 동행 시간 추가요금 단위값, 동행 시간 추가요금 단위 금액
     let gowithTimeUnit, gowithTimeUnitValue;
     // 심야 할증 비율, 주말 할증 비율
     let nightRatio, weekendRatio;
@@ -49,13 +49,13 @@ module.exports = {
       expPickupTime = sql_data1[0].expect_pickup_time;
       expTerminateServiceTime = sql_data1[0].expect_terminate_service_time;
 
-      // 예상 이동 거리
+      // 예상 이동거리
       const result2 = await connection.query(sql2, [reservationId]);
       const sql_data2 = result2[0];
 
       expMoveDistance = sql_data2[0].sum;
 
-      // 기본 이동 거리, 기본 병원동행 시간, 기본 요금
+      // 기본 이동거리, 기본 병원동행 시간, 기본요금
       const result3 = await connection.query(sql3, [serviceKindId]);
       const sql_data3 = result3[0];
 
@@ -63,8 +63,8 @@ module.exports = {
       baseGowithTime = sql_data3[0].service_base_hospital_gowith_time;
       baseCost = sql_data3[0].service_base_cost;
 
-      // 이동거리 추가요금 단위값, 이동거리 추가요금 단위 금액
-      // 동행 추가요금 단위값, 동행 추가요금 단위 금액
+      // 이동 거리 추가요금 단위값, 이동 거리 추가요금 단위 금액
+      // 동행 시간 추가요금 단위값, 동행 시간 추가요금 단위 금액
       // 심야 할증 비율, 주말 할증 비율
       const result4 = await connection.query(sql4);
       const sql_data4 = result4[0];
@@ -106,6 +106,8 @@ module.exports = {
         if (serviceKindId == 3 || serviceKindId == 5)
           // 왕복일 경우 2배
           overMoveDistanceCost *= 2;
+      } else {
+        overMoveDistance = 0;
       }
 
       // === 동행 시간 추가요금 계산 ===
@@ -122,6 +124,8 @@ module.exports = {
           if (overGowithTime % gowithTimeUnit != 0) timelevel += 1;
 
           overGowithTimeCost = timelevel * gowithTimeUnitValue;
+        } else {
+          overGowithTime = 0;
         }
       }
 
@@ -186,7 +190,18 @@ module.exports = {
       TotalBaseCost += nightCost + weekendCost; // 할증 요금 추가
       TotalBaseCost = Math.floor(TotalBaseCost / 100) * 100; // 100원 단위
 
-      return baseCost;
+      const result = {
+        TotalBaseCost: TotalBaseCost,               // 총 기본요금
+        baseCost: baseCost,                         // 기본요금
+        overMoveDistanceCost: overMoveDistanceCost, // 이동 거리 추가요금
+        overMoveDistance: overMoveDistance,         // 추가 이동 거리(편도 기준)
+        overGowithTimeCost: overGowithTimeCost,     // 동행 시간 추가요금
+        overGowithTime: overGowithTime,             // 추가 동행 시간(분)
+        nightCost: nightCost,                       // 심야 할증 추가요금
+        nightmin: nightmin,                         // 심야 해당 시간(분)
+        weekendCost: weekendCost,                   // 주말 할증 추가요금
+      };
+      return result;
     } catch (err) {
       console.error("err : " + err);
     } finally {

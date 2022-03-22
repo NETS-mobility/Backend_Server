@@ -11,7 +11,7 @@ module.exports = {
     let serviceKindId, gowithTime, expPickupTime, hopeHospitalDepartureTime;
     // 실제 픽업 시각, 실제 병원에서 귀가 출발 시각, 실제 병원동행 시간
     let realPickupTime, realHospitalDepartureTime, realgowithTime;
-    // 동행 초과요금 단위값, 동행 초과요금 단위 금액
+    // 동행 시간 초과요금 단위값, 동행 시간 초과요금 단위 금액
     let gowithTimeUnit, gowithTimeUnitValue;
     // 승차 지연 대기요금 단위값, 승차 지연 대기요금 단위 금액, 승차 지연 대기요금 무료 단위값, 승차 지연 대기요금 최대 단위값
     let delayTimeUnit, delayTimeUnitValue, delayTimeFreeUnit, delayTimeMaxUnit;
@@ -49,7 +49,7 @@ module.exports = {
       realHospitalDepartureTime = sql_data2[0].real_return_start_time;
       realgowithTime = sql_data2[0].real_hospital_gowith_time;
 
-      // 동행 초과요금 단위값, 동행 초과요금 단위 금액
+      // 동행 시간 초과요금 단위값, 동행 시간 초과요금 단위 금액
       // 승차 지연 대기요금 단위값, 승차 지연 대기요금 단위 금액, 승차 지연 대기요금 무료 단위값, 승차 지연 대기요금 최대 단위값
       const result3 = await connection.query(sql3);
       const sql_data3 = result3[0];
@@ -76,6 +76,8 @@ module.exports = {
           if (overGowithTime % gowithTimeUnit != 0) timelevel1 += 1;
 
           overGowithTimeCost = timelevel1 * gowithTimeUnitValue;
+        } else {
+          overGowithTime = 0;
         }
       }
 
@@ -116,7 +118,7 @@ module.exports = {
         }
       }
 
-      delayTime = delayTime - delayTimeFreeUnit; // 초과 승차 지연 대기 시간
+      delayTime = delayTime - delayTimeFreeUnit; // 초과 승차 지연 대기 시간(무료 제외)
 
       if (delayTime > 0) {
         if (delayTime > delayTimeMaxUnit - delayTimeFreeUnit)
@@ -129,11 +131,20 @@ module.exports = {
         delayTimeCost = timelevel2 * delayTimeUnitValue;
       }
 
+      delayTime = delayTime + delayTimeFreeUnit; // 실제 승차 지연 대기 시간(무료 포함)
+
       // === 총 추가요금 ===
       TotalExtraCost = overGowithTimeCost + delayTimeCost;
       TotalExtraCost = Math.floor(TotalExtraCost / 100) * 100; // 100원 단위
 
-      return extraCost;
+      const result = {
+        TotalExtraCost: TotalExtraCost,         // 총 추가요금
+        overGowithTimeCost: overGowithTimeCost, // 동행 시간 초과요금
+        overGowithTime: overGowithTime,         // 초과 동행 시간(분)
+        delayTimeCost: delayTimeCost,           // 승차 지연 대기요금
+        delayTime: delayTime,                   // 승차 지연 대기 시간(분)
+      }
+      return result;
     } catch (err) {
       console.error("err : " + err);
     } finally {
