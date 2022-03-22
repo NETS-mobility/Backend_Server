@@ -226,6 +226,8 @@ router.post(
     recode_date.setHours(recodeTime.hours);
     recode_date.setMinutes(recodeTime.minutes);
 
+    let result_extraCost; // 추가요금 계산 결과
+
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
       // 현재 서비스 상태 구하기
@@ -267,10 +269,10 @@ router.post(
       // 서비스 종료 후 추가 요금 정보
       let next_pay_state;
       if (next_state == service_state.complete) {
-        const extraCost = extracost.calExtracost(service_id);
+        result_extraCost = await extracost.calExtracost(service_id);
         if (extraCost > 0) {
           const sql_cost = `INSERT INTO payment(reservation_id, payment_type, payment_state_id, payment_amount) VALUES(?,?,?,?);`;
-          await connection.query(sql_cost, [service_id, 2, 1, extraCost]);
+          await connection.query(sql_cost, [service_id, 2, 1, result_extraCost.TotalExtraCost]);
           next_pay_state = payment_state.waitExtraPay;
         }
         else {
@@ -283,7 +285,7 @@ router.post(
           service_id,
         ]);
 
-        res.status(200).send({ success: true, extraCost: extraCost });
+        res.status(200).send({ success: true, extraCost: result_extraCost.TotalExtraCost });
       }
       else res.status(200).send({ success: true });
     } catch (err) {
