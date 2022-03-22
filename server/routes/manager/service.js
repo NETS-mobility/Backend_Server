@@ -22,7 +22,7 @@ const logger = require("../../config/logger");
 router.post("/serviceList/:listType/:date", async function (req, res, next) {
   const token = req.body.jwtToken;
   const listType = req.params.listType;
-  const sdate = req.params.date;
+  const listDate = req.params.date;
 
   const token_res = await jwt.verify(token);
   if (token_res == jwt.TOKEN_EXPIRED)
@@ -33,15 +33,23 @@ router.post("/serviceList/:listType/:date", async function (req, res, next) {
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
+    const targetDate = new Date(listDate);
     if (!(listType >= 0 && listType <= 1)) throw (err = 0);
+    if (listDate != "NONE" &&!(targetDate instanceof Date && !isNaN(targetDate))) throw (err = 0);
 
-    let param = [user_num, sdate];
+    let param = [user_num];
     let sql1 =
       "select distinct S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, `drop_address`, " +
       "`hospital_address` as `hos_address`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `move_direction_id`, `gowith_hospital_time`, " +
       "U.`user_name` as `user_name`, U.`user_phone` as `user_phone`, `gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " +
       "from `car_dispatch` as C, `reservation` as R, `service_info` as S, `user` as U, `netsmanager` as NM " +
-      "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and C.`netsmanager_number`=NM.`netsmanager_number` and R.`user_number`=U.`user_number` and R.`hope_reservation_date`=? ";
+      "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and C.`netsmanager_number`=NM.`netsmanager_number` and R.`user_number`=U.`user_number` ";
+
+    // 날짜 검색
+    if (listDate != "NONE") {
+      sql1 += "and `hope_reservation_date`=? ";
+      param.push(listDate);
+    }
 
     // 서비스 진행상태 분기점
     if (listType == 0) {
@@ -93,9 +101,6 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
   const user_num = token_res.num;
-
-  if (!(await evidence_checker(service_id)))
-    return res.send({ document_isSubmit: false }); // 필수 서류 미제출
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
@@ -150,8 +155,11 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     data_service[0].dispatch_case = case_finder(data_service[0].move_direction_id, data_service[0].gowith_hospital_time);
     data_service[0].isOverPoint = gowith_finder(data_service[0].gowith_hospital_time);
 
+    // 서류 제출 판단
+    const document_isSubmit = await evidence_checker(service_id);
+
     res.send({
-      document_isSubmit: true,
+      document_isSubmit: document_isSubmit,
       service_state: sstate,
       service_state_time: sstate_time,
       manager: data_manager[0],
