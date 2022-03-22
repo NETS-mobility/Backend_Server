@@ -8,9 +8,11 @@ const pool2 = require("../../modules/mysql2");
 const evidence_checker = require("../../modules/user_evidence_check");
 const upload = require("../../modules/fileupload");
 const rev_state_msg = require("../../modules/reservation_state_msg");
+const extracost = require("../../modules/extracost");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
+const payment_state = require("../../config/payment_state");
 const uplPath = require("../../config/upload_path");
 const logger = require("../../config/logger");
 
@@ -243,7 +245,32 @@ router.post(
         "`=?, `service_state_id`=? where `reservation_id`=?;";
       await connection.query(spl, [recode_date, next_state, service_id]);
 
-      res.send();
+      // 서비스 종료 후 추가 요금 정보
+      let next_pay_state;
+      if (next_state == service_state.complete) {
+        const extraCost = extracost.calExtracost(service_id);
+        if (extraCost > 0) {
+          const sql_cost = `INSERT INTO payment(reservation_id, payment_type, payment_state_id, payment_amount
+                            ) VALUES(?,?,?,?);`;
+          await connection.query(sql_cost, [
+            service_id,
+            2,
+            1,
+            extraCost,
+          ]);
+          next_pay_state = payment_state.waitExtraPay;
+        }
+        else {
+          next_pay_state = payment_state.completeAllPay;
+        }
+        const sql_pay_prog = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
+        await connection.query(sql_pay_prog, [
+          next_pay_state,
+          service_id,
+        ]);
+        res.status(200).send({ success: true, extraCost: extraCost });
+      }
+      res.status(200).send({ success: true });
     } catch (err) {
       logger.error(__filename + " : " + err);
       if (err == 0) res.status(401).send({ err: "잘못된 인자입니다." });
