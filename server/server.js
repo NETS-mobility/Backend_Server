@@ -20,6 +20,7 @@ const route_client_login = require("./routes/client/login");
 const route_client_register = require("./routes/client/register");
 const route_client_reserve = require("./routes/client/reserve");
 const route_client_alarm = require("./routes/client/view_alarm");
+const route_getToken = require("./routes/getToken");
 
 const route_manager_service = require("./routes/manager/service");
 const route_manager_mypage = require("./routes/manager/mypage");
@@ -91,6 +92,7 @@ app.use("/admin/view_alarm", route_admin_alarm);
 
 app.use("/dispatch", route_dispatch);
 app.use("/public", route_public);
+app.use("/getToken", route_getToken);
 /*
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
