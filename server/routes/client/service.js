@@ -34,7 +34,7 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     let param = [user_num];
     console.log("param==", param);
     let sql1 =
-      "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, " +
+      "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, `drop_address`, " +
       "`hospital_address` as `hos_address`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " +
       "`gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " +
       "from `reservation` as R, `service_info` as S " +
@@ -98,7 +98,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
   try {
     // 서비스 정보
     const sql_service =
-      "select cast(`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address` as `pickup_address`, `hospital_address` as `hos_address`, " +
+      "select cast(`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address` as `pickup_address`, `hospital_address` as `hos_address`, `drop_address`, " +
       "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " +
       "from `reservation` where `reservation_id`=?;";
     const result_service = await connection.query(sql_service, [service_id]);
@@ -146,41 +146,30 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     const sqlp =
       "select `payment_amount` as `cost` from `payment` where  `reservation_id`=? order by `payment_type`;";
     const sqlpr = await connection.query(sqlp, [service_id]);
-    console.log("sqlpr==", sqlpr);
-    console.log("sqlpr[0]==", sqlpr[0]);
-    console.log("sqlpr[0][0]==", sqlpr[0][0]);
-    console.log("sqlpr[0][1]==", sqlpr[0][1]);
-    // console.log("sqlpr[0][0].cost==", sqlpr[0][0].cost);
-    // console.log("sqlpr[0][1].cost==", sqlpr[0][1].cost);
+    const sqlpd = sqlpr[0];
 
     // reservation_state 결정
     const sqlm =
       "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
     const sqlmr = await connection.query(sqlm, [service_id]);
     const isNeedExtraPay = sqlmr[0].length > 0;
-    console.log("sqlmr==", sqlmr);
-    console.log("sqlmr[0]==", sqlmr[0]);
-    console.log("sqlmr[0][0]==", sqlmr[0][0]);
-    console.log("sqlmr[0][1]==", sqlmr[0][1]);
-    // console.log("sqlmr[0][0].cost==", sqlmr[0][0].cost);
-    // console.log("sqlmr[0][1].cost==", sqlmr[0][1].cost);
     data_service[0].reservation_state = rev_state_msg(
       data_service[0].reservation_state,
       isNeedExtraPay
     );
 
+    let charge = "";
     let extraPay = "";
-    if (sqlpr[0].length == 2) {
-      extraPay = sqlpr[0][1].cost;
-    }
-
+    if (sqlpd.length >= 1) charge = sqlpd[0].cost;
+    if (sqlpd.length >= 2) extraPay = sqlpd[1].cost;
+    
     res.send({
       dispatch: sqldd,
       service: data_service[0],
       service_state: sstate,
       service_state_time: sstate_time,
       payment: {
-        charge: sqlpr[0][0].cost,
+        charge: charge,
         extraPay: extraPay,
       },
     });
