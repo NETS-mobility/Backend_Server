@@ -268,14 +268,12 @@ router.post(
         else {
           next_pay_state = payment_state.completeAllPay;
         }
-        const sql_pay_prog = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
+        const sql_pay_prog = `UPDATE reservation SET reservation_state_id=?, reservation_payment_state_id=? WHERE reservation_id=?;`;
         await connection.query(sql_pay_prog, [
+          3,
           next_pay_state,
           service_id,
         ]);
-
-        const sqlr = "update `reservation` set `reservation_state_id`=3 where `reservation_id`=?;";
-        await connection.query(sqlr, [service_id]);
 
         res.status(200).send({ success: true, extraCost: extraCost });
       }
