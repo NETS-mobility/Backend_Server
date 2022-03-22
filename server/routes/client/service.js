@@ -160,6 +160,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       isNeedExtraPay
     );
 
+    console.log("sqlpr=", sqlpr[0].length);
     let extraPay = "";
     if (sqlpr[0].length == 2) {
       extraPay = sqlpr[0][1].cost;
