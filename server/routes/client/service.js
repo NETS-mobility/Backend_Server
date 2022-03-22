@@ -146,16 +146,33 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     const sqlp =
       "select `payment_amount` as `cost` from `payment` where  `reservation_id`=? order by `payment_type`;";
     const sqlpr = await connection.query(sqlp, [service_id]);
+    console.log("sqlpr==", sqlpr);
+    console.log("sqlpr[0]==", sqlpr[0]);
+    console.log("sqlpr[0][0]==", sqlpr[0][0]);
+    console.log("sqlpr[0][1]==", sqlpr[0][1]);
+    // console.log("sqlpr[0][0].cost==", sqlpr[0][0].cost);
+    // console.log("sqlpr[0][1].cost==", sqlpr[0][1].cost);
 
     // reservation_state 결정
     const sqlm =
       "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
     const sqlmr = await connection.query(sqlm, [service_id]);
     const isNeedExtraPay = sqlmr[0].length > 0;
+    console.log("sqlmr==", sqlmr);
+    console.log("sqlmr[0]==", sqlmr[0]);
+    console.log("sqlmr[0][0]==", sqlmr[0][0]);
+    console.log("sqlmr[0][1]==", sqlmr[0][1]);
+    // console.log("sqlmr[0][0].cost==", sqlmr[0][0].cost);
+    // console.log("sqlmr[0][1].cost==", sqlmr[0][1].cost);
     data_service[0].reservation_state = rev_state_msg(
       data_service[0].reservation_state,
       isNeedExtraPay
     );
+
+    let extraPay = "";
+    if (sqlpr[0].length == 2) {
+      extraPay = sqlpr[0][1].cost;
+    }
 
     res.send({
       dispatch: sqldd,
@@ -164,7 +181,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       service_state_time: sstate_time,
       payment: {
         charge: sqlpr[0][0].cost,
-        extraPay: sqlpr[0][1].cost,
+        extraPay: extraPay,
       },
     });
   } catch (err) {
