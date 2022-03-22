@@ -102,9 +102,6 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
   const user_num = token_res.num;
 
-  if (!(await evidence_checker(service_id)))
-    return res.send({ document_isSubmit: false }); // 필수 서류 미제출
-
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     // 서비스 정보
@@ -158,8 +155,11 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     data_service[0].dispatch_case = case_finder(data_service[0].move_direction_id, data_service[0].gowith_hospital_time);
     data_service[0].isOverPoint = gowith_finder(data_service[0].gowith_hospital_time);
 
+    // 서류 제출 판단
+    const document_isSubmit = await evidence_checker(service_id);
+
     res.send({
-      document_isSubmit: true,
+      document_isSubmit: document_isSubmit,
       service_state: sstate,
       service_state_time: sstate_time,
       manager: data_manager[0],
