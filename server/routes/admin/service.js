@@ -138,7 +138,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     const sqlmr2 = await connection.query(sqlm2, [service_id]);
     let payMethod = "";
     let payCost = 0;
-    if (sqlmr2[0].length == 0) {
+    if (sqlmr2[0].length > 0) {
       payMethod = sqlmr2[0][0].payment_method;
       payCost = sqlmr2[0][0].payment_amount;
     }
