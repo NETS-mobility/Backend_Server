@@ -261,14 +261,8 @@ router.post(
       if (next_state == service_state.complete) {
         const extraCost = extracost.calExtracost(service_id);
         if (extraCost > 0) {
-          const sql_cost = `INSERT INTO payment(reservation_id, payment_type, payment_state_id, payment_amount
-                            ) VALUES(?,?,?,?);`;
-          await connection.query(sql_cost, [
-            service_id,
-            2,
-            1,
-            extraCost,
-          ]);
+          const sql_cost = `INSERT INTO payment(reservation_id, payment_type, payment_state_id, payment_amount) VALUES(?,?,?,?);`;
+          await connection.query(sql_cost, [service_id, 2, 1, extraCost]);
           next_pay_state = payment_state.waitExtraPay;
         }
         else {
@@ -279,9 +273,13 @@ router.post(
           next_pay_state,
           service_id,
         ]);
+
+        const sqlr = "update `reservation` set `reservation_state_id`=3 where `reservation_id`=?;";
+        await connection.query(sqlr, [service_id]);
+
         res.status(200).send({ success: true, extraCost: extraCost });
       }
-      res.status(200).send({ success: true });
+      else res.status(200).send({ success: true });
     } catch (err) {
       logger.error(__filename + " : " + err);
       if (err == 0) res.status(401).send({ err: "잘못된 인자입니다." });
