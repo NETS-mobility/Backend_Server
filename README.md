@@ -6,7 +6,7 @@ https://app.swaggerhub.com/apis/YunseoKang/NETS-Backend2.0/1.0.0
 https://app.swaggerhub.com/apis/NETS-mobility1/Backend_Server/1.0.0
 
 ## DB-main
-2022.03.20 NETS_db_v2.28.mwb
+2022.03.21 NETS_db_v2.29.mwb
 
 ## DB-base_setting(need to import)
 2022.03.20 base_setting_v4
