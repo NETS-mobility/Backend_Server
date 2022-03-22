@@ -38,6 +38,7 @@ router.post(
       protectorPhone,
       expPickupTime,
       expTerminateServiceTime;
+    let reservationId; // 예약 번호
 
     gowithHospitalTime = user.gowithHospitalTime; // 병원 동행 시간
 
@@ -98,7 +99,7 @@ router.post(
       const now = formatdate.getFormatDate(new Date(), 1);
 
       // 예약 번호
-      const reservationId = Number(
+      reservationId = Number(
         now.substring(2, 4) +
         now.substring(5, 7) +
         now.substring(8, 10) +
