@@ -162,7 +162,7 @@ router.post("/manager/detail", async function (req, res, next) {
 
 // ===== 매니저 상세 조회 - 개인정보 변경 =====
 router.post("/manager/detail/changeInfo", async function (req, res, next) {
-  const { number, phone, available, salary } = req.body;
+  const { number, id, phone, available, salary } = req.body;
   if (!(await token_checker(req.body.jwtToken))) {
     res.status(401).send({ err: "접근 권한이 없습니다." });
     return;
@@ -171,8 +171,9 @@ router.post("/manager/detail/changeInfo", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const spl =
-      "update `netsmanager` set `netsmanager_phone`=?, `netsmanager_possible`=?, `netsmanager_basic_salary`=? where `netsmanager_number`=?;";
+      "update `netsmanager` set `netsmanager_id`=?, `netsmanager_phone`=?, `netsmanager_possible`=?, `netsmanager_basic_salary`=? where `netsmanager_number`=?;";
     const result = await connection.query(spl, [
+      id,
       phone,
       available,
       salary,

@@ -8,16 +8,21 @@ const pool2 = require("../../modules/mysql2");
 const evidence_checker = require("../../modules/user_evidence_check");
 const upload = require("../../modules/fileupload");
 const rev_state_msg = require("../../modules/reservation_state_msg");
+const extracost = require("../../modules/extracost");
+const case_finder = require("../../modules/dispatch_case_finder");
+const gowith_finder = require("../../modules/dispatch_isOverPoint_finder");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
+const payment_state = require("../../config/payment_state");
 const uplPath = require("../../config/upload_path");
 const logger = require("../../config/logger");
 
 // ===== 서비스 목록 조회 =====
-router.post("/serviceList/:listType", async function (req, res, next) {
+router.post("/serviceList/:listType/:date", async function (req, res, next) {
   const token = req.body.jwtToken;
   const listType = req.params.listType;
+  const sdate = req.params.date;
 
   const token_res = await jwt.verify(token);
   if (token_res == jwt.TOKEN_EXPIRED)
@@ -30,13 +35,13 @@ router.post("/serviceList/:listType", async function (req, res, next) {
   try {
     if (!(listType >= 0 && listType <= 1)) throw (err = 0);
 
-    let param = [user_num];
+    let param = [user_num, sdate];
     let sql1 =
-      "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, " +
-      "`hospital_address` as `hos_address`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " +
+      "select distinct S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, `drop_address`, " +
+      "`hospital_address` as `hos_address`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `move_direction_id`, `gowith_hospital_time`, " +
       "U.`user_name` as `user_name`, U.`user_phone` as `user_phone`, `gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " +
       "from `car_dispatch` as C, `reservation` as R, `service_info` as S, `user` as U, `netsmanager` as NM " +
-      "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and C.`netsmanager_number`=NM.`netsmanager_number` and R.`user_number`=U.`user_number` ";
+      "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and C.`netsmanager_number`=NM.`netsmanager_number` and R.`user_number`=U.`user_number` and R.`hope_reservation_date`=? ";
 
     // 서비스 진행상태 분기점
     if (listType == 0) {
@@ -61,6 +66,10 @@ router.post("/serviceList/:listType", async function (req, res, next) {
         data1[i].reservation_state,
         isNeedExtraPay
       );
+
+      // 배차 case 결정
+      data1[i].dispatch_case = case_finder(data1[i].move_direction_id, data1[i].gowith_hospital_time);
+      data1[i].isOverPoint = gowith_finder(data1[i].gowith_hospital_time);
     }
 
     res.send(data1);
@@ -92,7 +101,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
   try {
     // 서비스 정보
     const sql_service =
-      "select cast(R.`reservation_id` as char) as `service_id`, `pickup_address`, `hospital_address` as `hos_address`, U.`user_name` as `user_name`, U.`user_phone` as `user_phone`, `reservation_state_id` as `reservation_state`, " +
+      "select cast(R.`reservation_id` as char) as `service_id`, `pickup_address`, `hospital_address` as `hos_address`, `drop_address`, U.`user_name` as `user_name`, U.`user_phone` as `user_phone`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time`, " +
       "`expect_pickup_time` as `pickup_time`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, S.`service_kind` as `service_type`, `hope_reservation_date` as `rev_date`, `gowithmanager_name` as `gowithumanager_name` " +
       "from `reservation` as R, `service_info` as S, `user` as U " +
       "where R.`reservation_id`=? and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number`;";
@@ -136,6 +145,10 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       data_service[0].reservation_state,
       isNeedExtraPay
     );
+
+    // 배차 case 결정
+    data_service[0].dispatch_case = case_finder(data_service[0].move_direction_id, data_service[0].gowith_hospital_time);
+    data_service[0].isOverPoint = gowith_finder(data_service[0].gowith_hospital_time);
 
     res.send({
       document_isSubmit: true,
@@ -243,7 +256,28 @@ router.post(
         "`=?, `service_state_id`=? where `reservation_id`=?;";
       await connection.query(spl, [recode_date, next_state, service_id]);
 
-      res.send();
+      // 서비스 종료 후 추가 요금 정보
+      let next_pay_state;
+      if (next_state == service_state.complete) {
+        const extraCost = extracost.calExtracost(service_id);
+        if (extraCost > 0) {
+          const sql_cost = `INSERT INTO payment(reservation_id, payment_type, payment_state_id, payment_amount) VALUES(?,?,?,?);`;
+          await connection.query(sql_cost, [service_id, 2, 1, extraCost]);
+          next_pay_state = payment_state.waitExtraPay;
+        }
+        else {
+          next_pay_state = payment_state.completeAllPay;
+        }
+        const sql_pay_prog = `UPDATE reservation SET reservation_state_id=?, reservation_payment_state_id=? WHERE reservation_id=?;`;
+        await connection.query(sql_pay_prog, [
+          3,
+          next_pay_state,
+          service_id,
+        ]);
+
+        res.status(200).send({ success: true, extraCost: extraCost });
+      }
+      else res.status(200).send({ success: true });
     } catch (err) {
       logger.error(__filename + " : " + err);
       if (err == 0) res.status(401).send({ err: "잘못된 인자입니다." });

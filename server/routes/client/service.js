@@ -8,6 +8,8 @@ const pool2 = require("../../modules/mysql2");
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
 const rev_state_msg = require("../../modules/reservation_state_msg");
+const case_finder = require("../../modules/dispatch_case_finder");
+const gowith_finder = require("../../modules/dispatch_isOverPoint_finder");
 const logger = require("../../config/logger");
 
 // ===== 서비스 목록 조회 =====
@@ -24,7 +26,8 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
-  const user_num = token_res.num;
+  const user_num = 1;
+  token_res.num;
   console.log("user_num==", user_num);
 
   const connection = await pool2.getConnection(async (conn) => conn);
@@ -34,9 +37,9 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     let param = [user_num];
     console.log("param==", param);
     let sql1 =
-      "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, " +
+      "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, `drop_address`, " +
       "`hospital_address` as `hos_address`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " +
-      "`gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " +
+      "`gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time` " +
       "from `reservation` as R, `service_info` as S " +
       "where `user_number`=? and R.`service_kind_id`=S.`service_kind_id` ";
 
@@ -77,6 +80,13 @@ router.post("/serviceList/:listType", async function (req, res, next) {
         data1[i].reservation_state,
         isNeedExtraPay
       );
+
+      // 배차 case 결정
+      data1[i].dispatch_case = case_finder(
+        data1[i].move_direction_id,
+        data1[i].gowith_hospital_time
+      );
+      data1[i].isOverPoint = gowith_finder(data1[i].gowith_hospital_time);
     }
     console.log("data1 (sqlmr)", data1);
 
@@ -98,8 +108,8 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
   try {
     // 서비스 정보
     const sql_service =
-      "select cast(`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address` as `pickup_address`, `hospital_address` as `hos_address`, " +
-      "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " +
+      "select cast(`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address` as `pickup_address`, `hospital_address` as `hos_address`, `drop_address`, " +
+      "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time` " +
       "from `reservation` where `reservation_id`=?;";
     const result_service = await connection.query(sql_service, [service_id]);
     const data_service = result_service[0];
@@ -135,10 +145,12 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     const sqldd = sqldr[0];
 
     // 매니저 자격증
-    for(let i = 0; i < sqldd.length; i++)
-    {
-      const sqlmc = "select `netsmanager_certificate_name` as `name` from `manager_certificate` where `netsmanager_number`=?;";
-      const sqlmcr = await connection.query(sqlmc, [sqldd[i].netsmanager_number]);
+    for (let i = 0; i < sqldd.length; i++) {
+      const sqlmc =
+        "select `netsmanager_certificate_name` as `name` from `manager_certificate` where `netsmanager_number`=?;";
+      const sqlmcr = await connection.query(sqlmc, [
+        sqldd[i].netsmanager_number,
+      ]);
       sqldd[i].netsmanager_certificate = sqlmcr[0];
     }
 
@@ -146,34 +158,31 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     const sqlp =
       "select `payment_amount` as `cost` from `payment` where  `reservation_id`=? order by `payment_type`;";
     const sqlpr = await connection.query(sqlp, [service_id]);
-    console.log("sqlpr==", sqlpr);
-    console.log("sqlpr[0]==", sqlpr[0]);
-    console.log("sqlpr[0][0]==", sqlpr[0][0]);
-    console.log("sqlpr[0][1]==", sqlpr[0][1]);
-    // console.log("sqlpr[0][0].cost==", sqlpr[0][0].cost);
-    // console.log("sqlpr[0][1].cost==", sqlpr[0][1].cost);
+    const sqlpd = sqlpr[0];
 
     // reservation_state 결정
     const sqlm =
       "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
     const sqlmr = await connection.query(sqlm, [service_id]);
     const isNeedExtraPay = sqlmr[0].length > 0;
-    console.log("sqlmr==", sqlmr);
-    console.log("sqlmr[0]==", sqlmr[0]);
-    console.log("sqlmr[0][0]==", sqlmr[0][0]);
-    console.log("sqlmr[0][1]==", sqlmr[0][1]);
-    // console.log("sqlmr[0][0].cost==", sqlmr[0][0].cost);
-    // console.log("sqlmr[0][1].cost==", sqlmr[0][1].cost);
     data_service[0].reservation_state = rev_state_msg(
       data_service[0].reservation_state,
       isNeedExtraPay
     );
 
-    console.log("sqlpr=", sqlpr[0].length);
+    // 배차 case 결정
+    data_service[0].dispatch_case = case_finder(
+      data_service[0].move_direction_id,
+      data_service[0].gowith_hospital_time
+    );
+    data_service[0].isOverPoint = gowith_finder(
+      data_service[0].gowith_hospital_time
+    );
+
+    let charge = "";
     let extraPay = "";
-    if (sqlpr[0].length == 2) {
-      extraPay = sqlpr[0][1].cost;
-    }
+    if (sqlpd.length >= 1) charge = sqlpd[0].cost;
+    if (sqlpd.length >= 2) extraPay = sqlpd[1].cost;
 
     res.send({
       dispatch: sqldd,
@@ -181,7 +190,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       service_state: sstate,
       service_state_time: sstate_time,
       payment: {
-        charge: sqlpr[0][0].cost,
+        charge: charge,
         extraPay: extraPay,
       },
     });
