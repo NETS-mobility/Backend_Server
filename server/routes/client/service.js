@@ -26,7 +26,7 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
-  const user_num = 1;token_res.num;
+  const user_num = token_res.num;
   console.log("user_num==", user_num);
 
   const connection = await pool2.getConnection(async (conn) => conn);
@@ -81,7 +81,10 @@ router.post("/serviceList/:listType", async function (req, res, next) {
       );
 
       // 배차 case 결정
-      data1[i].dispatch_case = case_finder(data1[i].move_direction_id, data1[i].gowith_hospital_time);
+      data1[i].dispatch_case = case_finder(
+        data1[i].move_direction_id,
+        data1[i].gowith_hospital_time
+      );
       data1[i].isOverPoint = gowith_finder(data1[i].gowith_hospital_time);
     }
     console.log("data1 (sqlmr)", data1);
@@ -141,10 +144,12 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     const sqldd = sqldr[0];
 
     // 매니저 자격증
-    for(let i = 0; i < sqldd.length; i++)
-    {
-      const sqlmc = "select `netsmanager_certificate_name` as `name` from `manager_certificate` where `netsmanager_number`=?;";
-      const sqlmcr = await connection.query(sqlmc, [sqldd[i].netsmanager_number]);
+    for (let i = 0; i < sqldd.length; i++) {
+      const sqlmc =
+        "select `netsmanager_certificate_name` as `name` from `manager_certificate` where `netsmanager_number`=?;";
+      const sqlmcr = await connection.query(sqlmc, [
+        sqldd[i].netsmanager_number,
+      ]);
       sqldd[i].netsmanager_certificate = sqlmcr[0];
     }
 
@@ -165,14 +170,19 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     );
 
     // 배차 case 결정
-    data_service[0].dispatch_case = case_finder(data_service[0].move_direction_id, data_service[0].gowith_hospital_time);
-    data_service[0].isOverPoint = gowith_finder(data_service[0].gowith_hospital_time);
+    data_service[0].dispatch_case = case_finder(
+      data_service[0].move_direction_id,
+      data_service[0].gowith_hospital_time
+    );
+    data_service[0].isOverPoint = gowith_finder(
+      data_service[0].gowith_hospital_time
+    );
 
     let charge = "";
     let extraPay = "";
     if (sqlpd.length >= 1) charge = sqlpd[0].cost;
     if (sqlpd.length >= 2) extraPay = sqlpd[1].cost;
-    
+
     res.send({
       dispatch: sqldd,
       service: data_service[0],
