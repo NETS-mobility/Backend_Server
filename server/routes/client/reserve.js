@@ -39,6 +39,7 @@ router.post(
       expPickupTime,
       expTerminateServiceTime;
     let reservationId; // 예약 번호
+    let result_baseCost; // 기본요금 계산 결과
 
     gowithHospitalTime = user.gowithHospitalTime; // 병원 동행 시간
 
@@ -209,15 +210,15 @@ router.post(
       const sql6 = `INSERT INTO payment(reservation_id, payment_type, payment_state_id, payment_amount
                     ) VALUES(?,?,?,?);`;
       
-      const baseCost = basecost.calBasecost(reservationId);
+      result_baseCost = await basecost.calBasecost(reservationId);
       const result6 = await connection.query(sql6, [
         reservationId,
         1,
         1,
-        baseCost,
+        result_baseCost.TotalBaseCost,
       ]);
 
-      res.status(200).send({ success: true, reservationId: reservationId, baseCost: baseCost });
+      res.status(200).send({ success: true, reservationId: reservationId, baseCost: result_baseCost.TotalBaseCost });
     } catch (err) {
       logger.error(__filename + " : " + err);
       // res.status(500).send({ err : "서버 오류" });
