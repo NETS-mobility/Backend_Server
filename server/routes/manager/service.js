@@ -244,7 +244,7 @@ router.post(
       let prog;
       switch (next_state) {
         case service_state.carDep:
-          prog = "real_car_departure";
+          prog = "real_car_departure_time";
           break; // 차량출발
         case service_state.pickup:
           prog = "real_pickup_time";
@@ -282,8 +282,17 @@ router.post(
       if (next_state == service_state.complete) {
         result_extraCost = await extracost.calExtracost(service_id);
         if (extraCost > 0) {
-          const sql_cost = `INSERT INTO payment(reservation_id, payment_type, payment_state_id, payment_amount) VALUES(?,?,?,?);`;
-          await connection.query(sql_cost, [service_id, 2, 1, result_extraCost.TotalExtraCost]);
+          const sql_cost = `INSERT INTO extra_payment(reservation_id, payment_state_id, payment_amount,
+                            over_gowith_cost, over_gowith_time, delay_cost, delay_time) VALUES(?,?,?,?,?,?,?);`;
+          await connection.query(sql_cost, [
+            service_id,
+            1,
+            result_extraCost.TotalExtraCost,
+            result_extraCost.overGowithTimeCost,
+            result_extraCost.overGowithTime,
+            result_extraCost.delayTimeCost,
+            result_extraCost.delayTime,
+          ]);
           next_pay_state = payment_state.waitExtraPay;
         }
         else {

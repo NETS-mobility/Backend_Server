@@ -207,15 +207,24 @@ router.post(
       }
 
       // === 기본 요금 정보 ===
-      const sql6 = `INSERT INTO payment(reservation_id, payment_type, payment_state_id, payment_amount
-                    ) VALUES(?,?,?,?);`;
+      const sql6 = `INSERT INTO base_payment(reservation_id, payment_state_id, payment_amount,
+                    base_cost, over_move_distance_cost, over_move_distance, over_gowith_cost, over_gowith_time,
+                    night_cost, night_time, weekend_cost
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?);`;
       
       result_baseCost = await basecost.calBasecost(reservationId);
       const result6 = await connection.query(sql6, [
         reservationId,
         1,
-        1,
         result_baseCost.TotalBaseCost,
+        result_baseCost.baseCost,
+        result_baseCost.overMoveDistanceCost,
+        result_baseCost.overMoveDistance,
+        result_baseCost.overGowithTimeCost,
+        result_baseCost.overGowithTime,
+        result_baseCost.nightCost,
+        result_baseCost.nightmin,
+        result_baseCost.weekendCost,
       ]);
 
       res.status(200).send({ success: true, reservationId: reservationId, baseCost: result_baseCost.TotalBaseCost });
