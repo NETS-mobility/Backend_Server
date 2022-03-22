@@ -5,6 +5,8 @@ const jwt = require("../../modules/jwt");
 const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const token_checker = require("../../modules/admin_token");
+const case_finder = require("../../modules/dispatch_case_finder");
+const gowith_finder = require("../../modules/dispatch_isOverPoint_finder");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
@@ -87,8 +89,8 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     // 서비스 정보
     const sql_service =
       "select cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_address`, `hospital_address` as `hos_address`, `drop_address`, `hope_reservation_date` as `rev_date`, " +
-      "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithmanager_name` as `gowithumanager`," +
-      "`reservation_state_id` as `reservation_state`, R.`user_number` as `customer_number`, U.`user_name` as `customer_name`, S.`service_kind` as `service_type` " +
+      "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithmanager_name` as `gowithumanager`, " +
+      "`reservation_state_id` as `reservation_state`, R.`user_number` as `customer_number`, U.`user_name` as `customer_name`, S.`service_kind` as `service_type`, `move_direction_id`, `gowith_hospital_time` " +
       "from `reservation` as R, `user` as U, `service_info` as S " +
       "where R.`reservation_id`=? and R.`user_number`=U.`user_number` and R.`service_kind_id`=S.`service_kind_id`;";
     const result_service = await connection.query(sql_service, [service_id]);
@@ -142,6 +144,10 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       payMethod = sqlmr2[0][0].payment_method;
       payCost = sqlmr2[0][0].payment_amount;
     }
+
+    // 배차 case 결정
+    data_service[0].dispatch_case = case_finder(data_service[0].move_direction_id, data_service[0].gowith_hospital_time);
+    data_service[0].isOverPoint = gowith_finder(data_service[0].gowith_hospital_time);
 
     res.send({
       service_state: sstate,

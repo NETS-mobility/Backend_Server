@@ -8,6 +8,8 @@ const pool2 = require("../../modules/mysql2");
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
 const rev_state_msg = require("../../modules/reservation_state_msg");
+const case_finder = require("../../modules/dispatch_case_finder");
+const gowith_finder = require("../../modules/dispatch_isOverPoint_finder");
 const logger = require("../../config/logger");
 
 // ===== 서비스 목록 조회 =====
@@ -24,7 +26,7 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
-  const user_num = token_res.num;
+  const user_num = 1;token_res.num;
   console.log("user_num==", user_num);
 
   const connection = await pool2.getConnection(async (conn) => conn);
@@ -36,7 +38,7 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     let sql1 =
       "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, `drop_address`, " +
       "`hospital_address` as `hos_address`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " +
-      "`gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " +
+      "`gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time` " +
       "from `reservation` as R, `service_info` as S " +
       "where `user_number`=? and R.`service_kind_id`=S.`service_kind_id` ";
 
@@ -77,6 +79,10 @@ router.post("/serviceList/:listType", async function (req, res, next) {
         data1[i].reservation_state,
         isNeedExtraPay
       );
+
+      // 배차 case 결정
+      data1[i].dispatch_case = case_finder(data1[i].move_direction_id, data1[i].gowith_hospital_time);
+      data1[i].isOverPoint = gowith_finder(data1[i].gowith_hospital_time);
     }
     console.log("data1 (sqlmr)", data1);
 
@@ -99,7 +105,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     // 서비스 정보
     const sql_service =
       "select cast(`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address` as `pickup_address`, `hospital_address` as `hos_address`, `drop_address`, " +
-      "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " +
+      "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time` " +
       "from `reservation` where `reservation_id`=?;";
     const result_service = await connection.query(sql_service, [service_id]);
     const data_service = result_service[0];
@@ -157,6 +163,10 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       data_service[0].reservation_state,
       isNeedExtraPay
     );
+
+    // 배차 case 결정
+    data_service[0].dispatch_case = case_finder(data_service[0].move_direction_id, data_service[0].gowith_hospital_time);
+    data_service[0].isOverPoint = gowith_finder(data_service[0].gowith_hospital_time);
 
     let charge = "";
     let extraPay = "";

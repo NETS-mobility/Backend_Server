@@ -171,7 +171,7 @@ router.post(
 // ===== 마이페이지 개인정보 변경 =====
 router.post("/changeInfo/changeInfo", async function (req, res, next) {
   const token = req.body.jwtToken;
-  const { name, phone, intro, notice } = req.body;
+  const { id, name, phone, intro, notice } = req.body;
 
   const token_res = await jwt.verify(token);
   if (token_res == jwt.TOKEN_EXPIRED)
@@ -183,9 +183,10 @@ router.post("/changeInfo/changeInfo", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql =
-      "update `netsmanager` set `netsmanager_name`=?, `netsmanager_phone`=?, " +
+      "update `netsmanager` set `netsmanager_id`=?, `netsmanager_name`=?, `netsmanager_phone`=?, " +
       "`netsmanager_about_me`=?, `netsmanager_notice`=? where `netsmanager_number`=?;";
     const result = await connection.query(sql, [
+      id,
       name,
       phone,
       intro,
