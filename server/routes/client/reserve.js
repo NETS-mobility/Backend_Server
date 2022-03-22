@@ -6,6 +6,7 @@ const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const upload = require("../../modules/fileupload");
 const formatdate = require("../../modules/formatdate");
+const basecost = require("../../modules/basecost");
 const alarm = require("../../modules/setting_alarm");
 
 const uplPath = require("../../config/upload_path");
@@ -37,6 +38,7 @@ router.post(
       protectorPhone,
       expPickupTime,
       expTerminateServiceTime;
+    let reservationId; // 예약 번호
 
     gowithHospitalTime = user.gowithHospitalTime; // 병원 동행 시간
 
@@ -97,13 +99,13 @@ router.post(
       const now = formatdate.getFormatDate(new Date(), 1);
 
       // 예약 번호
-      const reservationId = Number(
+      reservationId = Number(
         now.substring(2, 4) +
-          now.substring(5, 7) +
-          now.substring(8, 10) +
-          now.substring(11, 13) +
-          now.substring(14, 16) +
-          now.substring(17)
+        now.substring(5, 7) +
+        now.substring(8, 10) +
+        now.substring(11, 13) +
+        now.substring(14, 16) +
+        now.substring(17)
       );
 
       // 예약 정보 저장
@@ -203,7 +205,19 @@ router.post(
         await connection.query(sql4, [filepath, 1, reservationId]);
       }
 
-      res.status(200).send({ success: true });
+      // === 기본 요금 정보 ===
+      const sql6 = `INSERT INTO payment(reservation_id, payment_type, payment_state_id, payment_amount
+                    ) VALUES(?,?,?,?);`;
+      
+      const baseCost = basecost.calBasecost(reservationId);
+      const result6 = await connection.query(sql6, [
+        reservationId,
+        1,
+        1,
+        baseCost,
+      ]);
+
+      res.status(200).send({ success: true, reservationId: reservationId, baseCost: baseCost });
     } catch (err) {
       logger.error(__filename + " : " + err);
       // res.status(500).send({ err : "서버 오류" });

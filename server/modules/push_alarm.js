@@ -21,8 +21,8 @@ admin.initializeApp({
   });*/
 
 exports.pushAlarm = async function (push_alarm_body, push_alarm_title, device_token) {
-  const registrationToken =device_token;
-  
+  const registrationToken = device_token;
+
   // 알림 setting
   let message = {
     notification: {
