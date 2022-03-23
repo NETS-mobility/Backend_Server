@@ -64,13 +64,15 @@ router.post(
   upload(uplPath.manager_notice_file).array("files"),
   async function (req, res, next) {
     const files = req.files;
-    const { title, writer_id, content } = JSON.parse(req.body.json);
+    const { title, content, jwtToken } = JSON.parse(req.body.json);
 
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
       await connection.beginTransaction();
 
-      if (!(await token_checker(req.body.jwtToken))) throw (err = 0);
+      if (!(await token_checker(jwtToken))) throw (err = 0);
+      const token_res = await jwt.verify(jwtToken);
+      const writer_id = token_res.num;
 
       const now = new Date();
       const sql1 =
@@ -228,13 +230,15 @@ router.post(
   upload(uplPath.customer_notice_file).array("files"),
   async function (req, res, next) {
     const files = req.files;
-    const { title, writer_id, content } = JSON.parse(req.body.json);
+    const { title, content, jwtToken } = JSON.parse(req.body.json);
 
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
       await connection.beginTransaction();
 
-      if (!(await token_checker(req.body.jwtToken))) throw (err = 0);
+      if (!(await token_checker(jwtToken))) throw (err = 0);
+      const token_res = await jwt.verify(jwtToken);
+      const writer_id = token_res.num;
 
       const now = new Date();
       const sql1 =

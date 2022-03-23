@@ -60,7 +60,7 @@ router.post("/serviceList/:listType/:date", async function (req, res, next) {
       param.push(reservation_state.complete);
     }
 
-    sql1 += "order by `rev_date` and `pickup_time`;";
+    sql1 += "order by `rev_date`, `pickup_time`;";
     const result1 = await connection.query(sql1, param);
     const data1 = result1[0];
 
@@ -125,11 +125,10 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     if (data_prog.length > 0) {
       sstate = data_prog[0].service_state_id;
       sstate_time = [];
+      sstate_time[service_state.carDep] = data_prog[0].real_car_departure; // 차량출발
       sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
-      sstate_time[service_state.arrivalHos] =
-        data_prog[0].real_hospital_arrival_time; // 병원도착
-      sstate_time[service_state.carReady] =
-        data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
+      sstate_time[service_state.arrivalHos] = data_prog[0].real_hospital_arrival_time; // 병원도착
+      sstate_time[service_state.carReady] = data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
       sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
       sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
     }
@@ -192,14 +191,12 @@ router.post(
       if (data_prog.length > 0) {
         sstate = data_prog[0].service_state_id;
         sstate_time = [];
+        sstate_time[service_state.carDep] = data_prog[0].real_car_departure; // 차량출발
         sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
-        sstate_time[service_state.arrivalHos] =
-          data_prog[0].real_hospital_arrival_time; // 병원도착
-        sstate_time[service_state.carReady] =
-          data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
+        sstate_time[service_state.arrivalHos] = data_prog[0].real_hospital_arrival_time; // 병원도착
+        sstate_time[service_state.carReady] = data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
         sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
-        sstate_time[service_state.complete] =
-          data_prog[0].real_service_end_time; // 서비스종료
+        sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
       }
 
       res.send({
@@ -225,23 +222,30 @@ router.post(
     const recode_date = new Date();
     recode_date.setHours(recodeTime.hours);
     recode_date.setMinutes(recodeTime.minutes);
+    recode_date.setSeconds(0);
 
     let result_extraCost; // 추가요금 계산 결과
 
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
+      await connection.beginTransaction();
+
       // 현재 서비스 상태 구하기
       const sql_prog =
         "select `service_state_id` from `service_progress` where `reservation_id`=?;";
       const result_prog = await connection.query(sql_prog, [service_id]);
       const data_prog = result_prog[0];
       console.log("data_prog=", data_prog);
-      const next_state = data_prog[0].service_state_id + 1;
+      let next_state = data_prog[0].service_state_id + 1;
+      if(next_state > service_state.complete) next_state = service_state.complete;
       console.log("next_state=", next_state);
 
       // 상태 설정
       let prog;
       switch (next_state) {
+        case service_state.carDep:
+          prog = "real_car_departure_time";
+          break; // 차량출발
         case service_state.pickup:
           prog = "real_pickup_time";
           break; // 픽업완료
@@ -266,13 +270,29 @@ router.post(
         "`=?, `service_state_id`=? where `reservation_id`=?;";
       await connection.query(spl, [recode_date, next_state, service_id]);
 
+      // 서비스 진행 중 설정
+      if (next_state == service_state.carDep)
+      {
+        const sqln = `UPDATE reservation SET reservation_state_id=? WHERE reservation_id=?;`;
+        await connection.query(sqln, [reservation_state.inProgress,service_id]);
+      }
+
       // 서비스 종료 후 추가 요금 정보
       let next_pay_state;
       if (next_state == service_state.complete) {
         result_extraCost = await extracost.calExtracost(service_id);
         if (extraCost > 0) {
-          const sql_cost = `INSERT INTO payment(reservation_id, payment_type, payment_state_id, payment_amount) VALUES(?,?,?,?);`;
-          await connection.query(sql_cost, [service_id, 2, 1, result_extraCost.TotalExtraCost]);
+          const sql_cost = `INSERT INTO extra_payment(reservation_id, payment_state_id, payment_amount,
+                            over_gowith_cost, over_gowith_time, delay_cost, delay_time) VALUES(?,?,?,?,?,?,?);`;
+          await connection.query(sql_cost, [
+            service_id,
+            1,
+            result_extraCost.TotalExtraCost,
+            result_extraCost.overGowithTimeCost,
+            result_extraCost.overGowithTime,
+            result_extraCost.delayTimeCost,
+            result_extraCost.delayTime,
+          ]);
           next_pay_state = payment_state.waitExtraPay;
         }
         else {
@@ -280,15 +300,16 @@ router.post(
         }
         const sql_pay_prog = `UPDATE reservation SET reservation_state_id=?, reservation_payment_state_id=? WHERE reservation_id=?;`;
         await connection.query(sql_pay_prog, [
-          3,
+          reservation_state.complete,
           next_pay_state,
           service_id,
         ]);
-
         res.status(200).send({ success: true, extraCost: result_extraCost.TotalExtraCost });
       }
       else res.status(200).send({ success: true });
+      await connection.commit();
     } catch (err) {
+      await connection.rollback();
       logger.error(__filename + " : " + err);
       if (err == 0) res.status(401).send({ err: "잘못된 인자입니다." });
       else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });

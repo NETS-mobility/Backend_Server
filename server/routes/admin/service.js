@@ -49,7 +49,7 @@ router.post(
         sql1 += "and `hope_reservation_date`=? ";
         param.push(listDate);
       }
-      sql1 += "order by `hope_reservation_date`;";
+      sql1 += "order by `rev_date`, `pickup_time`;";
 
       const result1 = await connection.query(sql1, param);
       const data1 = result1[0];
@@ -108,6 +108,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     if (data_prog.length > 0) {
       sstate = data_prog[0].service_state_id;
       sstate_time = [];
+      sstate_time[service_state.carDep] = data_prog[0].real_car_departure; // 차량출발
       sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
       sstate_time[service_state.arrivalHos] =
         data_prog[0].real_hospital_arrival_time; // 병원도착
@@ -183,6 +184,7 @@ router.post(
     try {
       const ss = service_state;
       const param = [
+        recTime[ss.carDep],
         recTime[ss.pickup],
         recTime[ss.arrivalHos],
         recTime[ss.carReady],
@@ -193,7 +195,7 @@ router.post(
       ];
 
       const spl =
-        "update `service_progress` set `real_pickup_time`=?, `real_hospital_arrival_time`=?, `real_return_hospital_arrival_time`=?, " +
+        "update `service_progress` set `real_car_departure`=?, `real_pickup_time`=?, `real_hospital_arrival_time`=?, `real_return_hospital_arrival_time`=?, " +
         "`real_return_start_time`=?, `real_service_end_time`=?, `service_state_id`=? where `reservation_id`=?;";
       const result = await connection.query(spl, param);
       if (result[0].affectedRows == 0) throw (err = 0);

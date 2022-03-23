@@ -53,7 +53,7 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     console.log("sql1 after concat==", sql1);
     console.log("param after push==", param);
 
-    sql1 += "order by `rev_date` and `pickup_time`;";
+    sql1 += "order by `rev_date`, `pickup_time`;";
     const result1 = await connection.query(sql1, param);
     const data1 = result1[0];
     console.log("data1 (sql1)", data1);
@@ -125,6 +125,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     if (data_prog.length > 0) {
       sstate = data_prog[0].service_state_id;
       sstate_time = [];
+      sstate_time[service_state.carDep] = data_prog[0].real_car_departure; // 차량출발
       sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
       sstate_time[service_state.arrivalHos] =
         data_prog[0].real_hospital_arrival_time; // 병원도착
