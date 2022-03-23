@@ -11,12 +11,15 @@ const rev_state_msg = require("../../modules/reservation_state_msg");
 const extracost = require("../../modules/extracost");
 const case_finder = require("../../modules/dispatch_case_finder");
 const gowith_finder = require("../../modules/dispatch_isOverPoint_finder");
+const alarm = require("../../modules/setting_alarm");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
 const payment_state = require("../../config/payment_state");
 const uplPath = require("../../config/upload_path");
 const logger = require("../../config/logger");
+const alarm_reciever = require("../../config/push_alarm_reciever");
+const alarm_kind = require("../../config/alarm_kind");
 
 // ===== 서비스 목록 조회 =====
 router.post("/serviceList/:listType/:date", async function (req, res, next) {
@@ -68,7 +71,10 @@ router.post("/serviceList/:listType/:date", async function (req, res, next) {
       );
 
       // 배차 case 결정
-      data1[i].dispatch_case = case_finder(data1[i].move_direction_id, data1[i].gowith_hospital_time);
+      data1[i].dispatch_case = case_finder(
+        data1[i].move_direction_id,
+        data1[i].gowith_hospital_time
+      );
       data1[i].isOverPoint = gowith_finder(data1[i].gowith_hospital_time);
     }
 
@@ -147,8 +153,13 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     );
 
     // 배차 case 결정
-    data_service[0].dispatch_case = case_finder(data_service[0].move_direction_id, data_service[0].gowith_hospital_time);
-    data_service[0].isOverPoint = gowith_finder(data_service[0].gowith_hospital_time);
+    data_service[0].dispatch_case = case_finder(
+      data_service[0].move_direction_id,
+      data_service[0].gowith_hospital_time
+    );
+    data_service[0].isOverPoint = gowith_finder(
+      data_service[0].gowith_hospital_time
+    );
 
     res.send({
       document_isSubmit: true,
@@ -264,20 +275,47 @@ router.post(
           const sql_cost = `INSERT INTO payment(reservation_id, payment_type, payment_state_id, payment_amount) VALUES(?,?,?,?);`;
           await connection.query(sql_cost, [service_id, 2, 1, extraCost]);
           next_pay_state = payment_state.waitExtraPay;
-        }
-        else {
+        } else {
           next_pay_state = payment_state.completeAllPay;
         }
         const sql_pay_prog = `UPDATE reservation SET reservation_state_id=?, reservation_payment_state_id=? WHERE reservation_id=?;`;
-        await connection.query(sql_pay_prog, [
-          3,
-          next_pay_state,
+        await connection.query(sql_pay_prog, [3, next_pay_state, service_id]);
+
+        // == 알림 전송 ==
+        const sql_alarm =
+          "select user_id from user as u inner join reservation as r on u.user_number = r.user_number " +
+          "where r.reservation_id =?;";
+        const alarm_res = await connection.query(sql_alarm, [service_id]);
+        const user_id = alarm_res[0].user_id;
+
+        logger.info(user_id);
+
+        // 대기요금 요청
+        alarm.set_alarm(
+          alarm_reciever.customer,
           service_id,
-        ]);
+          alarm_kind.waiting_payment,
+          user_id,
+          [alarm_res.real_hospital_gowith_time, result_extraCost.overGowithCost]
+        );
+        // 동행 추가요금 결제 요청
+        alarm.set_alarm(
+          alarm_reciever.customer,
+          service_id,
+          alarm_kind.extra_payment,
+          user_id,
+          [result_extraCost.delayTime, result_extraCost.delayTimeCost]
+        );
+        // 동행상황 보고(알림)
+        alarm.set_alarm(
+          alarm_reciever.customer,
+          service_id,
+          alarm_kind.report_end,
+          user_id
+        );
 
         res.status(200).send({ success: true, extraCost: extraCost });
-      }
-      else res.status(200).send({ success: true });
+      } else res.status(200).send({ success: true });
     } catch (err) {
       logger.error(__filename + " : " + err);
       if (err == 0) res.status(401).send({ err: "잘못된 인자입니다." });

@@ -101,11 +101,11 @@ router.post(
       // 예약 번호
       reservationId = Number(
         now.substring(2, 4) +
-        now.substring(5, 7) +
-        now.substring(8, 10) +
-        now.substring(11, 13) +
-        now.substring(14, 16) +
-        now.substring(17)
+          now.substring(5, 7) +
+          now.substring(8, 10) +
+          now.substring(11, 13) +
+          now.substring(14, 16) +
+          now.substring(17)
       );
 
       // 예약 정보 저장
@@ -208,7 +208,7 @@ router.post(
       // === 기본 요금 정보 ===
       const sql6 = `INSERT INTO payment(reservation_id, payment_type, payment_state_id, payment_amount
                     ) VALUES(?,?,?,?);`;
-      
+
       const baseCost = basecost.calBasecost(reservationId);
       const result6 = await connection.query(sql6, [
         reservationId,
@@ -217,18 +217,25 @@ router.post(
         baseCost,
       ]);
 
-      res.status(200).send({ success: true, reservationId: reservationId, baseCost: baseCost });
+      res
+        .status(200)
+        .send({
+          success: true,
+          reservationId: reservationId,
+          baseCost: baseCost,
+        });
     } catch (err) {
       logger.error(__filename + " : " + err);
       // res.status(500).send({ err : "서버 오류" });
       res.status(500).send({ err: "오류-" + err });
     } finally {
+      // 고객에게 결제 요청 알림 전송
       alarm.set_alarm(
         reciever.customer,
         reservationId,
         alarm_kind.request_payment,
         id
-      ); // 고객에게 결제 요청 알림 전송
+      );
       connection.release();
     }
   }
