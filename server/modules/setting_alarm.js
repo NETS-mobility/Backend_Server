@@ -88,9 +88,9 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
       "select netsmanager_number, netsmanager_device_token from netsmanager where netsmanager_id =?";
     sql_res = await connection1.query(sql, [user_id]);
   }
-  let res = Object.values(sql_res[0][0]);
-  let user_number = res[0];
-  let device_token = res[1];
+  let res = Object.values(sql_res[0]);
+  let user_number = res[0].user_number;
+  let device_token = res[0].user_device_token;
   alarm = new Alarm(user_number, reservation_id, alarm_kind, device_token);
 
   try {
