@@ -131,9 +131,10 @@ router.post("/extra/setting", async function (req, res, next) {
     }
 
     const sqlc1 =
-      "update `extra_cost` set `extra_cost_max_unit_value`=? where `extra_cost_kind_id`=4;";
+      "update `extra_cost` set `extra_cost_max_unit_value`=?, `extra_cost_free_unit_value`=? where `extra_cost_kind_id`=4;";
     const sqlrc1 = await connection.query(sqlc1, [
       extra_cost[4 - 1].extra_cost_max_unit_value,
+      extra_cost[4 - 1].extra_cost_free_unit_value,
     ]);
     if (sqlrc1[0].affectedRows == 0) throw (err = 0);
 
