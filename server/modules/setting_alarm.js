@@ -75,21 +75,23 @@ async function alarm_later(reciever, reservation_id, alarm_kind, user_id) {
 }
 
 async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
-  let alarm, sql, sql_res;
+  let alarm, sql, sql_res, user_number;
   const connection1 = await pool2.getConnection(async (conn) => conn);
   if (reciever == reciever_kind.customer) {
     // user_number, device token 추출
     sql =
       "select `user_number`, `user_device_token` from `user` where `user_id` =?";
-    sql_res = await connection1.query(sql, user_id);
+    sql_res = await connection1.query(sql, [user_id]);
+    let res = Object.values(sql_res[0]);
+    user_number = res[0].user_number;
   } else {
     // user_number, device token 추출
     sql =
       "select netsmanager_number, netsmanager_device_token from netsmanager where netsmanager_id =?";
     sql_res = await connection1.query(sql, [user_id]);
+    let res = Object.values(sql_res[0]);
+    user_number = res[0].netsmanager_number;
   }
-  let res = Object.values(sql_res[0]);
-  let user_number = res[0].user_number;
   let device_token = res[0].user_device_token;
   alarm = new Alarm(user_number, reservation_id, alarm_kind, device_token);
 

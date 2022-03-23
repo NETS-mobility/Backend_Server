@@ -38,7 +38,11 @@ router.post("/serviceList/:listType/:date", async function (req, res, next) {
   try {
     const targetDate = new Date(listDate);
     if (!(listType >= 0 && listType <= 1)) throw (err = 0);
-    if (listDate != "NONE" &&!(targetDate instanceof Date && !isNaN(targetDate))) throw (err = 0);
+    if (
+      listDate != "NONE" &&
+      !(targetDate instanceof Date && !isNaN(targetDate))
+    )
+      throw (err = 0);
 
     let param = [user_num];
     let sql1 =
@@ -133,8 +137,10 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       sstate_time = [];
       sstate_time[service_state.carDep] = data_prog[0].real_car_departure; // 차량출발
       sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
-      sstate_time[service_state.arrivalHos] = data_prog[0].real_hospital_arrival_time; // 병원도착
-      sstate_time[service_state.carReady] = data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
+      sstate_time[service_state.arrivalHos] =
+        data_prog[0].real_hospital_arrival_time; // 병원도착
+      sstate_time[service_state.carReady] =
+        data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
       sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
       sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
     }
@@ -204,10 +210,13 @@ router.post(
         sstate_time = [];
         sstate_time[service_state.carDep] = data_prog[0].real_car_departure; // 차량출발
         sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
-        sstate_time[service_state.arrivalHos] = data_prog[0].real_hospital_arrival_time; // 병원도착
-        sstate_time[service_state.carReady] = data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
+        sstate_time[service_state.arrivalHos] =
+          data_prog[0].real_hospital_arrival_time; // 병원도착
+        sstate_time[service_state.carReady] =
+          data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
         sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
-        sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
+        sstate_time[service_state.complete] =
+          data_prog[0].real_service_end_time; // 서비스종료
       }
 
       res.send({
@@ -248,7 +257,8 @@ router.post(
       const data_prog = result_prog[0];
       console.log("data_prog=", data_prog);
       let next_state = data_prog[0].service_state_id + 1;
-      if(next_state > service_state.complete) next_state = service_state.complete;
+      if (next_state > service_state.complete)
+        next_state = service_state.complete;
       console.log("next_state=", next_state);
 
       // 상태 설정
@@ -282,11 +292,29 @@ router.post(
       await connection.query(spl, [recode_date, next_state, service_id]);
 
       // 서비스 진행 중 설정
-      if (next_state == service_state.carDep)
-      {
+      if (next_state == service_state.carDep) {
         const sqln = `UPDATE reservation SET reservation_state_id=? WHERE reservation_id=?;`;
-        await connection.query(sqln, [reservation_state.inProgress,service_id]);
+        await connection.query(sqln, [
+          reservation_state.inProgress,
+          service_id,
+        ]);
       }
+
+      /*
+      const sql_alarm =
+        "select user_id as id from user as u join reservation as r on u.user_number = r.user_number " +
+        "where r.reservation_id =?;";
+      const alarm_res = await connection.query(sql_alarm, [service_id]);
+      const user_id = alarm_res[0].id;
+      console.log("userid =", user_id);
+
+      // 동행상황 보고(알림)
+      alarm.set_alarm(
+        alarm_reciever.customer,
+        service_id,
+        alarm_kind.report_end,
+        "A1@naver.com"
+      );*/
 
       // 서비스 종료 후 추가 요금 정보
       let next_pay_state;
@@ -309,17 +337,13 @@ router.post(
           next_pay_state = payment_state.completeAllPay;
         }
         const sql_pay_prog = `UPDATE reservation SET reservation_state_id=?, reservation_payment_state_id=? WHERE reservation_id=?;`;
-<<<<<<< HEAD
-        await connection.query(sql_pay_prog, [3, next_pay_state, service_id]);
+        await connection.query(sql_pay_prog, [
+          reservation_state.complete,
+          next_pay_state,
+          service_id,
+        ]);
 
-        // == 알림 전송 ==
-        const sql_alarm =
-          "select user_id from user as u inner join reservation as r on u.user_number = r.user_number " +
-          "where r.reservation_id =?;";
-        const alarm_res = await connection.query(sql_alarm, [service_id]);
-        const user_id = alarm_res[0].user_id;
-
-        logger.info(user_id);
+        /*// == 알림 전송 ==
 
         // 대기요금 요청
         alarm.set_alarm(
@@ -336,28 +360,13 @@ router.post(
           alarm_kind.extra_payment,
           user_id,
           [result_extraCost.delayTime, result_extraCost.delayTimeCost]
-        );
-        // 동행상황 보고(알림)
-        alarm.set_alarm(
-          alarm_reciever.customer,
-          service_id,
-          alarm_kind.report_end,
-          user_id
-        );
+        );*/
 
-        res.status(200).send({ success: true, extraCost: extraCost });
+        res
+          .status(200)
+          .send({ success: true, extraCost: result_extraCost.TotalExtraCost });
       } else res.status(200).send({ success: true });
-=======
-        await connection.query(sql_pay_prog, [
-          reservation_state.complete,
-          next_pay_state,
-          service_id,
-        ]);
-        res.status(200).send({ success: true, extraCost: result_extraCost.TotalExtraCost });
-      }
-      else res.status(200).send({ success: true });
       await connection.commit();
->>>>>>> c1cee31d27b96ce51e57bff944cdb72749c8a8a8
     } catch (err) {
       await connection.rollback();
       logger.error(__filename + " : " + err);
