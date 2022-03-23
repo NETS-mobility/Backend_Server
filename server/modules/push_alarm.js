@@ -26,7 +26,6 @@ exports.pushAlarm = async function (
   push_alarm_title,
   device_token
 ) {
->>>>>>> Stashed changes
   const registrationToken = device_token;
 
   // 알림 setting
