@@ -20,9 +20,7 @@ admin.initializeApp({
     console.log("Error sending message:", error);
   });*/
 
-<<<<<<< Updated upstream
-exports.pushAlarm = async function (push_alarm_body, push_alarm_title, device_token) {
-=======
+
 exports.pushAlarm = async function (
   push_alarm_body,
   push_alarm_title,
