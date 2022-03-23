@@ -78,10 +78,6 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
   }
   let res = Object.values(sql_res[0]);
   let user_number = res[0].user_number;
-<<<<<<< HEAD
-  console.log(res[0]);
-  let device_token = res[0].user_device_token;
-=======
   let device_token = res[1].user_device_token;
 >>>>>>> 093144c79c50ff6fc9ddbafa04dd46455807c5f6
   alarm = new Alarm(user_number, reservation_id, alarm_kind, device_token);
