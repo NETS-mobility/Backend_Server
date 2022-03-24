@@ -11,12 +11,15 @@ const rev_state_msg = require("../../modules/reservation_state_msg");
 const extracost = require("../../modules/extracost");
 const case_finder = require("../../modules/dispatch_case_finder");
 const gowith_finder = require("../../modules/dispatch_isOverPoint_finder");
+const alarm = require("../../modules/setting_alarm");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
 const payment_state = require("../../config/payment_state");
 const uplPath = require("../../config/upload_path");
 const logger = require("../../config/logger");
+const alarm_reciever = require("../../config/push_alarm_reciever");
+const alarm_kind = require("../../config/alarm_kind");
 
 // ===== 서비스 목록 조회 =====
 router.post("/serviceList/:listType/:date", async function (req, res, next) {
@@ -35,7 +38,11 @@ router.post("/serviceList/:listType/:date", async function (req, res, next) {
   try {
     const targetDate = new Date(listDate);
     if (!(listType >= 0 && listType <= 1)) throw (err = 0);
-    if (listDate != "NONE" &&!(targetDate instanceof Date && !isNaN(targetDate))) throw (err = 0);
+    if (
+      listDate != "NONE" &&
+      !(targetDate instanceof Date && !isNaN(targetDate))
+    )
+      throw (err = 0);
 
     let param = [user_num];
     let sql1 =
@@ -76,7 +83,10 @@ router.post("/serviceList/:listType/:date", async function (req, res, next) {
       );
 
       // 배차 case 결정
-      data1[i].dispatch_case = case_finder(data1[i].move_direction_id, data1[i].gowith_hospital_time);
+      data1[i].dispatch_case = case_finder(
+        data1[i].move_direction_id,
+        data1[i].gowith_hospital_time
+      );
       data1[i].isOverPoint = gowith_finder(data1[i].gowith_hospital_time);
     }
 
@@ -127,8 +137,10 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       sstate_time = [];
       sstate_time[service_state.carDep] = data_prog[0].real_car_departure; // 차량출발
       sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
-      sstate_time[service_state.arrivalHos] = data_prog[0].real_hospital_arrival_time; // 병원도착
-      sstate_time[service_state.carReady] = data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
+      sstate_time[service_state.arrivalHos] =
+        data_prog[0].real_hospital_arrival_time; // 병원도착
+      sstate_time[service_state.carReady] =
+        data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
       sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
       sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
     }
@@ -151,8 +163,13 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     );
 
     // 배차 case 결정
-    data_service[0].dispatch_case = case_finder(data_service[0].move_direction_id, data_service[0].gowith_hospital_time);
-    data_service[0].isOverPoint = gowith_finder(data_service[0].gowith_hospital_time);
+    data_service[0].dispatch_case = case_finder(
+      data_service[0].move_direction_id,
+      data_service[0].gowith_hospital_time
+    );
+    data_service[0].isOverPoint = gowith_finder(
+      data_service[0].gowith_hospital_time
+    );
 
     // 서류 제출 판단
     const document_isSubmit = await evidence_checker(service_id);
@@ -193,10 +210,13 @@ router.post(
         sstate_time = [];
         sstate_time[service_state.carDep] = data_prog[0].real_car_departure; // 차량출발
         sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
-        sstate_time[service_state.arrivalHos] = data_prog[0].real_hospital_arrival_time; // 병원도착
-        sstate_time[service_state.carReady] = data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
+        sstate_time[service_state.arrivalHos] =
+          data_prog[0].real_hospital_arrival_time; // 병원도착
+        sstate_time[service_state.carReady] =
+          data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
         sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
-        sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
+        sstate_time[service_state.complete] =
+          data_prog[0].real_service_end_time; // 서비스종료
       }
 
       res.send({
@@ -237,7 +257,8 @@ router.post(
       const data_prog = result_prog[0];
       console.log("data_prog=", data_prog);
       let next_state = data_prog[0].service_state_id + 1;
-      if(next_state > service_state.complete) next_state = service_state.complete;
+      if (next_state > service_state.complete)
+        next_state = service_state.complete;
       console.log("next_state=", next_state);
 
       // 상태 설정
@@ -271,11 +292,29 @@ router.post(
       await connection.query(spl, [recode_date, next_state, service_id]);
 
       // 서비스 진행 중 설정
-      if (next_state == service_state.carDep)
-      {
+      if (next_state == service_state.carDep) {
         const sqln = `UPDATE reservation SET reservation_state_id=? WHERE reservation_id=?;`;
-        await connection.query(sqln, [reservation_state.inProgress,service_id]);
+        await connection.query(sqln, [
+          reservation_state.inProgress,
+          service_id,
+        ]);
       }
+
+      /*
+      const sql_alarm =
+        "select user_id as id from user as u join reservation as r on u.user_number = r.user_number " +
+        "where r.reservation_id =?;";
+      const alarm_res = await connection.query(sql_alarm, [service_id]);
+      const user_id = alarm_res[0].id;
+      console.log("userid =", user_id);
+
+      // 동행상황 보고(알림)
+      alarm.set_alarm(
+        alarm_reciever.customer,
+        service_id,
+        alarm_kind.report_end,
+        "A1@naver.com"
+      );*/
 
       // 서비스 종료 후 추가 요금 정보
       let next_pay_state;
@@ -294,8 +333,7 @@ router.post(
             result_extraCost.delayTime,
           ]);
           next_pay_state = payment_state.waitExtraPay;
-        }
-        else {
+        } else {
           next_pay_state = payment_state.completeAllPay;
         }
         const sql_pay_prog = `UPDATE reservation SET reservation_state_id=?, reservation_payment_state_id=? WHERE reservation_id=?;`;
@@ -304,9 +342,30 @@ router.post(
           next_pay_state,
           service_id,
         ]);
-        res.status(200).send({ success: true, extraCost: result_extraCost.TotalExtraCost });
-      }
-      else res.status(200).send({ success: true });
+
+        /*// == 알림 전송 ==
+
+        // 대기요금 요청
+        alarm.set_alarm(
+          alarm_reciever.customer,
+          service_id,
+          alarm_kind.waiting_payment,
+          user_id,
+          [alarm_res.real_hospital_gowith_time, result_extraCost.overGowithCost]
+        );
+        // 동행 추가요금 결제 요청
+        alarm.set_alarm(
+          alarm_reciever.customer,
+          service_id,
+          alarm_kind.extra_payment,
+          user_id,
+          [result_extraCost.delayTime, result_extraCost.delayTimeCost]
+        );*/
+
+        res
+          .status(200)
+          .send({ success: true, extraCost: result_extraCost.TotalExtraCost });
+      } else res.status(200).send({ success: true });
       await connection.commit();
     } catch (err) {
       await connection.rollback();

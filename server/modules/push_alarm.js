@@ -1,5 +1,6 @@
 // === push 알림 전송 ===
 const admin = require("firebase-admin");
+const logger = require("../config/logger");
 
 // SDK 초기화
 let serviceAccount = require("../config/nets-339714-firebase-adminsdk-w7rz6-cbc6b343db.json");
@@ -19,7 +20,6 @@ admin.initializeApp({
   .catch((error) => {
     console.log("Error sending message:", error);
   });*/
-
 
 exports.pushAlarm = async function (
   push_alarm_body,
@@ -48,10 +48,10 @@ exports.pushAlarm = async function (
     .messaging()
     .send(message)
     .then(function (response) {
-      console.log("successfully sent push message: ", response);
+      logger.info("successfully sent push message: ", response);
     })
     .catch(function (err) {
-      console.log("Error Sending Push Message!!: ", err);
+      logger.error("Error Sending Push Message!!: ", err);
     });
 };
 /////////////////////////////////////////

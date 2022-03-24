@@ -24,12 +24,11 @@ router.post("/alarmList/", async function (req, res, next) {
     let param = [manager_id];
 
     const sql =
-      "select *, m.`netsmanager_name` from `manager_alarm` as ma left join `netsmanager` as m on ma.`netsmanager_number` = m.`netsmanager_number` " +
+      "select ma.*, m.`netsmanager_name` from `manager_alarm` as ma left join `netsmanager` as m on ma.`netsmanager_number` = m.`netsmanager_number` " +
       "where m.netsmanager_id =? " +
-      "order by ma.`alarm_id` desc";
+      "order by ma.`alarm_id` desc;";
     const result = await connection.query(sql, param);
     const data = result[0];
-    connection.release();
 
     res.send(data);
   } catch (err) {

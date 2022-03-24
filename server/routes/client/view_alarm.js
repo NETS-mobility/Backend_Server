@@ -5,6 +5,7 @@ const logger = require("../../config/logger");
 
 const jwt = require("../../modules/jwt");
 const pool2 = require("../../modules/mysql2");
+const alarm = require("../../modules/setting_alarm");
 
 // ===== 알람 조회 =====
 router.post("/alarmList/", async function (req, res, next) {
@@ -22,12 +23,13 @@ router.post("/alarmList/", async function (req, res, next) {
     let param = [user_id];
 
     const sql =
-      "select *, u.`user_name` from `customer_alarm` as ca left join `user` as u on ca.`user_number` = u.`user_number` " +
+      "select ca.*, u.`user_name` from `customer_alarm` as ca left join `user` as u on ca.`user_number` = u.`user_number`" +
       "where u.user_id =? " +
       "order by ca.`alarm_id` desc";
     const result = await connection.query(sql, param);
     const data = result[0];
-    connection.release();
+
+    alarm.set_alarm(1, 220107000001, 1, user_id);
 
     res.send(data);
   } catch (err) {
