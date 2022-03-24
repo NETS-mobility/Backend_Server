@@ -18,6 +18,7 @@ const payment_state = require("../config/payment_state");
 const reciever_kind = require("../config/push_alarm_reciever");
 const logger = require("../config/logger");
 const alarm_kind = require("../config/alarm_kind");
+const service_state = require("../config/service_state");
 
 //const cron = require("node-cron");
 const push_alarm = require("./push_alarm");
@@ -92,7 +93,7 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
     let res = Object.values(sql_res[0]);
     user_number = res[0].user_number;
     device_token = res[0].user_device_token;
-  } else {
+  } else if (reciever == reciever_kind.manager) {
     // netsmanager_number, device token 추출
     sql =
       "select netsmanager_number, netsmanager_device_token from netsmanager where netsmanager_id =?";
@@ -101,7 +102,6 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
     user_number = res[0].netsmanager_number;
     device_token = res[0].netsmanager_device_token;
   }
-
   alarm = new Alarm(user_number, reservation_id, alarm_kind, device_token);
 
   try {
@@ -280,20 +280,37 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
           );
 
           alarm.set_push("예약 확정", "네츠 예약이 확정되었습니다.");
+
+          // 하루전에 방문 예정 알림 전송
+          let alarm_day = new Date(year, month, day - 1, hour, min, sec);
+
+          var j = schedule.scheduleJob(alarm_day, function () {
+            set_alarm(
+              reciever_kind.manager,
+              reservation_id,
+              alarm_kind_number.visit,
+              user_id
+            );
+            // 알림 취소 원할 경우 j.cancel(); 입력
+          });
         }
         break;
       // 방문 예정
       case alarm_kind_number.visit:
         {
           let sql =
-            "select m.netsmanager_name " +
-            "from car_dispatch as cd inner join reservation as r inner join netsmanager as m " +
-            "where cd.reservation_id = r.reservation_id and m.netsmanager_number = cd.netsmanager_number and " +
-            "r.reservation_id = ?";
+            "select m.`netsmanager_name`, cd.`expect_car_pickup_time` " +
+            "from `car_dispatch` as cd inner join `reservation` as r inner join `netsmanager` as m " +
+            "where cd.`reservation_id` = r.`reservation_id` and m.`netsmanager_number` = cd.`netsmanager_number` and " +
+            "r.`reservation_id` = ?";
 
-          let netsmanager_name = await connection1.query(sql, [reservation_id]);
-          netsmanager_name = util.inspect(netsmanager_name[0]);
-          netsmanager_name = netsmanager_name.substr(23, 3);
+          let sql_res = await connection1.query(sql, [reservation_id]);
+
+          let res = Object.values(sql_res[0][0]);
+          netsmanager_name = res[0];
+          pickup_time = res[1];
+
+          console.log(pickup_time);
 
           alarm.set_context(
             "네츠매니저 " +
@@ -385,12 +402,12 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
                 netsmanager_name
             );
           } catch (err) {
-            console.log("ALARM Error!!(delay_over_20min)");
+            logger.err("ALARM Error!!(delay_over_20min)");
           } finally {
-            alarm.set_push(
+            /*alarm.set_push(
               "지연 알림",
               "네츠 차량 픽업이 20분이상 지연되었습니다."
-            );
+            );*/
           }
         }
         break;
@@ -642,11 +659,13 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
         logger.error("alarm setting err : " + err);
       } finally {
         // push 알림
-        push_alarm.pushAlarm(
-          alarm.push_text,
-          alarm.push_title,
-          alarm.device_token
-        );
+        if (alarm.push_text != null) {
+          push_alarm.pushAlarm(
+            alarm.push_text,
+            alarm.push_title,
+            alarm.device_token
+          );
+        }
 
         connection1.release();
         return alarm;
