@@ -42,8 +42,6 @@ router.post("/service", async function (req, res, next) {
     const result4_2 = await connection.query(sql4_2, [start, end]);
     const data4_2 = result4_2[0];
     if (data4_2[0].sales === null) data4_2[0].sales = 0;
-    console.log(data4_1[0].sales);
-    console.log(data4_2[0].sales);
 
     const sql5 =
       "select count(*) as `cnt` from `user` where `user_join_date`>=? and `user_join_date`<=?;";
