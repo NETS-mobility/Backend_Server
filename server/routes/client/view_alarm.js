@@ -29,8 +29,6 @@ router.post("/alarmList/", async function (req, res, next) {
     const result = await connection.query(sql, param);
     const data = result[0];
 
-    alarm.set_alarm(1, 220107000001, 1, user_id);
-
     res.send(data);
   } catch (err) {
     logger.error(__filename + " : " + err);
