@@ -12,6 +12,7 @@ const extracost = require("../../modules/extracost");
 const case_finder = require("../../modules/dispatch_case_finder");
 const gowith_finder = require("../../modules/dispatch_isOverPoint_finder");
 const alarm = require("../../modules/setting_alarm");
+const { checking_over_20min } = require("../../modules/time_alarm");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
@@ -218,7 +219,9 @@ router.post(
         sstate_time[service_state.complete] =
           data_prog[0].real_service_end_time; // 서비스종료
       }
-
+      if (sstate == service_state.carDep) {
+        checking_over_20min(service_id);
+      }
       res.send({
         service_state: sstate,
         service_state_time: sstate_time,
