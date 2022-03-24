@@ -23,7 +23,7 @@ router.post("/alarmList/", async function (req, res, next) {
     let param = [user_id];
 
     const sql =
-      "select *, u.`user_name` from `customer_alarm` as ca left join `user` as u on ca.`user_number` = u.`user_number` " +
+      "select ca.*, u.`user_name` from `customer_alarm` as ca left join `user` as u on ca.`user_number` = u.`user_number`" +
       "where u.user_id =? " +
       "order by ca.`alarm_id` desc";
     const result = await connection.query(sql, param);
