@@ -67,7 +67,7 @@ router.post("/serviceList/:listType/:date", async function (req, res, next) {
     // reservation_state 결정
     for (let i = 0; i < data1.length; i++) {
       const sqlm =
-        "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
+        "select * from `extra_payment` where `payment_state_id`=1 and `reservation_id`=?;";
       const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
       const isNeedExtraPay = sqlmr[0].length > 0;
       data1[i].reservation_state = rev_state_msg(
@@ -142,7 +142,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
 
     // 결제 구하기
     const sqlm =
-      "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
+      "select * from `extra_payment` where `payment_state_id`=1 and `reservation_id`=?;";
     const sqlmr = await connection.query(sqlm, [service_id]);
     const isNeedExtraPay = sqlmr[0].length > 0;
     data_service[0].reservation_state = rev_state_msg(

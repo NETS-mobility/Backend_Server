@@ -128,7 +128,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
 
     // 결제
     const sqlm =
-      "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
+      "select * from `extra_payment` where `payment_state_id`=1 and `reservation_id`=?;";
     const sqlmr = await connection.query(sqlm, [service_id]);
     const isNeedExtraPay = sqlmr[0].length > 0;
     data_service[0].reservation_state = rev_state_msg(
@@ -137,7 +137,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     );
 
     const sqlm2 =
-      "select `payment_method`, `payment_amount` from `payment` where `payment_type`=1 and `reservation_id`=?;";
+      "select `payment_method`, `payment_amount` from `base_payment` where `reservation_id`=?;";
     const sqlmr2 = await connection.query(sqlm2, [service_id]);
     let payMethod = "";
     let payCost = 0;

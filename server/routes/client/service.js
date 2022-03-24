@@ -17,24 +17,18 @@ router.post("/serviceList/:listType", async function (req, res, next) {
   const token = req.body.jwtToken;
   const listType = req.params.listType;
 
-  console.log("token==", token);
-  console.log("listType==", listType);
-
   const token_res = await jwt.verify(token);
-  console.log("token_res==", token_res);
   if (token_res == jwt.TOKEN_EXPIRED)
     return res.status(401).send({ err: "만료된 토큰입니다." });
   if (token_res == jwt.TOKEN_INVALID)
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
   const user_num = token_res.num;
-  console.log("user_num==", user_num);
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     if (!(listType >= 0 && listType <= 1)) throw (err = 0);
 
     let param = [user_num];
-    console.log("param==", param);
     let sql1 =
       "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address`, `drop_address`, " +
       "`hospital_address` as `hos_address`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " +
@@ -50,13 +44,10 @@ router.post("/serviceList/:listType", async function (req, res, next) {
       sql1 += "and `reservation_state_id`=? ";
       param.push(reservation_state.complete);
     }
-    console.log("sql1 after concat==", sql1);
-    console.log("param after push==", param);
 
     sql1 += "order by `rev_date`, `pickup_time`;";
     const result1 = await connection.query(sql1, param);
     const data1 = result1[0];
-    console.log("data1 (sql1)", data1);
 
     // 매니저 & 차량 구하기
     for (let i = 0; i < data1.length; i++) {
@@ -67,12 +58,11 @@ router.post("/serviceList/:listType", async function (req, res, next) {
       const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
       data1[i].dispatch = sqlmr[0];
     }
-    console.log("data1 (sqlm)", data1);
 
     // reservation_state 결정
     for (let i = 0; i < data1.length; i++) {
       const sqlm =
-        "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
+        "select * from `extra_payment` where `payment_state_id`=1 and `reservation_id`=?;";
       const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
       const isNeedExtraPay = sqlmr[0].length > 0;
       data1[i].reservation_state = rev_state_msg(
@@ -87,7 +77,6 @@ router.post("/serviceList/:listType", async function (req, res, next) {
       );
       data1[i].isOverPoint = gowith_finder(data1[i].gowith_hospital_time);
     }
-    console.log("data1 (sqlmr)", data1);
 
     res.send(data1);
   } catch (err) {
@@ -156,13 +145,13 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
 
     // 결제 정보
     const sqlp =
-      "select `payment_amount` as `cost` from `payment` where  `reservation_id`=? order by `payment_type`;";
+      "select `payment_amount` as `cost` from `base_payment` where  `reservation_id`=?;";
     const sqlpr = await connection.query(sqlp, [service_id]);
     const sqlpd = sqlpr[0];
 
     // reservation_state 결정
     const sqlm =
-      "select * from `payment` where `payment_type`=2 and `payment_state_id`=1 and `reservation_id`=?;";
+      "select * from `extra_payment` where `payment_state_id`=1 and `reservation_id`=?;";
     const sqlmr = await connection.query(sqlm, [service_id]);
     const isNeedExtraPay = sqlmr[0].length > 0;
     data_service[0].reservation_state = rev_state_msg(
