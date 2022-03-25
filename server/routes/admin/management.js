@@ -139,7 +139,7 @@ router.post("/manager/detail", async function (req, res, next) {
     const sql4 =
       "select C.`car_dispatch_number` as `dispatch_id`, C.`reservation_id`, S.`service_kind` as `service_type`, `expect_car_pickup_time` as `start_time`, `expect_car_terminate_service_time` as `end_time`, U.`user_name` as `customer_name`" +
       "from `car_dispatch` as C, `reservation` as R, `service_info` as S, `user` as U " +
-      "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number` and `expect_pickup_time` >= ? " +
+      "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number` and `hope_reservation_date` >= ? " +
       "order by `start_time`;";
     const result4 = await connection.query(sql4, [number, now]);
     const data4 = result4[0];

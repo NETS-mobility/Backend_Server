@@ -312,7 +312,7 @@ router.post("/vacation/register", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 = "insert into `manager_holiday` values (?,?,?,0);";
-    await connection.query(sql1, [id, start, end]);
+    await connection.query(sql1, [user_num, start, end]);
     res.status(200).send();
   } catch (err) {
     logger.error(__filename + " : " + err);
