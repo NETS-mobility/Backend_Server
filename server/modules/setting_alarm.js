@@ -75,7 +75,7 @@ async function payment_alarm_later(
 ) {
   const connection1 = await pool2.getConnection(async (conn) => conn);
   let sql_cron =
-    "select `payment_state_id` from `payment` where `reservation_id` =?"; //
+    "select `payment_state_id` from `base_payment` where `reservation_id` =?"; //
   const sql_cron_res = await connection1.query(sql_cron, [reservation_id]);
   res = Object.values(sql_cron_res[0][0]);
   if (res[0] == payment_state.waitBasePay)
