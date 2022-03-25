@@ -201,7 +201,7 @@ router.post("/manager/detail/addCertificate", async function (req, res, next) {
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
-    const spl = "insert into `manager_certificate` values (?,?,?,?,?);";
+    const spl = "insert into `manager_certificate`(`netsmanager_number`, `netsmanager_certificate_name`, `netsmanager_certificate_number`, `certificate_obtention_date`, `certiicate_expiration_date`) values (?,?,?,?,?);";
     await connection.query(spl, [
       number,
       cert_name,
