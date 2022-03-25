@@ -27,7 +27,7 @@ router.post(
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
       const targetDate = new Date(listDate);
-      if (!(listType >= 0 && listType <= 2)) throw (err = 0);
+      if (!(listType >= 0 && listType <= 3)) throw (err = 0);
       if (
         listDate != "NONE" &&
         !(targetDate instanceof Date && !isNaN(targetDate))
@@ -39,10 +39,9 @@ router.post(
         "select cast(`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date` " +
         "from `reservation` where `reservation_state_id`=? ";
 
-      if (listType == 0) param.push(reservation_state.ready);
-      // 운행 전
-      else if (listType == 1) param.push(reservation_state.inProgress);
-      // 운행 시작
+      if (listType == 0) param.push(reservation_state.new); // 결제 전
+      if (listType == 1) param.push(reservation_state.ready); // 운행 전
+      else if (listType == 2) param.push(reservation_state.inProgress); // 운행 시작
       else param.push(reservation_state.complete); // 운행 종료
 
       if (listDate != "NONE") {
