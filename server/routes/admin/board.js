@@ -6,6 +6,7 @@ const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const token_checker = require("../../modules/admin_token");
 const upload = require("../../modules/fileupload");
+const date_to_string = require("../../modules/date_to_string");
 const uplPath = require("../../config/upload_path");
 const logger = require("../../config/logger");
 
@@ -70,7 +71,7 @@ router.post("/manager/write", async function (req, res, next) {
       const token_res = await jwt.verify(jwtToken);
       const writer_id = token_res.num;
 
-      const now = new Date();
+      const now = date_to_string(new Date());
       const sql1 =
         "insert into `manager_notice` (`post_title`,`post_writer_id`,`post_content`,`post_date`,`view_number`,`is_end_post`,`admin_number`) values(?,?,?,?,0,0,?);";
       const result1 = await connection.query(sql1, [
@@ -290,7 +291,7 @@ router.post("/customer/write", async function (req, res, next) {
       const token_res = await jwt.verify(jwtToken);
       const writer_id = token_res.num;
 
-      const now = new Date();
+      const now = date_to_string(new Date());
       const sql1 =
         "insert into `customer_notice` (`post_title`,`post_writer_id`,`post_content`,`post_date`,`view_number`,`is_end_post`,`admin_number`) values(?,?,?,?,0,0,?);";
       const result1 = await connection.query(sql1, [

@@ -229,14 +229,7 @@ router.post(
       if (data_date.length == 0) throw (err = 0);
 
       // 매니저 구하기 (승인된 휴가 날짜가 예약날짜를 포함하는 매니저 필터링)
-      const revDate_obj = new Date(data_date[0].hope_reservation_date);
-      const revDate =
-        "" +
-        revDate_obj.getFullYear() +
-        "-" +
-        (revDate_obj.getMonth() + 1) +
-        "-" +
-        revDate_obj.getDate();
+      const revDate = data_date[0].hope_reservation_date;
       const sql_man =
         "select `netsmanager_name` as `name`, `netsmanager_id` as `id`, `netsmanager_number` as `number` from `netsmanager` as M where " +
         "not exists (select * from `manager_holiday` as H where M.`netsmanager_number`=H.`netsmanager_number` and `holiday_certified`=1 and `start_holiday_date`<=? and `end_holiday_date`>=?);";

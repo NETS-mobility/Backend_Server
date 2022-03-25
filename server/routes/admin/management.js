@@ -4,6 +4,7 @@ const router = express.Router();
 const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const token_checker = require("../../modules/admin_token");
+const date_to_string = require("../../modules/date_to_string");
 const upload = require("../../modules/fileupload");
 const bcrypt = require("bcryptjs");
 
@@ -135,7 +136,7 @@ router.post("/manager/detail", async function (req, res, next) {
     const result3 = await connection.query(sql3, [number]);
     const data3 = result3[0];
 
-    const now = new Date();
+    const now = date_to_string(new Date());
     const sql4 =
       "select C.`car_dispatch_number` as `dispatch_id`, C.`reservation_id`, S.`service_kind` as `service_type`, `expect_car_pickup_time` as `start_time`, `expect_car_terminate_service_time` as `end_time`, U.`user_name` as `customer_name`" +
       "from `car_dispatch` as C, `reservation` as R, `service_info` as S, `user` as U " +
@@ -403,7 +404,7 @@ router.post(
 
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
-      const now = new Date();
+      const now = date_to_string(new Date());
       const hashedPW = await bcrypt.hash(password, saltRounds);
 
       const spl =
@@ -499,7 +500,7 @@ router.post("/car/addCar", async function (req, res, next) {
       await connection.query(sql2, [garage_address, garage_x, garage_y]);
     }
 
-    const now = new Date();
+    const now = date_to_string(new Date());
     const sql3 =
       "insert into `car` (`car_number`,`car_kind`,`netsmanager_number`,`garage_detail_address`,`car_joined_date`,`car_state_id`) values(?,?,?,?,?,1);";
     await connection.query(sql3, [
