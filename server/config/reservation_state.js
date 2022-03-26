@@ -7,5 +7,5 @@ module.exports = {
   inProgress: 2,    // 서비스 진행 중
   complete: 3,      // 서비스 완료
   waitCancelled: 4, // 예약 취소 대기
-  Cancelled: 5,     // 예약 취소 완료
+  cancelled: 5,     // 예약 취소 완료
 };
