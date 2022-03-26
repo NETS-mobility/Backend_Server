@@ -6,6 +6,8 @@ const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const formatdate = require("../../modules/formatdate");
 
+const reservation_payment_state = require("../../config/reservation_payment_state");
+const payment_state = require("../../config/payment_state");
 const logger = require("../../config/logger");
 
 // ===== 회사은행정보 조회 =====
@@ -50,6 +52,8 @@ router.post("/payBaseCost", async function (req, res, next) {
   try {
     const sql1 = `UPDATE base_payment SET payment_state_id=?, payment_method=?, bank_name=?,
                   submit_payment_date=?, valid_payment_date=? WHERE reservation_id=?;`;
+
+    const sql2 = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
     
     const now = new Date(); // 오늘
     const submitDate = formatdate.getFormatDate(new Date(), 1); // 날짜,시간
@@ -58,13 +62,19 @@ router.post("/payBaseCost", async function (req, res, next) {
     validDate = validDate + " 11:59:59";
 
     const result1 = await connection.query(sql1, [
-      2, // 무통장입금 승인 대기
+      payment_state.waitDepositPay,
       "무통장입금",
       bankName,
       submitDate,
       validDate,
       reservationId,
     ]);
+    
+    const result2 = await connection.query(sql2, [
+      reservation_payment_state.waitBaseDepositPay,
+      reservationId,
+    ]);
+
     res.status(200).send({ success: true });
   } catch (err) {
     logger.error(__filename + " : " + err);
@@ -92,6 +102,8 @@ router.post("/payExtraCost", async function (req, res, next) {
     const sql1 = `UPDATE extra_payment SET payment_state_id=?, payment_method=?, bank_name=?,
                   submit_payment_date=?, valid_payment_date=? WHERE reservation_id=?;`;
 
+    const sql2 = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
+
     const now = new Date(); // 오늘
     const submitDate = formatdate.getFormatDate(new Date(), 1); // 날짜,시간
     let validDate = new Date(now.setDate(now.getDate() + 1)); // 내일
@@ -99,13 +111,19 @@ router.post("/payExtraCost", async function (req, res, next) {
     validDate = validDate + " 11:59:59";
     
     const result1 = await connection.query(sql1, [
-      2, // 무통장입금 승인 대기
+      payment_state.waitDepositPay,
       "무통장입금",
       bankName,
       submitDate,
       validDate,
       reservationId,
     ]);
+
+    const result2 = await connection.query(sql2, [
+      reservation_payment_state.waitExtraDepositPay,
+      reservationId,
+    ]);
+
     res.status(200).send({ success: true });
   } catch (err) {
     logger.error(__filename + " : " + err);
