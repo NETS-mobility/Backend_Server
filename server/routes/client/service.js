@@ -96,7 +96,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
   try {
     // 서비스 정보
     const sql_service =
-      "select cast(`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address` as `pickup_address`, `hospital_address` as `hos_address`, `drop_address`, " +
+      "select cast(`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date`, `pickup_address` as `pickup_address`, `hospital_address` as `hos_address`, `drop_address`, `reservation_payment_state_id`, " +
       "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time` " +
       "from `reservation` where `reservation_id`=?;";
     const result_service = await connection.query(sql_service, [service_id]);
@@ -154,6 +154,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       "select * from `extra_payment` where `payment_state_id`=1 and `reservation_id`=?;";
     const sqlmr = await connection.query(sqlm, [service_id]);
     const isNeedExtraPay = sqlmr[0].length > 0;
+    data_service[0].reservation_state_id = data_service[0].reservation_state; // 기존 reservation_state_id
     data_service[0].reservation_state = rev_state_msg(
       data_service[0].reservation_state,
       isNeedExtraPay
