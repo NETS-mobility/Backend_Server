@@ -32,7 +32,7 @@ router.post("/baseCostDetail", async function (req, res, next) {
     const sql_data1 = result1[0];
 
     if (sql_data1.length == 0)
-      res.status(200).send({ msg: "해당하는 예약이 존재하지 않음" });
+      res.status(204).send({ msg: "해당하는 예약이 존재하지 않음" });
     else
       res.status(200).send({
         paymentState: sql_data1[0].payment_state_id,
@@ -79,7 +79,7 @@ router.post("/extraCostDetail", async function (req, res, next) {
     const sql_data1 = result1[0];
 
     if (sql_data1.length == 0)
-      res.status(200).send({ msg: "해당하는 예약이 존재하지 않음" });
+      res.status(204).send({ msg: "해당하는 예약이 존재하지 않음" });
     else
       res.status(200).send({
         paymentState: sql_data1[0].payment_state_id,
