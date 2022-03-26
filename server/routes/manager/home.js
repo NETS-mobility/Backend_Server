@@ -6,6 +6,7 @@ const jwt = require("../../modules/jwt");
 const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const date_to_string = require("../../modules/date_to_string");
+const payment_state = require("../../config/payment_state");
 
 // ===== 홈페이지 =====
 router.post("", async function (req, res, next) {
@@ -26,9 +27,9 @@ router.post("", async function (req, res, next) {
       "select distinct S.`service_kind` as `service_type`, cast(C.`expect_car_pickup_time` as time) as `pickup_time`, `hope_reservation_date` as `rev_date`, C.`departure_address`, cast(R.`reservation_id` as char) as `id` " +
       "from `car_dispatch` as C, `reservation` as R, `service_info` as S " +
       "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`hope_reservation_date`=? and R.`reservation_state_id`>=1 " +
-      "and exists(select * from `base_payment` as P where `payment_state_id`=2 and R.`reservation_id`=P.`reservation_id`) " + 
+      "and exists(select * from `base_payment` as P where `payment_state_id`=? and R.`reservation_id`=P.`reservation_id`) " + 
       "order by `pickup_time`;";
-    const sql_result = await connection.query(sql, [user_num, now]);
+    const sql_result = await connection.query(sql, [user_num, now, payment_state.completePay]);
     const sql_data = sql_result[0];
     res.send({
       name: user_name,

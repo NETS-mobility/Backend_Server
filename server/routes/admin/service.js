@@ -10,6 +10,7 @@ const gowith_finder = require("../../modules/dispatch_isOverPoint_finder");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
+const payment_state = require("../../config/payment_state");
 const rev_state_msg = require("../../modules/reservation_state_msg");
 const logger = require("../../config/logger");
 
@@ -127,8 +128,8 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
 
     // 결제
     const sqlm =
-      "select * from `extra_payment` where `payment_state_id`=1 and `reservation_id`=?;";
-    const sqlmr = await connection.query(sqlm, [service_id]);
+      "select * from `extra_payment` where `payment_state_id`=? and `reservation_id`=?;";
+    const sqlmr = await connection.query(sqlm, [payment_state.waitPay, service_id]);
     const isNeedExtraPay = sqlmr[0].length > 0;
     data_service[0].reservation_state = rev_state_msg(
       data_service[0].reservation_state,

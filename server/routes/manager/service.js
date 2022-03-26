@@ -17,7 +17,8 @@ const { checking_over_20min } = require("../../modules/time_alarm");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
-const payment_state = require("../../config/reservation_payment_state");
+const payment_state = require("../../config/payment_state");
+const reservation_payment_state = require("../../config/reservation_payment_state");
 const uplPath = require("../../config/upload_path");
 const logger = require("../../config/logger");
 const alarm_reciever = require("../../config/push_alarm_reciever");
@@ -76,8 +77,8 @@ router.post("/serviceList/:listType/:date", async function (req, res, next) {
     // reservation_state 결정
     for (let i = 0; i < data1.length; i++) {
       const sqlm =
-        "select * from `extra_payment` where `payment_state_id`=1 and `reservation_id`=?;";
-      const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
+        "select * from `extra_payment` where `payment_state_id`=? and `reservation_id`=?;";
+      const sqlmr = await connection.query(sqlm, [payment_state.waitPay, data1[i].service_id]);
       const isNeedExtraPay = sqlmr[0].length > 0;
       data1[i].reservation_state = rev_state_msg(
         data1[i].reservation_state,
@@ -156,8 +157,8 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
 
     // 결제 구하기
     const sqlm =
-      "select * from `extra_payment` where `payment_state_id`=1 and `reservation_id`=?;";
-    const sqlmr = await connection.query(sqlm, [service_id]);
+      "select * from `extra_payment` where `payment_state_id`=? and `reservation_id`=?;";
+    const sqlmr = await connection.query(sqlm, [payment_state.waitPay, service_id]);
     const isNeedExtraPay = sqlmr[0].length > 0;
     data_service[0].reservation_state = rev_state_msg(
       data_service[0].reservation_state,
@@ -339,9 +340,9 @@ router.post(
             result_extraCost.delayTimeCost,
             result_extraCost.delayTime,
           ]);
-          next_pay_state = payment_state.waitExtraPay;
+          next_pay_state = reservation_payment_state.waitExtraPay;
         } else {
-          next_pay_state = payment_state.completeAllPay;
+          next_pay_state = reservation_payment_state.completeAllPay;
         }
         const sql_pay_prog = `UPDATE reservation SET reservation_state_id=?, reservation_payment_state_id=? WHERE reservation_id=?;`;
         await connection.query(sql_pay_prog, [

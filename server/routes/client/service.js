@@ -7,6 +7,7 @@ const pool2 = require("../../modules/mysql2");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
+const payment_state = require("../../config/payment_state");
 const rev_state_msg = require("../../modules/reservation_state_msg");
 const case_finder = require("../../modules/dispatch_case_finder");
 const gowith_finder = require("../../modules/dispatch_isOverPoint_finder");
@@ -62,8 +63,8 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     // reservation_state 결정
     for (let i = 0; i < data1.length; i++) {
       const sqlm =
-        "select * from `extra_payment` where `payment_state_id`=1 and `reservation_id`=?;";
-      const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
+        "select * from `extra_payment` where `payment_state_id`=? and `reservation_id`=?;";
+      const sqlmr = await connection.query(sqlm, [payment_state.waitPay, data1[i].service_id]);
       const isNeedExtraPay = sqlmr[0].length > 0;
       data1[i].reservation_state = rev_state_msg(
         data1[i].reservation_state,
@@ -151,8 +152,8 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
 
     // reservation_state 결정
     const sqlm =
-      "select * from `extra_payment` where `payment_state_id`=1 and `reservation_id`=?;";
-    const sqlmr = await connection.query(sqlm, [service_id]);
+      "select * from `extra_payment` where `payment_state_id`=? and `reservation_id`=?;";
+    const sqlmr = await connection.query(sqlm, [payment_state.waitPay, service_id]);
     const isNeedExtraPay = sqlmr[0].length > 0;
     data_service[0].reservation_state_id = data_service[0].reservation_state; // 기존 reservation_state_id
     data_service[0].reservation_state = rev_state_msg(

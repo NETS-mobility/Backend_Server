@@ -156,9 +156,4 @@ router.post("/changePw", async function (req, res, next) {
   }
 });
 
-// ===== 마이페이지 FAQ =====
-// ===== 마이페이지 공지사항 =====
-// ===== 마이페이지 예약변경 및 취소 수수료 안내 =====
-// ===== 마이페이지 약관 상세 확인 =====
-
 module.exports = router;
