@@ -17,7 +17,7 @@ const { checking_over_20min } = require("../../modules/time_alarm");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
-const payment_state = require("../../config/reservation_payment_state");
+const payment_state = require("../../config/payment_state");
 const uplPath = require("../../config/upload_path");
 const logger = require("../../config/logger");
 const alarm_reciever = require("../../config/push_alarm_reciever");
