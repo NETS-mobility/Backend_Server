@@ -5,6 +5,7 @@ const router = express.Router();
 const jwt = require("../../modules/jwt");
 const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
+const date_to_string = require("../../modules/date_to_string");
 const evidence_checker = require("../../modules/user_evidence_check");
 const upload = require("../../modules/fileupload");
 const rev_state_msg = require("../../modules/reservation_state_msg");
@@ -136,7 +137,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     if (data_prog.length > 0) {
       sstate = data_prog[0].service_state_id;
       sstate_time = [];
-      sstate_time[service_state.carDep] = data_prog[0].real_car_departure; // 차량출발
+      sstate_time[service_state.carDep] = data_prog[0].real_car_departure_time; // 차량출발
       sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
       sstate_time[service_state.arrivalHos] =
         data_prog[0].real_hospital_arrival_time; // 병원도착
@@ -209,7 +210,7 @@ router.post(
       if (data_prog.length > 0) {
         sstate = data_prog[0].service_state_id;
         sstate_time = [];
-        sstate_time[service_state.carDep] = data_prog[0].real_car_departure; // 차량출발
+        sstate_time[service_state.carDep] = data_prog[0].real_car_departure_time; // 차량출발
         sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
         sstate_time[service_state.arrivalHos] =
           data_prog[0].real_hospital_arrival_time; // 병원도착
@@ -241,11 +242,14 @@ router.post(
   async function (req, res, next) {
     const service_id = req.params.service_id;
     const recodeTime = req.body.recodeTime;
+    const rh = recodeTime.hours;
+    const rm = recodeTime.minutes;
 
-    const recode_date = new Date();
-    recode_date.setHours(recodeTime.hours);
-    recode_date.setMinutes(recodeTime.minutes);
-    recode_date.setSeconds(0);
+    let recode_date = date_to_string(new Date()).substr(0, 10) + " ";
+    recode_date += (rh >= 10) ? rh : "0" + rh;
+    recode_date += ":";
+    recode_date += (rm >= 10) ? rm : "0" + rm;
+    recode_date += ":00";
 
     let result_extraCost; // 추가요금 계산 결과
 

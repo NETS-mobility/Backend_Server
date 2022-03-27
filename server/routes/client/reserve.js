@@ -102,11 +102,11 @@ router.post(
       // 예약 번호
       reservationId = Number(
         now.substring(2, 4) +
-          now.substring(5, 7) +
-          now.substring(8, 10) +
-          now.substring(11, 13) +
-          now.substring(14, 16) +
-          now.substring(17)
+        now.substring(5, 7) +
+        now.substring(8, 10) +
+        now.substring(11, 13) +
+        now.substring(14, 16) +
+        now.substring(17)
       );
 
       // 예약 정보 저장

@@ -27,7 +27,7 @@ router.post(
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
       const targetDate = new Date(listDate);
-      if (!(listType >= 0 && listType <= 2)) throw (err = 0);
+      if (!(listType >= 0 && listType <= 3)) throw (err = 0);
       if (
         listDate != "NONE" &&
         !(targetDate instanceof Date && !isNaN(targetDate))
@@ -39,10 +39,9 @@ router.post(
         "select cast(`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `hope_reservation_date` as `rev_date` " +
         "from `reservation` where `reservation_state_id`=? ";
 
-      if (listType == 0) param.push(reservation_state.ready);
-      // 운행 전
-      else if (listType == 1) param.push(reservation_state.inProgress);
-      // 운행 시작
+      if (listType == 0) param.push(reservation_state.new); // 결제 전
+      if (listType == 1) param.push(reservation_state.ready); // 운행 전
+      else if (listType == 2) param.push(reservation_state.inProgress); // 운행 시작
       else param.push(reservation_state.complete); // 운행 종료
 
       if (listDate != "NONE") {
@@ -108,7 +107,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     if (data_prog.length > 0) {
       sstate = data_prog[0].service_state_id;
       sstate_time = [];
-      sstate_time[service_state.carDep] = data_prog[0].real_car_departure; // 차량출발
+      sstate_time[service_state.carDep] = data_prog[0].real_car_departure_time; // 차량출발
       sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
       sstate_time[service_state.arrivalHos] =
         data_prog[0].real_hospital_arrival_time; // 병원도착
@@ -195,7 +194,7 @@ router.post(
       ];
 
       const spl =
-        "update `service_progress` set `real_car_departure`=?, `real_pickup_time`=?, `real_hospital_arrival_time`=?, `real_return_hospital_arrival_time`=?, " +
+        "update `service_progress` set `real_car_departure_time`=?, `real_pickup_time`=?, `real_hospital_arrival_time`=?, `real_return_hospital_arrival_time`=?, " +
         "`real_return_start_time`=?, `real_service_end_time`=?, `service_state_id`=? where `reservation_id`=?;";
       const result = await connection.query(spl, param);
       if (result[0].affectedRows == 0) throw (err = 0);
@@ -230,14 +229,7 @@ router.post(
       if (data_date.length == 0) throw (err = 0);
 
       // 매니저 구하기 (승인된 휴가 날짜가 예약날짜를 포함하는 매니저 필터링)
-      const revDate_obj = new Date(data_date[0].hope_reservation_date);
-      const revDate =
-        "" +
-        revDate_obj.getFullYear() +
-        "-" +
-        (revDate_obj.getMonth() + 1) +
-        "-" +
-        revDate_obj.getDate();
+      const revDate = data_date[0].hope_reservation_date;
       const sql_man =
         "select `netsmanager_name` as `name`, `netsmanager_id` as `id`, `netsmanager_number` as `number` from `netsmanager` as M where " +
         "not exists (select * from `manager_holiday` as H where M.`netsmanager_number`=H.`netsmanager_number` and `holiday_certified`=1 and `start_holiday_date`<=? and `end_holiday_date`>=?);";
