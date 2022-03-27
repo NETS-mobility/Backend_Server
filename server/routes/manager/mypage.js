@@ -105,8 +105,14 @@ router.post(
   "/changeInfo/UploadProfile",
   upload(uplPath.manager_picture).single("file"),
   async function (req, res, next) {
+    console.log("req==", req);
     const file = req.file;
+    console.log("file==", file);
     const token = JSON.parse(req.body.json).jwtToken;
+    console.log("req.body==", req.body);
+    console.log("req.body.json==", req.body.json);
+    console.log("JSON.parse(req.body.json)==", JSON.parse(req.body.json));
+    console.log("token==", token);
     if (file === undefined)
       return res.status(400).send({ err: "파일이 업로드되지 않았습니다." });
 
