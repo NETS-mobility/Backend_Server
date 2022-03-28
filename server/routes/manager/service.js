@@ -138,7 +138,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     if (data_prog.length > 0) {
       sstate = data_prog[0].service_state_id;
       sstate_time = [];
-      sstate_time[service_state.carDep] = data_prog[0].real_car_departure; // 차량출발
+      sstate_time[service_state.carDep] = data_prog[0].real_car_departure_time; // 차량출발
       sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
       sstate_time[service_state.arrivalHos] =
         data_prog[0].real_hospital_arrival_time; // 병원도착
@@ -211,7 +211,7 @@ router.post(
       if (data_prog.length > 0) {
         sstate = data_prog[0].service_state_id;
         sstate_time = [];
-        sstate_time[service_state.carDep] = data_prog[0].real_car_departure; // 차량출발
+        sstate_time[service_state.carDep] = data_prog[0].real_car_departure_time; // 차량출발
         sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
         sstate_time[service_state.arrivalHos] =
           data_prog[0].real_hospital_arrival_time; // 병원도착

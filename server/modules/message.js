@@ -14,7 +14,7 @@ module.exports = {
         from: twilioPhone,
         to: "+82" + phone,
       });
-      if (result) return { randomNumber }; // 메세지 전송 성공, 인증번호 반환 
+      if (result) return randomNumber; // 메세지 전송 성공, 인증번호 반환 
       else return -1; // 메세지 전송 실패
     }
     catch (err) {
