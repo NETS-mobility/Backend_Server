@@ -92,7 +92,7 @@ module.exports = {
 
       if (serviceKindId == 3 || serviceKindId == 5) {
         // 왕복일 경우 편도 기준으로 바꿈
-        expMoveDistance = expMoveDistance / 2;
+        expMoveDistance = expMoveDistance / 2 + 1;
         baseMoveDistance = baseMoveDistance / 2;
       }
 
