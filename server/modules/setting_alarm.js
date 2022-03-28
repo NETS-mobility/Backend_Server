@@ -10,6 +10,10 @@ const util = require("util"); // db에서 불러오는 파일 변환
 const mysql = require("mysql");
 const pool = require("./mysql");
 const pool2 = require("./mysql2");
+const push_alarm = require("./push_alarm");
+const token = require("../config/token");
+const schedule = require("node-schedule");
+//const cron = require("node-cron");
 
 const conn = require("../config/database");
 const alarm_kind_number = require("../config/alarm_kind");
@@ -20,10 +24,7 @@ const logger = require("../config/logger");
 const alarm_kind = require("../config/alarm_kind");
 const service_state = require("../config/service_state");
 
-//const cron = require("node-cron");
-const push_alarm = require("./push_alarm");
-const token = require("../config/token");
-const schedule = require("node-schedule");
+const cancel_reserv = require("../modules/request_cancel_reservation");
 
 class Alarm {
   constructor(user_number, reservation_id, alarm_kind, device_token) {
@@ -228,6 +229,7 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
       // 취소 안내
       case alarm_kind_number.cancellation:
         {
+          cancel_reserv.cancel_reserv(reservation_id); // 예약 취소
           alarm.set_context(
             "결제시간 초과로 예약이 취소되었습니다.\n" +
               "서비스번호: " +
