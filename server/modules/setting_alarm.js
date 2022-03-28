@@ -78,7 +78,7 @@ async function payment_alarm_later(
     "select `payment_state_id` from `base_payment` where `reservation_id` =?"; //
   const sql_cron_res = await connection1.query(sql_cron, [reservation_id]);
   res = Object.values(sql_cron_res[0][0]);
-  if (res[0] == payment_state.waitBasePay)
+  if (res[0] == payment_state.waitPay)
     set_alarm(reciever, reservation_id, alarm_kind, user_id);
 }
 
