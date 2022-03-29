@@ -14,12 +14,16 @@ const saltRounds = bcrypt_option.saltRounds;
 // ===== 로그인 =====
 router.post("", async function (req, res, next) {
   const { id, password, device_token } = req.body;
+  console.log("req==", req);
+  console.log("req.body==", req.body);
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 = `SELECT user_password, user_name,user_number FROM user WHERE user_id=?;`;
     const result1 = await connection.query(sql1, [id]);
+    console.log("result1==", result1);
     const sql_data = result1[0];
+    console.log("sql_data==", sql_data);
 
     if (sql_data.length == 0)
       return res.status(401).send({ msg: "아이디가 존재하지 않음" });
@@ -28,6 +32,8 @@ router.post("", async function (req, res, next) {
       password,
       sql_data[0].user_password
     ); // 복호화 비교
+    console.log("validPassword==", validPassword);
+
     if (validPassword == 0) {
       res.status(401).send({ msg: "비밀번호가 일치하지 않음" });
     } else {
@@ -39,10 +45,12 @@ router.post("", async function (req, res, next) {
       };
 
       const token_res = await jwt.sign(payload); // 토큰 생성
+      console.log("token_res==", token_res);
       res.status(200).send({ success: true, token: token_res });
 
       // 고객의 디바이스 토큰값 갱신(push 알림에 사용)
       const sql2 = "update user set `user_device_token` =? where `user_id` =?;";
+      console.log("sql2=", sql2);
       //await connection.query(sql2, [device_token, id]);
     }
   } catch (err) {
