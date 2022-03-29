@@ -6,6 +6,10 @@ const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const token_checker = require("../../modules/admin_token");
 
+const reservation_state = require("../../config/reservation_state");
+const service_state = require("../../config/service_state");
+const reservation_payment_state = require("../../config/reservation_payment_state");
+const payment_state = require("../../config/payment_state");
 const logger = require("../../config/logger");
 
 // ===== 기본요금 무통장입금 결제 완료 =====
@@ -26,20 +30,21 @@ router.post("/setCompleteBaseCost", async function (req, res, next) {
                   ) VALUES(?,?);`;
     
     const result1 = await connection.query(sql1, [
-      1, // 예약 확정(결제 완료)
-      2, // 기본 결제 완료
+      reservation_state.ready,
+      reservation_payment_state.completeBasePay,
       reservationId,
     ]);
 
     const result2 = await connection.query(sql2, [
-      3, // 결제 완료
+      payment_state.completePay,
       reservationId,
     ]);
 
     const result3 = await connection.query(sql3, [
       reservationId,
-      0, // 픽업 이전
+      service_state.ready,
     ]);
+
     res.status(200).send({ success: true });
   } catch (err) {
     logger.error(__filename + " : " + err);
@@ -65,14 +70,15 @@ router.post("/setCompleteExtraCost", async function (req, res, next) {
     const sql2 = `UPDATE extra_payment SET payment_state_id=? WHERE reservation_id=?;`;
     
     const result1 = await connection.query(sql1, [
-      4, // 최종 결제 완료
+      reservation_payment_state.completeAllPay,
       reservationId,
     ]);
 
     const result2 = await connection.query(sql2, [
-      3, // 결제 완료
+      payment_state.completePay,
       reservationId,
     ]);
+    
     res.status(200).send({ success: true });
   } catch (err) {
     logger.error(__filename + " : " + err);
