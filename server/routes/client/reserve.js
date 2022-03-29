@@ -87,7 +87,8 @@ router.post(
       const userPhone = sql_data[0].user_phone;
 
       // 보호자 정보
-      if (user.protectorName == undefined && user.protectorPhone == undefined) {
+      if ((user.protectorName == undefined || user.protectorName == null || user.protectorName == "") &&
+          (user.protectorPhone == undefined || user.protectorPhone == null || user.protectorPhone == "")) {
         // 보호자 정보 없으면, 고객 정보를 저장
         protectorName = name;
         protectorPhone = userPhone;
