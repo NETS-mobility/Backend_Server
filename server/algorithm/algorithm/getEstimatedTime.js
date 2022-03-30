@@ -1,5 +1,6 @@
 const TmapTimeMachine = require("./tmapTimeMachine");
 const GetArrangeTime = require("./getArrangeTime");
+const logger = require("../../config/logger");
 
 const GetEstimatedTime = async (
   departure,
@@ -35,6 +36,7 @@ const GetEstimatedTime = async (
     estimatedTime = estimatedTime * 60000; //minutes -> milliseconds
     return { time: estimatedTime, dist: estimatedDistance };
   } catch (err) {
+    logger.error(__filename + " : " + err);
     return err;
   }
 };

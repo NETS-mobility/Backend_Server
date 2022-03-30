@@ -333,7 +333,7 @@ router.post(
                             over_gowith_cost, over_gowith_time, delay_cost, delay_time) VALUES(?,?,?,?,?,?,?);`;
           await connection.query(sql_cost, [
             service_id,
-            1,
+            payment_state.waitPay,
             result_extraCost.TotalExtraCost,
             result_extraCost.overGowithTimeCost,
             result_extraCost.overGowithTime,
