@@ -5,6 +5,7 @@
 // rd: 예약 날짜 (문자열, ex. "2022-03-04")
 // 반환: rd날짜에서 b1 ~ b1 + a1 시간 내에 스케줄이 없는 차량 목록 = 여유시작시간 < b1 && 여유시간 > a1
 
+const logger = require("../../config/logger");
 const pool2 = require("../util/mysql2");
 
 const GetL1 = async (a, b, rd) => {
@@ -21,7 +22,7 @@ const GetL1 = async (a, b, rd) => {
     const sql_result = await connection.query(sql, [start, start, end, end]);
     result = sql_result[0];
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
   } finally {
     connection.release();
     return result;

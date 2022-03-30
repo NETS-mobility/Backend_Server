@@ -5,6 +5,7 @@
 // 병원에서 출발 => 병원과 가장 가까운 곳에 있는 최적 차량 선택
 // prevDepartureTime이 가장 큰 순서대로 정렬되어 있으므로, 최적 차량 = dispatch[0]
 
+const logger = require("../../config/logger");
 const pool2 = require("../util/mysql2");
 
 const resultDispatch = async (dispatchResult, revData, dire, is3) => {
@@ -45,7 +46,7 @@ const resultDispatch = async (dispatchResult, revData, dire, is3) => {
       expCarTerminateServiceTime: time_end,
     };
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
   } finally {
     connection.release();
     return result;

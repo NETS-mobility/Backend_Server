@@ -6,6 +6,7 @@
 // 네츠 휠체어 플러스 왕복 = 5
 
 const pool2 = require("../util/mysql2");
+const logger = require("../../config/logger");
 
 const GetArrangeTime = async (service_kind_id) => {
   let result;
@@ -20,7 +21,7 @@ const GetArrangeTime = async (service_kind_id) => {
     const sql_data = sql_result[0];
     result = sql_data[0].freeTime;
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
   } finally {
     connection.release();
     return result;
