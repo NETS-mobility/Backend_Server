@@ -78,7 +78,10 @@ router.post("/serviceList/:listType/:date", async function (req, res, next) {
     for (let i = 0; i < data1.length; i++) {
       const sqlm =
         "select * from `extra_payment` where `payment_state_id`=? and `reservation_id`=?;";
-      const sqlmr = await connection.query(sqlm, [payment_state.waitPay, data1[i].service_id]);
+      const sqlmr = await connection.query(sqlm, [
+        payment_state.waitPay,
+        data1[i].service_id,
+      ]);
       const isNeedExtraPay = sqlmr[0].length > 0;
       data1[i].reservation_state = rev_state_msg(
         data1[i].reservation_state,
@@ -158,7 +161,10 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     // 결제 구하기
     const sqlm =
       "select * from `extra_payment` where `payment_state_id`=? and `reservation_id`=?;";
-    const sqlmr = await connection.query(sqlm, [payment_state.waitPay, service_id]);
+    const sqlmr = await connection.query(sqlm, [
+      payment_state.waitPay,
+      service_id,
+    ]);
     const isNeedExtraPay = sqlmr[0].length > 0;
     data_service[0].reservation_state = rev_state_msg(
       data_service[0].reservation_state,
@@ -211,7 +217,8 @@ router.post(
       if (data_prog.length > 0) {
         sstate = data_prog[0].service_state_id;
         sstate_time = [];
-        sstate_time[service_state.carDep] = data_prog[0].real_car_departure_time; // 차량출발
+        sstate_time[service_state.carDep] =
+          data_prog[0].real_car_departure_time; // 차량출발
         sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
         sstate_time[service_state.arrivalHos] =
           data_prog[0].real_hospital_arrival_time; // 병원도착
@@ -247,9 +254,9 @@ router.post(
     const rm = recodeTime.minutes;
 
     let recode_date = date_to_string(new Date()).substr(0, 10) + " ";
-    recode_date += (rh >= 10) ? rh : "0" + rh;
+    recode_date += rh >= 10 ? rh : "0" + rh;
     recode_date += ":";
-    recode_date += (rm >= 10) ? rm : "0" + rm;
+    recode_date += rm >= 10 ? rm : "0" + rm;
     recode_date += ":00";
 
     let result_extraCost; // 추가요금 계산 결과
@@ -392,14 +399,14 @@ router.post(
   upload(uplPath.customer_document).single("file"),
   async function (req, res, next) {
     const file = req.file;
+    console.log("file=", file);
     if (file === undefined)
       return res.status(400).send({ err: "파일이 업로드되지 않았습니다." });
 
-    const service_id = req.params.service_id;
-    const filepath = uplPath.customer_document + file.filename; // 업로드 파일 경로
-
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
+      const service_id = req.params.service_id;
+      const filepath = uplPath.customer_document + file.filename; // 업로드 파일 경로
       const spl =
         "update `reservation_user` set `valid_target_evidence_path`=?, `is_submit_evidence`=1 where `reservation_id`=?;";
       const sqlr = await connection.query(spl, [filepath, service_id]);
