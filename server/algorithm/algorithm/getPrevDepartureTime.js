@@ -1,6 +1,7 @@
 const TmapTimeMachine = require("./tmapTimeMachine");
 const getCarAdjRev = require("./getCarAdjRev");
 const AddMinuteToDate = require("../util/addMinuteToDate");
+const logger = require("../../config/logger");
 
 const GetPrevDepartureTime = async (L1, res_x, res_y, pickupTime) => {
   const prevDepartureTimeArray = [];
@@ -28,6 +29,7 @@ const GetPrevDepartureTime = async (L1, res_x, res_y, pickupTime) => {
       });
     }
   } catch (err) {
+    logger.error(__filename + " : " + err);
     return err;
   }
   return prevDepartureTimeArray;

@@ -19,6 +19,7 @@
 const work_start_time = "09:00:00"; // 운행시작시간
 const work_close_time = "21:00:00"; // 운행종료시간
 
+const logger = require("../../config/logger");
 const pool2 = require("../util/mysql2");
 
 const getCarAdjRev = async (id, pickupTime) => {
@@ -91,7 +92,7 @@ const getCarAdjRev = async (id, pickupTime) => {
         next: next
     };
   } catch (err) {
-    console.error("err : " + err);
+    logger.error(__filename + " : " + err);
   } finally {
     connection.release();
     return result;
