@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const { user } = require("../../config/database");
-const upload = require("../../modules/fileupload");
-
-const jwt = require("../../modules/jwt");
-const pool2 = require("../../modules/mysql2");
 const uplPath = require("../../config/upload_path");
 const logger = require("../../config/logger");
+const alarm_kind = require("../../config/alarm_kind");
+
+const upload = require("../../modules/fileupload");
+const jwt = require("../../modules/jwt");
+const pool2 = require("../../modules/mysql2");
 
 // ===== 알림 조회 =====
 router.post("/alarmList/", async function (req, res, next) {
@@ -24,9 +25,15 @@ router.post("/alarmList/", async function (req, res, next) {
     const sql =
       "select ca.*, u.`user_name`, cd.`netsmanager_number` " +
       "from `customer_alarm` as ca left join user as u on ca.`user_number` = u.`user_number` left join car_dispatch as cd on ca.`reservation_id` = cd.`reservation_id` " +
-      "where ca.`alarm_kind` = '결제요청' or ca.`alarm_kind` = '취소안내' or ca.`alarm_kind` = '20분이상지연' or ca.`alarm_kind` = '병원동행추가요금결제' or ca.`alarm_kind` = '대기요금결제' " +
+      "where ca.`alarm_kind` =? or ca.`alarm_kind` =? or ca.`alarm_kind` =? or ca.`alarm_kind` =? or ca.`alarm_kind` =? " +
       "order by ca.`alarm_id` desc";
-    const result = await connection.query(sql, param);
+    const result = await connection.query(sql, [
+      alarm_kind.request_payment,
+      alarm_kind.cancellation,
+      alarm_kind.delay_over_20min,
+      alarm_kind.extra_payment,
+      alarm_kind.waiting_payment,
+    ]);
     const data = result[0];
     connection.release();
 

@@ -22,11 +22,17 @@ const resultDispatch = async (dispatchResult, revData, dire, is3) => {
 
     let time_start = dispatchResult.expect_pickup_time;
     let time_end = dispatchResult.expect_terminate_service_time;
+    let expect_move_distance = dispatchResult.expect_move_distance;
+    let expect_move_time = dispatchResult.expect_move_time;
     if (is3) {
       if (dire == 1)
         time_end = revData.rev_date + " " + revData.old_hos_arr_time; // case 3일 경우, 병원 도착 시간을 기준으로 2개로 분할
       if (dire == 2)
+      {
         time_start = revData.rev_date + " " + revData.old_hos_arr_time; // case 3 후반 배차의 출발 시각은 동행 시작 시간으로 설정
+        expect_move_distance = dispatchResult.expect_move_distance2; // 병원->집 이동데이터
+        expect_move_time = dispatchResult.expect_move_time2;
+      }
     }
     time_start = time_start.substr(0, 10) + " " + time_start.substr(11, 8);
     time_end = time_end.substr(0, 10) + " " + time_end.substr(11, 8);
@@ -34,8 +40,8 @@ const resultDispatch = async (dispatchResult, revData, dire, is3) => {
     result = {
       netsmanagerNum: sqlmd[0][0].netsmanager_number,
       carId: car_id,
-      expMoveDistance: dispatchResult.expect_move_distance,
-      expMoveTime: dispatchResult.expect_move_time,
+      expMoveDistance: expect_move_distance,
+      expMoveTime: expect_move_time,
       expCarPickupTime: time_start,
       expCarTerminateServiceTime: time_end,
     };

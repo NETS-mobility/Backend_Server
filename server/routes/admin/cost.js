@@ -6,8 +6,8 @@ const pool2 = require("../../modules/mysql2");
 const token_checker = require("../../modules/admin_token");
 const logger = require("../../config/logger");
 
-// ===== 서비스 요금 조회 ====
-router.post("/service", async function (req, res, next) {
+// ===== 서비스 요금 조회 ==== => extra페이지하고 통합
+/*router.post("/service", async function (req, res, next) {
   if (!(await token_checker(req.body.jwtToken))) {
     res.status(401).send({ err: "접근 권한이 없습니다." });
     return;
@@ -27,10 +27,10 @@ router.post("/service", async function (req, res, next) {
   } finally {
     connection.release();
   }
-});
+});*/
 
-// ===== 서비스 요금 설정 ====
-router.post("/service/setting", async function (req, res, next) {
+// ===== 서비스 요금 설정 ==== => extra/setting페이지하고 통합
+/*router.post("/service/setting", async function (req, res, next) {
   const { id, cost } = req.body;
   if (!(await token_checker(req.body.jwtToken))) {
     res.status(401).send({ err: "접근 권한이 없습니다." });
@@ -51,9 +51,9 @@ router.post("/service/setting", async function (req, res, next) {
   } finally {
     connection.release();
   }
-});
+});*/
 
-// ===== 추가요금 정보 반환 =====
+// ===== 서비스 & 추가요금 정보 반환 =====
 router.post("/extra", async function (req, res, next) {
   if (!(await token_checker(req.body.jwtToken))) {
     res.status(401).send({ err: "접근 권한이 없습니다." });
@@ -62,6 +62,11 @@ router.post("/extra", async function (req, res, next) {
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
+    const sql0 =
+      "select `service_kind_id` as `id`, `service_kind` as `name`, `service_base_move_distance` as `dist`, `service_base_hospital_gowith_time` as `time`, `service_base_cost` as `cost` from `service_info` order by `service_kind_id`;";
+    const result0 = await connection.query(sql0, []);
+    const data0 = result0[0];
+
     const sql1 = "select * from `extra_cost` order by `extra_cost_kind_id`;";
     const result1 = await connection.query(sql1, []);
     const data1 = result1[0];
@@ -76,6 +81,7 @@ router.post("/extra", async function (req, res, next) {
     const data3 = result3[0];
 
     res.send({
+      service_cost: data0,
       extra_cost: data1,
       extra_cost_night_time: data2[0],
       manager_extra_pay: data3,
@@ -89,9 +95,9 @@ router.post("/extra", async function (req, res, next) {
   }
 });
 
-// ===== 추가요금 설정 =====
+// ===== 서비스 & 추가요금 설정 =====
 router.post("/extra/setting", async function (req, res, next) {
-  const { extra_cost, extra_cost_night_time, manager_extra_pay } = req.body;
+  const { service_cost, extra_cost, extra_cost_night_time, manager_extra_pay } = req.body;
   if (!(await token_checker(req.body.jwtToken))) {
     res.status(401).send({ err: "접근 권한이 없습니다." });
     return;
@@ -100,6 +106,18 @@ router.post("/extra/setting", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     await connection.beginTransaction();
+
+    for (let i = 1; i <= 5; i++) {
+      const sqlc =
+        "update `service_info` set `service_base_move_distance`=?, `service_base_hospital_gowith_time`=?, `service_base_cost`=? where `service_kind_id`=?;";
+      const sqlrc = await connection.query(sqlc, [
+        service_cost[i - 1].dist,
+        service_cost[i - 1].time,
+        service_cost[i - 1].cost,
+        i,
+      ]);
+      if (sqlrc[0].affectedRows == 0) throw (err = 0);
+    }
 
     for (let i = 1; i <= 5; i++) {
       const sqlc =
@@ -113,9 +131,10 @@ router.post("/extra/setting", async function (req, res, next) {
     }
 
     const sqlc1 =
-      "update `extra_cost` set `extra_cost_max_unit_value`=? where `extra_cost_kind_id`=4;";
+      "update `extra_cost` set `extra_cost_max_unit_value`=?, `extra_cost_free_unit_value`=? where `extra_cost_kind_id`=4;";
     const sqlrc1 = await connection.query(sqlc1, [
       extra_cost[4 - 1].extra_cost_max_unit_value,
+      extra_cost[4 - 1].extra_cost_free_unit_value,
     ]);
     if (sqlrc1[0].affectedRows == 0) throw (err = 0);
 

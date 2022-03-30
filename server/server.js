@@ -19,9 +19,10 @@ const route_client_home = require("./routes/client/home");
 const route_client_login = require("./routes/client/login");
 const route_client_register = require("./routes/client/register");
 const route_client_reserve = require("./routes/client/reserve");
-const route_client_basecost = require("./routes/client/basecost");
-const route_client_extracost = require("./routes/client/extracost");
+const route_client_cost = require("./routes/client/cost");
+const route_client_bankpay = require("./routes/client/bankpay");
 const route_client_alarm = require("./routes/client/view_alarm");
+const route_getToken = require("./routes/getToken");
 
 const route_manager_service = require("./routes/manager/service");
 const route_manager_mypage = require("./routes/manager/mypage");
@@ -37,9 +38,11 @@ const route_admin_board = require("./routes/admin/board");
 const route_admin_cost = require("./routes/admin/cost");
 const route_admin_login = require("./routes/admin/login");
 const route_admin_register = require("./routes/admin/register");
+const route_admin_bankpay = require("./routes/admin/bankpay");
 const route_admin_alarm = require("./routes/admin/view_alarm");
 
 const route_dispatch = require("./routes/dispatch/dispatch");
+const route_public = require("./routes/public");
 
 //const route_client_feedback = require('./routes/client/feedback');
 //const route_client_pay = require('./routes/client/pay');
@@ -70,8 +73,8 @@ app.use("/client", route_client_home);
 app.use("/client/login", route_client_login);
 app.use("/client/register", route_client_register);
 app.use("/client/reserve", route_client_reserve);
-app.use("/client/basecost", route_client_basecost);
-app.use("/client/extracost", route_client_extracost);
+app.use("/client/cost", route_client_cost);
+app.use("/client/bankpay", route_client_bankpay);
 app.use("/client/view_alarm", route_client_alarm);
 //app.use('/client/feedback', route_client_feedback);
 //app.use('/client/pay', route_client_pay);
@@ -90,9 +93,12 @@ app.use("/admin/board", route_admin_board);
 app.use("/admin/cost", route_admin_cost);
 app.use("/admin/login", route_admin_login);
 app.use("/admin/register", route_admin_register);
+app.use("/admin/bankpay", route_admin_bankpay);
 app.use("/admin/view_alarm", route_admin_alarm);
 
 app.use("/dispatch", route_dispatch);
+app.use("/public", route_public);
+app.use("/getToken", route_getToken);
 /*
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

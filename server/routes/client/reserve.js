@@ -6,8 +6,12 @@ const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const upload = require("../../modules/fileupload");
 const formatdate = require("../../modules/formatdate");
+const basecost = require("../../modules/basecost");
 const alarm = require("../../modules/setting_alarm");
 
+const reservation_state = require("../../config/reservation_state");
+const reservation_payment_state = require("../../config/reservation_payment_state");
+const payment_state = require("../../config/payment_state");
 const uplPath = require("../../config/upload_path");
 const alarm_kind = require("../../config/alarm_kind");
 const reciever = require("../../config/push_alarm_reciever");
@@ -33,10 +37,10 @@ router.post(
 
     let gowithHospitalTime = 0; // 병원 동행 시간
     let moveDirectionId,
-      protectorName,
-      protectorPhone,
-      expPickupTime,
-      expTerminateServiceTime;
+        protectorName, protectorPhone,
+        expPickupTime, expTerminateServiceTime;
+    let reservationId; // 예약 번호
+    let result_baseCost; // 기본요금 계산 결과
 
     gowithHospitalTime = user.gowithHospitalTime; // 병원 동행 시간
 
@@ -65,13 +69,13 @@ router.post(
       // === 예약 정보 ===
       const sql1 = `SELECT user_number, user_phone FROM user WHERE user_id=?;`;
 
-      const sql2 = `INSERT INTO reservation(reservation_id, user_number,
+      const sql2 = `INSERT INTO reservation(reservation_id, reservation_state_id, reservation_payment_state_id, user_number,
                     move_direction_id, service_kind_id, gowith_hospital_time,
                     pickup_address, drop_address, hospital_address,
                     hope_reservation_date, hope_hospital_arrival_time, fixed_medical_time, hope_hospital_departure_time,
                     expect_pickup_time, expect_terminate_service_time,
                     fixed_medical_detail, hope_requires
-                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
 
       const sql3 = `INSERT INTO reservation_user(reservation_id, patient_name, patient_phone, protector_name, protector_phone, valid_target_kind
                     ) VALUES(?,?,?,?,?,?);`;
@@ -83,7 +87,8 @@ router.post(
       const userPhone = sql_data[0].user_phone;
 
       // 보호자 정보
-      if (user.protectorName == undefined && user.protectorPhone == undefined) {
+      if ((user.protectorName == undefined || user.protectorName == null || user.protectorName == "") &&
+          (user.protectorPhone == undefined || user.protectorPhone == null || user.protectorPhone == "")) {
         // 보호자 정보 없으면, 고객 정보를 저장
         protectorName = name;
         protectorPhone = userPhone;
@@ -97,18 +102,20 @@ router.post(
       const now = formatdate.getFormatDate(new Date(), 1);
 
       // 예약 번호
-      const reservationId = Number(
+      reservationId = Number(
         now.substring(2, 4) +
-          now.substring(5, 7) +
-          now.substring(8, 10) +
-          now.substring(11, 13) +
-          now.substring(14, 16) +
-          now.substring(17)
+        now.substring(5, 7) +
+        now.substring(8, 10) +
+        now.substring(11, 13) +
+        now.substring(14, 16) +
+        now.substring(17)
       );
 
       // 예약 정보 저장
       const result2 = await connection.query(sql2, [
         reservationId,
+        reservation_state.new,
+        reservation_payment_state.waitBasePay,
         userNumber,
         moveDirectionId,
         user.serviceKindId,
@@ -203,18 +210,46 @@ router.post(
         await connection.query(sql4, [filepath, 1, reservationId]);
       }
 
-      res.status(200).send({ success: true });
+      // === 기본 요금 정보 ===
+      const sql6 = `INSERT INTO base_payment(reservation_id, payment_state_id, payment_amount,
+                    base_cost, over_move_distance_cost, over_move_distance, over_gowith_cost, over_gowith_time,
+                    night_cost, night_time, weekend_cost
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?);`;
+
+      result_baseCost = await basecost.calBasecost(reservationId);
+      const result6 = await connection.query(sql6, [
+        reservationId,
+        payment_state.waitPay,
+        result_baseCost.TotalBaseCost,
+        result_baseCost.baseCost,
+        result_baseCost.overMoveDistanceCost,
+        result_baseCost.overMoveDistance,
+        result_baseCost.overGowithTimeCost,
+        result_baseCost.overGowithTime,
+        result_baseCost.nightCost,
+        result_baseCost.nightmin,
+        result_baseCost.weekendCost,
+      ]);
+
+      res
+        .status(200)
+        .send({
+          success: true,
+          reservationId: reservationId,
+          baseCost: result_baseCost.TotalBaseCost,
+        });
     } catch (err) {
       logger.error(__filename + " : " + err);
       // res.status(500).send({ err : "서버 오류" });
       res.status(500).send({ err: "오류-" + err });
     } finally {
+      // 고객에게 결제 요청 알림 전송
       alarm.set_alarm(
         reciever.customer,
         reservationId,
         alarm_kind.request_payment,
         id
-      ); // 고객에게 결제 요청 알림 전송
+      );
       connection.release();
     }
   }

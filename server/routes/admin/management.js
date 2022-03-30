@@ -4,6 +4,7 @@ const router = express.Router();
 const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const token_checker = require("../../modules/admin_token");
+const date_to_string = require("../../modules/date_to_string");
 const upload = require("../../modules/fileupload");
 const bcrypt = require("bcryptjs");
 
@@ -135,11 +136,11 @@ router.post("/manager/detail", async function (req, res, next) {
     const result3 = await connection.query(sql3, [number]);
     const data3 = result3[0];
 
-    const now = new Date();
+    const now = date_to_string(new Date());
     const sql4 =
       "select C.`car_dispatch_number` as `dispatch_id`, C.`reservation_id`, S.`service_kind` as `service_type`, `expect_car_pickup_time` as `start_time`, `expect_car_terminate_service_time` as `end_time`, U.`user_name` as `customer_name`" +
       "from `car_dispatch` as C, `reservation` as R, `service_info` as S, `user` as U " +
-      "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number` and `expect_pickup_time` >= ? " +
+      "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number` and `hope_reservation_date` >= ? " +
       "order by `start_time`;";
     const result4 = await connection.query(sql4, [number, now]);
     const data4 = result4[0];
@@ -162,7 +163,7 @@ router.post("/manager/detail", async function (req, res, next) {
 
 // ===== 매니저 상세 조회 - 개인정보 변경 =====
 router.post("/manager/detail/changeInfo", async function (req, res, next) {
-  const { number, phone, available, salary } = req.body;
+  const { number, id, phone, available, salary } = req.body;
   if (!(await token_checker(req.body.jwtToken))) {
     res.status(401).send({ err: "접근 권한이 없습니다." });
     return;
@@ -171,8 +172,9 @@ router.post("/manager/detail/changeInfo", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const spl =
-      "update `netsmanager` set `netsmanager_phone`=?, `netsmanager_possible`=?, `netsmanager_basic_salary`=? where `netsmanager_number`=?;";
+      "update `netsmanager` set `netsmanager_id`=?, `netsmanager_phone`=?, `netsmanager_possible`=?, `netsmanager_basic_salary`=? where `netsmanager_number`=?;";
     const result = await connection.query(spl, [
+      id,
       phone,
       available,
       salary,
@@ -200,7 +202,7 @@ router.post("/manager/detail/addCertificate", async function (req, res, next) {
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
-    const spl = "insert into `manager_certificate` values (?,?,?,?,?);";
+    const spl = "insert into `manager_certificate`(`netsmanager_number`, `netsmanager_certificate_name`, `netsmanager_certificate_number`, `certificate_obtention_date`, `certiicate_expiration_date`) values (?,?,?,?,?);";
     await connection.query(spl, [
       number,
       cert_name,
@@ -402,7 +404,7 @@ router.post(
 
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
-      const now = new Date();
+      const now = date_to_string(new Date());
       const hashedPW = await bcrypt.hash(password, saltRounds);
 
       const spl =
@@ -498,7 +500,7 @@ router.post("/car/addCar", async function (req, res, next) {
       await connection.query(sql2, [garage_address, garage_x, garage_y]);
     }
 
-    const now = new Date();
+    const now = date_to_string(new Date());
     const sql3 =
       "insert into `car` (`car_number`,`car_kind`,`netsmanager_number`,`garage_detail_address`,`car_joined_date`,`car_state_id`) values(?,?,?,?,?,1);";
     await connection.query(sql3, [

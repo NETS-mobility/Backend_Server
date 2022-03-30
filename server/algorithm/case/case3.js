@@ -74,8 +74,10 @@ const Case3 = async (testData) => {
     expect_terminate_service_time: ToKoreanTime(
       AddMinuteToDate(new Date(hos_dep_time), toHomeEstimatedTime / 60000)
     ),
-    expect_move_distance: (toHomeEstimatedDist + toHosEstimatedDist) / 1000, //GetEstimatedTime돌렸을 때 나온 총 거리
-    expect_move_time: (toHomeEstimatedTime + toHosEstimatedTime) / 60000, //estimatedTime
+    expect_move_distance: (toHosEstimatedDist) / 1000, //GetEstimatedTime돌렸을 때 나온 총 거리
+    expect_move_time: (toHosEstimatedTime) / 60000, //estimatedTime
+    expect_move_distance2: (toHomeEstimatedDist) / 1000,
+    expect_move_time2: (toHomeEstimatedTime) / 60000,
   };
 
   if (ResultData.dispatch == -1) {

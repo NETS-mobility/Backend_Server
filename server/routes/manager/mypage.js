@@ -49,17 +49,17 @@ router.post("/changeInfo", async function (req, res, next) {
     const result2 = await connection.query(sql2, [user_num]);
     const data2 = result2[0];
 
-    // const picture = await fs.readFile("public/" + data1[0].netsmanager_picture_path);
     res.status(200).send({
       info: {
         phone: data1[0].netsmanager_phone,
         notice: data1[0].netsmanager_notice,
         intro: data1[0].netsmanager_about_me,
-        name: token_res.name,
-        id: id,
+        id: data1[0].netsmanager_id,
+        name: data1[0].netsmanager_name,
       },
       certificate: data2,
-      picture: data1[0].netsmanager_picture_path,
+      url_profile: data1[0].netsmanager_picture_path,
+      url_introimg: data1[0].netsmanager_notice_picture_url,
     });
   } catch (err) {
     logger.error(__filename + " : " + err);
@@ -171,7 +171,7 @@ router.post(
 // ===== 마이페이지 개인정보 변경 =====
 router.post("/changeInfo/changeInfo", async function (req, res, next) {
   const token = req.body.jwtToken;
-  const { name, phone, intro, notice } = req.body;
+  const { id, name, phone, intro, notice } = req.body;
 
   const token_res = await jwt.verify(token);
   if (token_res == jwt.TOKEN_EXPIRED)
@@ -183,9 +183,10 @@ router.post("/changeInfo/changeInfo", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql =
-      "update `netsmanager` set `netsmanager_name`=?, `netsmanager_phone`=?, " +
+      "update `netsmanager` set `netsmanager_id`=?, `netsmanager_name`=?, `netsmanager_phone`=?, " +
       "`netsmanager_about_me`=?, `netsmanager_notice`=? where `netsmanager_number`=?;";
     const result = await connection.query(sql, [
+      id,
       name,
       phone,
       intro,
@@ -310,8 +311,8 @@ router.post("/vacation/register", async function (req, res, next) {
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
-    const sql1 = "insert into `manager_holiday` values (?,?,?,0);";
-    await connection.query(sql1, [id, start, end]);
+    const sql1 = "insert into `manager_holiday`(`netsmanager_number`, `start_holiday_date`, `end_holiday_date`, `holiday_certified`) values (?,?,?,0);";
+    await connection.query(sql1, [user_num, start, end]);
     res.status(200).send();
   } catch (err) {
     logger.error(__filename + " : " + err);
