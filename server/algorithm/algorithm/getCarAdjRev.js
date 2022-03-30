@@ -16,11 +16,13 @@
  * (예약정보가 없을 경우, 장소는 차고지주소)
  */
 
-const work_start_time = "09:00:00"; // 운행시작시간
-const work_close_time = "21:00:00"; // 운행종료시간
-
-const logger = require("../../config/logger");
 const pool2 = require("../util/mysql2");
+const logger = require("../../config/logger");
+const work_time = require("../../config/car_operation_time");
+
+const work_start_time = work_time.start; // 운행시작시간
+const work_close_time = work_time.close; // 운행종료시간
+
 
 const getCarAdjRev = async (id, pickupTime) => {
   let result;

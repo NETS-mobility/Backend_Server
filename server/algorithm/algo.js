@@ -4,6 +4,7 @@ const resultDispatch = require("./algorithm/resultDispatch");
 const logger = require("../config/logger");
 
 const Algo = async (revData) => {
+  let dcase;
   let finalDispatch1, finalDispatch2;
   let isOverPoint = 0;
 
@@ -21,6 +22,7 @@ const Algo = async (revData) => {
       let dispatchResult4_2 = await Case2(revData, false);
       logger.info(dispatchResult4_1);
       logger.info(dispatchResult4_2);
+      dcase = 4;
       if (dispatchResult4_1 != -1 && dispatchResult4_2 != -1) {
         finalDispatch1 = await resultDispatch(
           dispatchResult4_1,
@@ -38,6 +40,7 @@ const Algo = async (revData) => {
     } else {
       let dispatchResult3 = await Case3(revData);
       logger.info(dispatchResult3);
+      dcase = 3;
       if (dispatchResult3 != -1) {
         finalDispatch1 = await resultDispatch(
           dispatchResult3,
@@ -56,6 +59,7 @@ const Algo = async (revData) => {
   } else if (revData.dire == "집-병원") {
     let dispatchResult1 = await Case1(revData, true);
     logger.info(dispatchResult1);
+    dcase = 1;
     if (dispatchResult1 != -1) {
       finalDispatch1 = await resultDispatch(dispatchResult1, revData, 1, false);
       finalDispatch2 = 0;
@@ -63,15 +67,14 @@ const Algo = async (revData) => {
   } else if (revData.dire == "병원-집") {
     let dispatchResult2 = await Case2(revData, true);
     logger.info(dispatchResult2);
+    dcase = 2;
     if (dispatchResult2 != -1) {
       finalDispatch1 = await resultDispatch(dispatchResult2, revData, 2, false);
       finalDispatch2 = 0;
     }
   }
-
   logger.info("Done!");
-
-  return { dispatch1: finalDispatch1, dispatch2: finalDispatch2 };
+  return { dispatch1: finalDispatch1, dispatch2: finalDispatch2, case: dcase };
 };
 
 module.exports = Algo;
