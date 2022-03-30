@@ -56,7 +56,7 @@ router.post("", async function (req, res, next) {
       // 매니저의 디바이스 토큰값 갱신(push 알림에 사용)
       const sql2 =
         "update netsmanager set `netsmanager_device_token` =? where `netsmanager_id` =?;";
-      //await connection.query(sql2, [device_token, id]);
+      await connection.query(sql2, [device_token, id]);
     }
   } catch (err) {
     logger.error(__filename + " : " + err);
