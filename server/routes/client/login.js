@@ -46,12 +46,12 @@ router.post("", async function (req, res, next) {
 
       const token_res = await jwt.sign(payload); // 토큰 생성
       console.log("token_res==", token_res);
-      res.status(200).send({ success: true, token: token_res });
 
       // 고객의 디바이스 토큰값 갱신(push 알림에 사용)
       const sql2 = "update user set `user_device_token` =? where `user_id` =?;";
       console.log("sql2=", sql2);
-      //await connection.query(sql2, [device_token, id]);
+      await connection.query(sql2, [device_token, id]);
+      res.status(200).send({ success: true, token: token_res });
     }
   } catch (err) {
     logger.error(__filename + " : " + err);
