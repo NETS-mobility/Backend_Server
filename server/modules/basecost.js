@@ -182,7 +182,7 @@ module.exports = {
 
       day = expPickupTime.getDay(); // 요일
 
-      if (day == 0 || day == 6) {
+      if (day == 0 || day == 6) { // 주말-계산 처리
         weekendCost = parseInt(TotalBaseCost * (weekendRatio - 1));
       }
 
