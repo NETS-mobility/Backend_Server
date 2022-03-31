@@ -3,11 +3,11 @@ const admin = require("firebase-admin");
 const logger = require("../config/logger");
 
 // SDK 초기화
-let serviceAccount = require("../config/nets-339714-firebase-adminsdk-w7rz6-cbc6b343db.json");
+let serviceAccount = require("../config/gcp-nets-firebase-adminsdk-wxtyz-ad3126049a.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  // databaseURL: "https://nets-339714.firebaseio.com",
+  databaseURL: "https://gcp-nets.firebaseio.com",
 });
 
 /*getMessaging()
