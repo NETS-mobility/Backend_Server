@@ -21,7 +21,11 @@ admin.initializeApp({
     console.log("Error sending message:", error);
   });*/
 
-exports.pushAlarm = function (push_alarm_body, push_alarm_title, device_token) {
+exports.pushAlarm = async function (
+  push_alarm_body,
+  push_alarm_title,
+  device_token
+) {
   const registrationToken = device_token;
 
   // 알림 setting
