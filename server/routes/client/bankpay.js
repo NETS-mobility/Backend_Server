@@ -58,7 +58,7 @@ router.post("/payBaseCost", async function (req, res, next) {
     const now = new Date(); // 오늘
     const submitDate = formatdate.getFormatDate(new Date(), 1); // 날짜,시간
     let validDate = new Date(now.setDate(now.getDate() + 1)); // 내일
-    validDate = formatdate.getFormatDate(validDate, 1); // 날짜
+    validDate = formatdate.getFormatDate(validDate, 2); // 날짜
     validDate = validDate + " 11:59:59";
 
     const result1 = await connection.query(sql1, [
@@ -107,7 +107,7 @@ router.post("/payExtraCost", async function (req, res, next) {
     const now = new Date(); // 오늘
     const submitDate = formatdate.getFormatDate(new Date(), 1); // 날짜,시간
     let validDate = new Date(now.setDate(now.getDate() + 1)); // 내일
-    validDate = formatdate.getFormatDate(validDate, 1); // 날짜
+    validDate = formatdate.getFormatDate(validDate, 2); // 날짜
     validDate = validDate + " 11:59:59";
     
     const result1 = await connection.query(sql1, [
