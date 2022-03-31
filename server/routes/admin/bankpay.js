@@ -5,6 +5,7 @@ const jwt = require("../../modules/jwt");
 const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const token_checker = require("../../modules/admin_token");
+const formatdate = require("../../modules/formatdate");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
@@ -20,11 +21,13 @@ router.post("/setCompleteBaseCost", async function (req, res, next) {
     return;
   }
 
+  const now = formatdate.getFormatDate(new Date(), 1); // 날짜,시간
+
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 = `UPDATE reservation SET reservation_state_id=?, reservation_payment_state_id=? WHERE reservation_id=?;`;
 
-    const sql2 = `UPDATE base_payment SET payment_state_id=? WHERE reservation_id=?;`;
+    const sql2 = `UPDATE base_payment SET payment_state_id=?, complete_payment_date=? WHERE reservation_id=?;`;
 
     const sql3 = `INSERT INTO service_progress(reservation_id, service_state_id
                   ) VALUES(?,?);`;
@@ -37,6 +40,7 @@ router.post("/setCompleteBaseCost", async function (req, res, next) {
 
     const result2 = await connection.query(sql2, [
       payment_state.completePay,
+      now,
       reservationId,
     ]);
 
@@ -63,11 +67,13 @@ router.post("/setCompleteExtraCost", async function (req, res, next) {
     return;
   }
 
+  const now = formatdate.getFormatDate(new Date(), 1); // 날짜,시간
+
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
 
-    const sql2 = `UPDATE extra_payment SET payment_state_id=? WHERE reservation_id=?;`;
+    const sql2 = `UPDATE extra_payment SET payment_state_id=?, complete_payment_date=? WHERE reservation_id=?;`;
     
     const result1 = await connection.query(sql1, [
       reservation_payment_state.completeAllPay,
@@ -76,6 +82,7 @@ router.post("/setCompleteExtraCost", async function (req, res, next) {
 
     const result2 = await connection.query(sql2, [
       payment_state.completePay,
+      now,
       reservationId,
     ]);
     
