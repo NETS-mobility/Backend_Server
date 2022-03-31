@@ -44,7 +44,7 @@ exports.pushAlarm = async function (
   };
 
   // fcm으로 push message 전송
-  admin
+  await admin
     .messaging()
     .send(message)
     .then(function (response) {
