@@ -26,24 +26,7 @@ router.post("/manager", async function (req, res, next) {
   } catch (err) {
     logger.error(__filename + " : " + err);
     res.status(500).send({ err: "오류-" + err });
-    logger.error("Fail about sending manager's push message!");
+    logger.error("Fail about sending testing manager's push message router!");
   }
-});
-
-router.post("/client", async function (req, res, next) {
-  /*const reservation_id = req.body.reservation_id;
-  const user_id = req.body.user_id;
-  alarm.set_alarm(
-    receiver.manager,
-    reservation_id,
-    alarm_kind.confirm_reservation,
-    user_id
-  );*/
-  const title = "푸시알림 테스트입니다.";
-  const alarm_text = req.body.text;
-  const device_token = req.body.device_token;
-
-  push_alarm.pushAlarm(alarm_text, title, device_token);
-  logger.info("message setting 완료!");
 });
 module.exports = router;
