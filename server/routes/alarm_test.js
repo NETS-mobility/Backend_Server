@@ -20,9 +20,14 @@ router.post("/manager", async function (req, res, next) {
     alarm_kind.m_confirm_reservation,
     user_id
   );*/
-  push_alarm.pushAlarm(alarm_text, title, device_token);
-
-  logger.info("message setting 완료!");
+  try {
+    push_alarm.pushAlarm(alarm_text, title, device_token);
+    res.status(200).send("");
+  } catch (err) {
+    logger.error(__filename + " : " + err);
+    res.status(500).send({ err: "오류-" + err });
+    logger.error("Fail about sending manager's push message!");
+  }
 });
 
 router.post("/client", async function (req, res, next) {

@@ -3,11 +3,11 @@ const admin = require("firebase-admin");
 const logger = require("../config/logger");
 
 // SDK 초기화
-let serviceAccount = require("../config/gcp-nets-firebase-adminsdk-wxtyz-ad3126049a.json");
+let serviceAccount = require("../config/gcp-nets-firebase-adminsdk-wxtyz-14b7a9b55e.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://gcp-nets.firebaseio.com",
+  //databaseURL: "https://gcp-nets.firebaseio.com",
 });
 
 /*getMessaging()
@@ -48,10 +48,10 @@ exports.pushAlarm = async function (
     .messaging()
     .send(message)
     .then(function (response) {
-      logger.info("successfully sent push message: ", response);
+      logger.info("successfully sent push message: " + response);
     })
     .catch(function (err) {
-      logger.error("Error Sending Push Message!!: ", err);
+      logger.error("Error Sending Push Message!!: " + err);
     });
 };
 /////////////////////////////////////////
