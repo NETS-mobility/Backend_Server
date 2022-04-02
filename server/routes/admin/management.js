@@ -23,7 +23,7 @@ router.post("/customer", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 =
-      "select `user_id` as `id`, `user_number` as `number`, `user_name` as `name`, `user_join_date` as `date` from `user`;";
+      "select `user_id` as `id`, `user_number` as `number`, `user_name` as `name`, date_format(`user_join_date`,'%Y-%m-%d') as `date` from `user`;";
     const result1 = await connection.query(sql1, []);
     res.send(result1[0]);
   } catch (err) {
@@ -46,13 +46,13 @@ router.post("/customer/detail", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 =
-      "select `user_id` as `id`, `user_number` as `number`,`user_name` as `name`, `user_join_date` as `date`, `user_phone` as `phone` from `user` where `user_number`=?;";
+      "select `user_id` as `id`, `user_number` as `number`,`user_name` as `name`, date_format(`user_join_date`,'%Y-%m-%d') as `date`, `user_phone` as `phone` from `user` where `user_number`=?;";
     const result1 = await connection.query(sql1, [number]);
     const data1 = result1[0];
     if (data1.length == 0) throw (err = 0);
 
     const sql2 =
-      "select R.`reservation_id` as `service_id`, S.`service_kind` as `service_type`, `hope_reservation_date` as `rev_date`, `expect_pickup_time` as `pickup_time`, " +
+      "select R.`reservation_id` as `service_id`, S.`service_kind` as `service_type`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, `expect_pickup_time` as `pickup_time`, " +
       "`hope_hospital_arrival_time` as `hos_arv_time`, `hope_hospital_departure_time` as `hos_dep_time`, `expect_terminate_service_time` as `end_time` " +
       "from `reservation` as R, `service_info` as S, `user` as U " +
       "where U.`user_number`=? and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number` " +
@@ -119,20 +119,20 @@ router.post("/manager/detail", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 =
-      "select `netsmanager_id` as `id`, `netsmanager_name` as `name`, `netsmanager_number` as `number`, `netsmanager_join_date` as `date`, `netsmanager_possible` as `available`, `netsmanager_picture_path` as `path_pic`, " +
+      "select `netsmanager_id` as `id`, `netsmanager_name` as `name`, `netsmanager_number` as `number`, date_format(`netsmanager_join_date`,'%Y-%m-%d') as `date`, `netsmanager_possible` as `available`, `netsmanager_picture_path` as `path_pic`, " +
       "`netsmanager_phone` as `phone`, `netsmanager_basic_salary` as `salary`, `netsmanager_rest_holiday` as `restDay`, `netsmanager_birth` as `birth` from `netsmanager` where `netsmanager_number`=?;";
     const result1 = await connection.query(sql1, [number]);
     const data1 = result1[0];
     if (data1.length == 0) throw (err = 0);
 
     const sql2 =
-      "select `netsmanager_certificate_name` as `name`, `certificate_obtention_date` as `obtention`, " +
-      "`certiicate_expiration_date` as `expiration`, `netsmanager_certificate_number` as `number` from `manager_certificate` where `netsmanager_number`=?;";
+      "select `netsmanager_certificate_name` as `name`, date_format(`certificate_obtention_date`,'%Y-%m-%d') as `obtention`, " +
+      "date_format(`certiicate_expiration_date`,'%Y-%m-%d') as `expiration`, `netsmanager_certificate_number` as `number` from `manager_certificate` where `netsmanager_number`=?;";
     const result2 = await connection.query(sql2, [number]);
     const data2 = result2[0];
 
     const sql3 =
-      "select `start_holiday_date` as `start`, `end_holiday_date` as `end`, `holiday_certified` as `isOK` from `manager_holiday` where `netsmanager_number`=?;";
+      "select date_format(`start_holiday_date`,'%Y-%m-%d') as `start`, date_format(`end_holiday_date`,'%Y-%m-%d') as `end`, `holiday_certified` as `isOK` from `manager_holiday` where `netsmanager_number`=?;";
     const result3 = await connection.query(sql3, [number]);
     const data3 = result3[0];
 
@@ -325,7 +325,7 @@ router.post("/admin", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 =
-      "select `admin_id` as `id`, `admin_number` as `number`, `admin_name` as `name`, `admin_join_date` as `date` from `administrator`;";
+      "select `admin_id` as `id`, `admin_number` as `number`, `admin_name` as `name`, date_format(`admin_join_date`,'%Y-%m-%d') as `date` from `administrator`;";
     const result1 = await connection.query(sql1, []);
     res.send(result1[0]);
   } catch (err) {
@@ -348,7 +348,7 @@ router.post("/admin/detail", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 =
-      "select `admin_id` as `id`, `admin_number` as `number`, `admin_name` as `name`, `admin_join_date` as `date`, `admin_phone` as `phone`, " +
+      "select `admin_id` as `id`, `admin_number` as `number`, `admin_name` as `name`, date_format(`admin_join_date`,'%Y-%m-%d') as `date`, `admin_phone` as `phone`, " +
       "`admin_birth` as `birth`, `admin_picture_path` as `path_pic` from `administrator` where `admin_number`=?;";
     const result1 = await connection.query(sql1, [number]);
     const data1 = result1[0];
@@ -439,7 +439,7 @@ router.post("/car", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 =
-      "select `car_id` as `id`, `car_number` as `number`, `car_joined_date` as `date`, `netsmanager_name` as `manager_name` " +
+      "select `car_id` as `id`, `car_number` as `number`, date_format(`car_joined_date`,'%Y-%m-%d') as `date`, `netsmanager_name` as `manager_name` " +
       "from `car` as C, `netsmanager` as M where C.`netsmanager_number`=M.`netsmanager_number`;";
     const result1 = await connection.query(sql1, []);
     res.send(result1[0]);
@@ -463,7 +463,7 @@ router.post("/car/:idx/repair", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 =
-      "select `car_repair_number` as `number`, `car_repair_start_date` as `start`, `car_repair_end_date` as `end`, `netsmanager_name` as `manager_name` " +
+      "select `car_repair_number` as `number`, date_format(`car_repair_start_date`,'%Y-%m-%d') as `start`, date_format(`car_repair_end_date`,'%Y-%m-%d') as `end`, `netsmanager_name` as `manager_name` " +
       "from `car_repair` as C, `netsmanager` as M where `car_id`=? and C.`netsmanager_number`=M.`netsmanager_number`;";
     const result1 = await connection.query(sql1, [idx]);
     res.send(result1[0]);
