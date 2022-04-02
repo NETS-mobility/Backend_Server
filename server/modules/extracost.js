@@ -2,6 +2,7 @@
 
 const pool = require("./mysql");
 const pool2 = require("./mysql2");
+const formatdate = require("./formatdate");
 
 module.exports = {
   calExtracost: async (reservationId) => {
@@ -87,7 +88,10 @@ module.exports = {
       let delayTimeCost = 0; // 승차 지연 대기요금
 
       // 날짜로 변환
+      hopeDate = formatdate.getFormatDate(new Date(hopeDate), 2); // 날짜
+
       expPickupTime = hopeDate + " " + expPickupTime;
+      
       expPickupTime = new Date(expPickupTime);
       realPickupTime = new Date(realPickupTime * 1000);
 

@@ -2,6 +2,7 @@
 
 const pool = require("./mysql");
 const pool2 = require("./mysql2");
+const formatdate = require("./formatdate");
 
 module.exports = {
   calBasecost: async (reservationId) => {
@@ -92,9 +93,11 @@ module.exports = {
 
       if (serviceKindId == 3 || serviceKindId == 5) {
         // 왕복일 경우 편도 기준으로 바꿈
-        expMoveDistance = expMoveDistance / 2 + 1;
+        expMoveDistance = expMoveDistance / 2;
         baseMoveDistance = baseMoveDistance / 2;
       }
+
+      expMoveDistance = expMoveDistance + 1; // 주차 거리
 
       overMoveDistance = expMoveDistance - baseMoveDistance; // 추가 이동 거리(편도 기준)
 
@@ -138,35 +141,37 @@ module.exports = {
       let totalmin; // 전체 서비스 시간(분)
 
       // 날짜로 변환
+      hopeDate = formatdate.getFormatDate(new Date(hopeDate), 2); // 날짜
+
       expPickupTime = hopeDate + " " + expPickupTime;
       expTerminateServiceTime = hopeDate + " " + expTerminateServiceTime;
       nightstart = hopeDate + " " + nightstart;
       nightend = hopeDate + " " + nightend;
-
+      
       expPickupTime = new Date(expPickupTime);
       expTerminateServiceTime = new Date(expTerminateServiceTime);
       nightstart = new Date(nightstart);
       nightend = new Date(nightend);
-
+      
       // 전체 서비스 시간 계산(분)
       let gap = (expTerminateServiceTime.getTime() - expPickupTime.getTime()) / (1000 * 60); // 차이(분)
       totalmin = parseInt(gap);
 
       // 심야 시간인지 판단
-      if (expTerminateServiceTime > nightend) {
-        // 심야 시간에 끝나면
-        gap = (expTerminateServiceTime.getTime() - nightend.getTime()) / (1000 * 60); // 차이(분)
+      if (expTerminateServiceTime > nightstart) {
+        // 저녁 심야 시간에 끝나면
+        gap = (expTerminateServiceTime.getTime() - nightstart.getTime()) / (1000 * 60); // 차이(분)
         nightmin = parseInt(gap);
       }
 
-      if (expPickupTime < nightstart) {
-        // 심야 시간에 시작하면
-        gap = (nightstart.getTime() - expPickupTime.getTime()) / (1000 * 60); // 차이(분)
+      if (expPickupTime < nightend) {
+        // 아침 심야 시간에 시작하면
+        gap = (nightend.getTime() - expPickupTime.getTime()) / (1000 * 60); // 차이(분)
         nightmin = parseInt(gap);
       }
 
-      if (expPickupTime > nightend) {
-        // 심야 시간에 시작하면
+      if (expPickupTime > nightstart) {
+        // 저녁 심야 시간에 시작하면
         nightmin = totalmin;
       }
 
@@ -182,7 +187,7 @@ module.exports = {
 
       day = expPickupTime.getDay(); // 요일
 
-      if (day == 0 || day == 6) {
+      if (day == 0 || day == 6) { // 주말-계산 처리
         weekendCost = parseInt(TotalBaseCost * (weekendRatio - 1));
       }
 

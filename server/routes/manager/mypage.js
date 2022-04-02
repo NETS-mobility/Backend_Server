@@ -9,6 +9,7 @@ const bcrypt = require("bcryptjs");
 
 const bcrypt_option = require("../../config/bcrypt");
 const uplPath = require("../../config/upload_path");
+const public_url = require("../../config/public_url");
 const logger = require("../../config/logger");
 const saltRounds = bcrypt_option.saltRounds;
 
@@ -58,8 +59,8 @@ router.post("/changeInfo", async function (req, res, next) {
         name: data1[0].netsmanager_name,
       },
       certificate: data2,
-      url_profile: data1[0].netsmanager_picture_path,
-      url_introimg: data1[0].netsmanager_notice_picture_url,
+      url_profile: public_url + data1[0].netsmanager_picture_path,
+      url_introimg: public_url + data1[0].netsmanager_notice_picture_url,
     });
   } catch (err) {
     logger.error(__filename + " : " + err);

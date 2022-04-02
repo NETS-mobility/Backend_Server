@@ -72,7 +72,7 @@ router.post("/extraCostDetail", async function (req, res, next) {
   try {
     const sql1 = `SELECT payment_state_id, payment_amount,
                   over_gowith_cost, over_gowith_time,
-                  delay_cost, delay_time,
+                  delay_cost, delay_time
                   FROM extra_payment WHERE reservation_id=?;`;
 
     const result1 = await connection.query(sql1, [reservationId]);
