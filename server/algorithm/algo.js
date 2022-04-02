@@ -1,6 +1,7 @@
 const { Case1, Case2, Case3 } = require("./case");
 const ToKoreanTime = require("./util/toKoreanTime");
 const resultDispatch = require("./algorithm/resultDispatch");
+const insertAddressCoordinate = require("./algorithm/insertAddressCoordinate");
 const logger = require("../config/logger");
 
 const Algo = async (revData) => {
@@ -36,6 +37,9 @@ const Algo = async (revData) => {
           2,
           false
         );
+        insertAddressCoordinate(revData.pickup, revData.pickup_x, revData.pickup_y);
+        insertAddressCoordinate(revData.hos, revData.hos_x, revData.hos_y);
+        insertAddressCoordinate(revData.drop, revData.drop_x, revData.drop_y);
       }
     } else {
       let dispatchResult3 = await Case3(revData);
@@ -54,6 +58,9 @@ const Algo = async (revData) => {
           2,
           true
         );
+        insertAddressCoordinate(revData.pickup, revData.pickup_x, revData.pickup_y);
+        insertAddressCoordinate(revData.hos, revData.hos_x, revData.hos_y);
+        insertAddressCoordinate(revData.drop, revData.drop_x, revData.drop_y);
       }
     }
   } else if (revData.dire == "집-병원") {
@@ -63,6 +70,8 @@ const Algo = async (revData) => {
     if (dispatchResult1 != -1) {
       finalDispatch1 = await resultDispatch(dispatchResult1, revData, 1, false);
       finalDispatch2 = 0;
+      insertAddressCoordinate(revData.pickup, revData.pickup_x, revData.pickup_y);
+      insertAddressCoordinate(revData.hos, revData.hos_x, revData.hos_y);
     }
   } else if (revData.dire == "병원-집") {
     let dispatchResult2 = await Case2(revData, true);
@@ -71,6 +80,8 @@ const Algo = async (revData) => {
     if (dispatchResult2 != -1) {
       finalDispatch1 = await resultDispatch(dispatchResult2, revData, 2, false);
       finalDispatch2 = 0;
+      insertAddressCoordinate(revData.hos, revData.hos_x, revData.hos_y);
+      insertAddressCoordinate(revData.drop, revData.drop_x, revData.drop_y);
     }
   }
   logger.info("Done!");
