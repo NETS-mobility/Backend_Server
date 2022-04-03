@@ -230,12 +230,12 @@ router.post(
         result_baseCost.nightmin,
         result_baseCost.weekendCost,
       ]);
-
+      
       res
         .status(200)
         .send({
           success: true,
-          reservationId: reservationId,
+          reservationId: String(reservationId),
           baseCost: result_baseCost.TotalBaseCost,
         });
     } catch (err) {
