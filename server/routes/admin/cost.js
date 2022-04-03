@@ -4,56 +4,10 @@ const router = express.Router();
 const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const token_checker = require("../../modules/admin_token");
+
 const logger = require("../../config/logger");
 
-// ===== 서비스 요금 조회 ==== => extra페이지하고 통합
-/*router.post("/service", async function (req, res, next) {
-  if (!(await token_checker(req.body.jwtToken))) {
-    res.status(401).send({ err: "접근 권한이 없습니다." });
-    return;
-  }
-
-  const connection = await pool2.getConnection(async (conn) => conn);
-  try {
-    const sql1 =
-      "select `service_kind_id` as `id`, `service_kind` as `name`, `service_base_move_distance` as `dist`, `service_base_hospital_gowith_time` as `time`, `service_base_cost` as `cost` from `service_info`;";
-    const result1 = await connection.query(sql1, []);
-    const data1 = result1[0];
-    res.send(data1);
-  } catch (err) {
-    logger.error(__filename + " : " + err);
-    // res.status(500).send({ err : "서버 오류" });
-    res.status(500).send({ err: "오류-" + err });
-  } finally {
-    connection.release();
-  }
-});*/
-
-// ===== 서비스 요금 설정 ==== => extra/setting페이지하고 통합
-/*router.post("/service/setting", async function (req, res, next) {
-  const { id, cost } = req.body;
-  if (!(await token_checker(req.body.jwtToken))) {
-    res.status(401).send({ err: "접근 권한이 없습니다." });
-    return;
-  }
-
-  const connection = await pool2.getConnection(async (conn) => conn);
-  try {
-    const sql1 =
-      "update `service_info` set `service_base_cost`=? where `service_kind_id`=?;";
-    const result1 = await connection.query(sql1, [cost, id]);
-    if (result1[0].affectedRows == 0) throw (err = 0);
-    res.send();
-  } catch (err) {
-    logger.error(__filename + " : " + err);
-    if (err == 0) res.status(500).send({ err: "변경 실패!" });
-    else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
-  } finally {
-    connection.release();
-  }
-});*/
-
-// ===== 서비스 & 추가요금 정보 반환 =====
+// ===== 서비스요금 & 추가요금 & 매니저 추가수당 정보 반환 =====
 router.post("/extra", async function (req, res, next) {
   if (!(await token_checker(req.body.jwtToken))) {
     res.status(401).send({ err: "접근 권한이 없습니다." });
@@ -80,7 +34,7 @@ router.post("/extra", async function (req, res, next) {
     const result3 = await connection.query(sql3, []);
     const data3 = result3[0];
 
-    res.send({
+    res.status(200).send({
       service_cost: data0,
       extra_cost: data1,
       extra_cost_night_time: data2[0],
@@ -95,7 +49,7 @@ router.post("/extra", async function (req, res, next) {
   }
 });
 
-// ===== 서비스 & 추가요금 설정 =====
+// ===== 서비스요금 & 추가요금 & 매니저 추가수당 정보 설정 =====
 router.post("/extra/setting", async function (req, res, next) {
   const { service_cost, extra_cost, extra_cost_night_time, manager_extra_pay } = req.body;
   if (!(await token_checker(req.body.jwtToken))) {
@@ -183,7 +137,7 @@ router.post("/extra/setting", async function (req, res, next) {
     if (sqlrc4[0].affectedRows == 0) throw (err = 0);
 
     await connection.commit();
-    res.send();
+    res.status(200).send({ success: true });
   } catch (err) {
     await connection.rollback();
     logger.error(__filename + " : " + err);
@@ -194,7 +148,7 @@ router.post("/extra/setting", async function (req, res, next) {
   }
 });
 
-// ===== 서비스 추가시간 반환 =====
+// ===== 시간 관련 변수(도어투도어 시간, 정돈 시간, tmap 여유 시간, 식사 시간) 반환 =====
 router.post("/service/extratime", async function (req, res, next) {
   if (!(await token_checker(req.body.jwtToken))) {
     res.status(401).send({ err: "접근 권한이 없습니다." });
@@ -206,7 +160,7 @@ router.post("/service/extratime", async function (req, res, next) {
     const sql1 = "select * from `service_extratime` order by `extratime_id`;";
     const result1 = await connection.query(sql1, []);
     const data1 = result1[0];
-    res.send(data1);
+    res.status(200).send({ extratime: data1 });
   } catch (err) {
     logger.error(__filename + " : " + err);
     // res.status(500).send({ err : "서버 오류" });
@@ -216,7 +170,7 @@ router.post("/service/extratime", async function (req, res, next) {
   }
 });
 
-// ===== 서비스 추가시간 반환 =====
+// ===== 시간 관련 변수(도어투도어 시간, 정돈 시간, tmap 여유 시간, 식사 시간) 설정 =====
 router.post("/service/extratime/setting", async function (req, res, next) {
   const { data } = req.body;
   if (!(await token_checker(req.body.jwtToken))) {
@@ -239,7 +193,7 @@ router.post("/service/extratime/setting", async function (req, res, next) {
     }
 
     await connection.commit();
-    res.send();
+    res.status(200).send({ success: true });
   } catch (err) {
     await connection.rollback();
     logger.error(__filename + " : " + err);
@@ -251,3 +205,50 @@ router.post("/service/extratime/setting", async function (req, res, next) {
 });
 
 module.exports = router;
+
+// ===== 서비스 요금 조회 ==== => extra페이지하고 통합
+/*router.post("/service", async function (req, res, next) {
+  if (!(await token_checker(req.body.jwtToken))) {
+    res.status(401).send({ err: "접근 권한이 없습니다." });
+    return;
+  }
+
+  const connection = await pool2.getConnection(async (conn) => conn);
+  try {
+    const sql1 =
+      "select `service_kind_id` as `id`, `service_kind` as `name`, `service_base_move_distance` as `dist`, `service_base_hospital_gowith_time` as `time`, `service_base_cost` as `cost` from `service_info`;";
+    const result1 = await connection.query(sql1, []);
+    const data1 = result1[0];
+    res.send(data1);
+  } catch (err) {
+    logger.error(__filename + " : " + err);
+    // res.status(500).send({ err : "서버 오류" });
+    res.status(500).send({ err: "오류-" + err });
+  } finally {
+    connection.release();
+  }
+});*/
+
+// ===== 서비스 요금 설정 ==== => extra/setting페이지하고 통합
+/*router.post("/service/setting", async function (req, res, next) {
+  const { id, cost } = req.body;
+  if (!(await token_checker(req.body.jwtToken))) {
+    res.status(401).send({ err: "접근 권한이 없습니다." });
+    return;
+  }
+
+  const connection = await pool2.getConnection(async (conn) => conn);
+  try {
+    const sql1 =
+      "update `service_info` set `service_base_cost`=? where `service_kind_id`=?;";
+    const result1 = await connection.query(sql1, [cost, id]);
+    if (result1[0].affectedRows == 0) throw (err = 0);
+    res.send();
+  } catch (err) {
+    logger.error(__filename + " : " + err);
+    if (err == 0) res.status(500).send({ err: "변경 실패!" });
+    else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
+  } finally {
+    connection.release();
+  }
+});*/
