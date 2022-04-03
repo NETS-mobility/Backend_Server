@@ -20,7 +20,7 @@ router.post("/manager", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 =
-      "select `post_id` as `id`, `post_title` as `title`, `post_date` as `date` from `manager_notice` order by `post_id`;";
+      "select `post_id` as `id`, `post_title` as `title`, date_format(`post_date`,'%Y-%m-%d') as `date` from `manager_notice` order by `post_id`;";
     const result1 = await connection.query(sql1, []);
     res.send(result1[0]);
   } catch (err) {
@@ -43,7 +43,7 @@ router.post("/manager/read/:idx", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 =
-      "select `post_id` as `id`, `post_title` as `title`, `post_date` as `date`, `post_content` as `content`, " +
+      "select `post_id` as `id`, `post_title` as `title`, date_format(`post_date`,'%Y-%m-%d') as `date`, `post_content` as `content`, " +
       "`view_number` as `view`, `post_writer_id` as `writer_id` from `manager_notice` where `post_id`=?;";
     const result1 = await connection.query(sql1, [idx]);
     const data1 = result1[0];
@@ -240,7 +240,7 @@ router.post("/customer", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 =
-      "select `post_id` as `id`, `post_title` as `title`, `post_date` as `date` from `customer_notice` order by `post_id`;";
+      "select `post_id` as `id`, `post_title` as `title`, date_format(`post_date`,'%Y-%m-%d') as `date` from `customer_notice` order by `post_id`;";
     const result1 = await connection.query(sql1, []);
     res.send(result1[0]);
   } catch (err) {
@@ -263,7 +263,7 @@ router.post("/customer/read/:idx", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 =
-      "select `post_id` as `id`, `post_title` as `title`, `post_date` as `date`, `post_content` as `content`, " +
+      "select `post_id` as `id`, `post_title` as `title`, date_format(`post_date`,'%Y-%m-%d') as `date`, `post_content` as `content`, " +
       "`view_number` as `view`, `post_writer_id` as `writer_id` from `customer_notice` where `post_id`=?;";
     const result1 = await connection.query(sql1, [idx]);
     const data1 = result1[0];

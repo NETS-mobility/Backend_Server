@@ -129,7 +129,8 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
 
     // 서비스 상태정보
     const sql_prog =
-      "select * from `service_progress` where `reservation_id`=?;";
+      "select date_format(`real_car_departure_time`,'%Y-%m-%d %T') as `real_car_departure_time`, date_format(`real_pickup_time`,'%Y-%m-%d %T') as `real_pickup_time`, date_format(`real_hospital_arrival_time`,'%Y-%m-%d %T') as `real_hospital_arrival_time`, date_format(`real_return_hospital_arrival_time`,'%Y-%m-%d %T') as `real_return_hospital_arrival_time`, " + 
+      "date_format(`real_return_start_time`,'%Y-%m-%d %T') as `real_return_start_time`, date_format(`real_service_end_time`,'%Y-%m-%d %T') as `real_service_end_time` from `service_progress` where `reservation_id`=?;";
     const result_prog = await connection.query(sql_prog, [service_id]);
     const data_prog = result_prog[0];
 
@@ -202,7 +203,8 @@ router.post(
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
       const sql_prog =
-        "select * from `service_progress` where `reservation_id`=?;";
+      "select date_format(`real_car_departure_time`,'%Y-%m-%d %T') as `real_car_departure_time`, date_format(`real_pickup_time`,'%Y-%m-%d %T') as `real_pickup_time`, date_format(`real_hospital_arrival_time`,'%Y-%m-%d %T') as `real_hospital_arrival_time`, date_format(`real_return_hospital_arrival_time`,'%Y-%m-%d %T') as `real_return_hospital_arrival_time`, " + 
+      "date_format(`real_return_start_time`,'%Y-%m-%d %T') as `real_return_start_time`, date_format(`real_service_end_time`,'%Y-%m-%d %T') as `real_service_end_time` from `service_progress` where `reservation_id`=?;";
       const result_prog = await connection.query(sql_prog, [service_id]);
       const data_prog = result_prog[0];
 

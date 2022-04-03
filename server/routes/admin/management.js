@@ -87,7 +87,6 @@ router.post("/customer/detail", async function (req, res, next) {
 
 // ===== 매니저 리스트 조회 =====
 router.post("/manager", async function (req, res, next) {
-  console.log("manager Req===", req);
   if (!(await token_checker(req.body.jwtToken))) {
     res.status(401).send({ err: "접근 권한이 없습니다." });
     return;
@@ -96,7 +95,7 @@ router.post("/manager", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 =
-      "select `netsmanager_id` as `id`, `netsmanager_number` as `number`, `netsmanager_name` as `name`, `netsmanager_join_date` as `date` from `netsmanager`;";
+      "select `netsmanager_id` as `id`, `netsmanager_number` as `number`, `netsmanager_name` as `name`, date_format(`netsmanager_join_date`,'%Y-%m-%d') as `date` from `netsmanager`;";
     const result1 = await connection.query(sql1, []);
     res.send(result1[0]);
   } catch (err) {
@@ -138,7 +137,7 @@ router.post("/manager/detail", async function (req, res, next) {
 
     const now = date_to_string(new Date());
     const sql4 =
-      "select C.`car_dispatch_number` as `dispatch_id`, C.`reservation_id`, S.`service_kind` as `service_type`, `expect_car_pickup_time` as `start_time`, `expect_car_terminate_service_time` as `end_time`, U.`user_name` as `customer_name`" +
+      "select C.`car_dispatch_number` as `dispatch_id`, C.`reservation_id`, S.`service_kind` as `service_type`, date_format(`expect_car_pickup_time`,'%Y-%m-%d %T') as `start_time`, date_format(`expect_car_terminate_service_time`,'%Y-%m-%d %T') as `end_time`, U.`user_name` as `customer_name`" +
       "from `car_dispatch` as C, `reservation` as R, `service_info` as S, `user` as U " +
       "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number` and `hope_reservation_date` >= ? " +
       "order by `start_time`;";
@@ -463,7 +462,7 @@ router.post("/car/:idx/repair", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const sql1 =
-      "select `car_repair_number` as `number`, date_format(`car_repair_start_date`,'%Y-%m-%d') as `start`, date_format(`car_repair_end_date`,'%Y-%m-%d') as `end`, `netsmanager_name` as `manager_name` " +
+      "select `car_repair_number` as `number`, date_format(`car_repair_start_date`,'%Y-%m-%d %T') as `start`, date_format(`car_repair_end_date`,'%Y-%m-%d %T') as `end`, `netsmanager_name` as `manager_name` " +
       "from `car_repair` as C, `netsmanager` as M where `car_id`=? and C.`netsmanager_number`=M.`netsmanager_number`;";
     const result1 = await connection.query(sql1, [idx]);
     res.send(result1[0]);

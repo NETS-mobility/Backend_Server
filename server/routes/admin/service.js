@@ -99,7 +99,8 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
 
     // 서비스 상태정보
     const sql_prog =
-      "select * from `service_progress` where `reservation_id`=?;";
+      "select date_format(`real_car_departure_time`,'%Y-%m-%d %T') as `real_car_departure_time`, date_format(`real_pickup_time`,'%Y-%m-%d %T') as `real_pickup_time`, date_format(`real_hospital_arrival_time`,'%Y-%m-%d %T') as `real_hospital_arrival_time`, date_format(`real_return_hospital_arrival_time`,'%Y-%m-%d %T') as `real_return_hospital_arrival_time`, " + 
+      "date_format(`real_return_start_time`,'%Y-%m-%d %T') as `real_return_start_time`, date_format(`real_service_end_time`,'%Y-%m-%d %T') as `real_service_end_time` from `service_progress` where `reservation_id`=?;";
     const result_prog = await connection.query(sql_prog, [service_id]);
     const data_prog = result_prog[0];
 
@@ -121,7 +122,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     // 배차 (매니저 & 차량)
     const sqld =
       "select C.`car_id`, `car_number`, NM.`netsmanager_id`, NM.`netsmanager_number`, NM.`netsmanager_name`, " +
-      "`car_dispatch_number`, `departure_address`, `destination_address`, `expect_car_pickup_time` as `pickup_time`, `expect_car_terminate_service_time` as `terminate_time`, `car_move_direction_id` as `dire` " +
+      "`car_dispatch_number`, `departure_address`, `destination_address`, date_format(`expect_car_pickup_time`,'%Y-%m-%d %T') as `pickup_time`, date_format(`expect_car_terminate_service_time`,'%Y-%m-%d %T') as `terminate_time`, `car_move_direction_id` as `dire` " +
       "from `reservation` as R, `car_dispatch`as D, `netsmanager` as NM, `car` as C " +
       "where R.`reservation_id`=? and R.`reservation_id`=D.`reservation_id` and D.`netsmanager_number`=NM.`netsmanager_number` and D.`car_id`=C.`car_id`;";
     const sqldr = await connection.query(sqld, [service_id]);
