@@ -30,6 +30,9 @@ exports.pushAlarm = async function (
 
   // 알림 setting
   let message = {
+    android: {
+      priority: "high",
+    },
     notification: {
       // 알림 화면에서 표시될 내용
       title: push_alarm_title,
