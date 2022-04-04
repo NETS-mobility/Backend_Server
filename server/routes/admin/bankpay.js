@@ -25,26 +25,36 @@ router.post("/setCompleteBaseCost", async function (req, res, next) {
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
-    const sql1 = `UPDATE reservation SET reservation_state_id=?, reservation_payment_state_id=? WHERE reservation_id=?;`;
+    const sql1 = `SELECT reservation_payment_state_id FROM reservation WHERE reservation_id=?;`;
 
-    const sql2 = `UPDATE base_payment SET payment_state_id=?, complete_payment_date=? WHERE reservation_id=?;`;
+    const sql2 = `UPDATE reservation SET reservation_state_id=?, reservation_payment_state_id=? WHERE reservation_id=?;`;
 
-    const sql3 = `INSERT INTO service_progress(reservation_id, service_state_id
+    const sql3 = `UPDATE base_payment SET payment_state_id=?, complete_payment_date=? WHERE reservation_id=?;`;
+
+    const sql4 = `INSERT INTO service_progress(reservation_id, service_state_id
                   ) VALUES(?,?);`;
+
+    const result1 = await connection.query(sql1, [reservationId]);
+    const sql_data1 = result1[0];
+
+    if (sql_data1.length == 0)
+      return res.status(400).send({ msg: "해당하는 예약이 존재하지 않음" });
+    else if (sql_data1[0].reservation_payment_state_id != 2)
+      return res.status(400).send({ msg: "결제 완료 진행할 수 없는 단계임" });
     
-    const result1 = await connection.query(sql1, [
+    const result2 = await connection.query(sql2, [
       reservation_state.ready,
       reservation_payment_state.completeBasePay,
       reservationId,
     ]);
 
-    const result2 = await connection.query(sql2, [
+    const result3 = await connection.query(sql3, [
       payment_state.completePay,
       now,
       reservationId,
     ]);
 
-    const result3 = await connection.query(sql3, [
+    const result4 = await connection.query(sql4, [
       reservationId,
       service_state.ready,
     ]);
@@ -71,16 +81,26 @@ router.post("/setCompleteExtraCost", async function (req, res, next) {
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
-    const sql1 = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
+    const sql1 = `SELECT reservation_payment_state_id FROM reservation WHERE reservation_id=?;`;
 
-    const sql2 = `UPDATE extra_payment SET payment_state_id=?, complete_payment_date=? WHERE reservation_id=?;`;
+    const sql2 = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
+
+    const sql3 = `UPDATE extra_payment SET payment_state_id=?, complete_payment_date=? WHERE reservation_id=?;`;
     
-    const result1 = await connection.query(sql1, [
+    const result1 = await connection.query(sql1, [reservationId]);
+    const sql_data1 = result1[0];
+
+    if (sql_data1.length == 0)
+      return res.status(400).send({ msg: "해당하는 예약이 존재하지 않음" });
+    else if (sql_data1[0].reservation_payment_state_id != 5)
+      return res.status(400).send({ msg: "결제 완료 진행할 수 없는 단계임" });
+
+    const result2 = await connection.query(sql2, [
       reservation_payment_state.completeAllPay,
       reservationId,
     ]);
 
-    const result2 = await connection.query(sql2, [
+    const result3 = await connection.query(sql3, [
       payment_state.completePay,
       now,
       reservationId,
