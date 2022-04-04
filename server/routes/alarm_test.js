@@ -13,6 +13,7 @@ router.post("/manager", async function (req, res, next) {
   const device_token = req.body.device_token;
 
   try {
+    console.log("device_token in alarm_test=", device_token);
     push_alarm.pushAlarm(alarm_text, title, device_token);
     res.status(200).send("");
   } catch (err) {

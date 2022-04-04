@@ -26,7 +26,9 @@ exports.pushAlarm = async function (
   push_alarm_title,
   device_token
 ) {
+  console.log("device_token in push_alarm=", device_token);
   const registrationToken = device_token;
+  console.log("registrationToken in push_alarm=", registrationToken);
 
   // 알림 setting
   let message = {
