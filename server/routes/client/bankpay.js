@@ -50,10 +50,20 @@ router.post("/payBaseCost", async function (req, res, next) {
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
-    const sql1 = `UPDATE base_payment SET payment_state_id=?, payment_method=?, bank_name=?,
+    const sql1 = `SELECT reservation_payment_state_id FROM reservation WHERE reservation_id=?;`;
+
+    const sql2 = `UPDATE base_payment SET payment_state_id=?, payment_method=?, bank_name=?,
                   submit_payment_date=?, valid_payment_date=? WHERE reservation_id=?;`;
 
-    const sql2 = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
+    const sql3 = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
+    
+    const result1 = await connection.query(sql1, [reservationId]);
+    const sql_data1 = result1[0];
+
+    if (sql_data1.length == 0)
+      return res.status(400).send({ msg: "해당하는 예약이 존재하지 않음" });
+    else if (sql_data1[0].reservation_payment_state_id != 1)
+      return res.status(400).send({ msg: "결제 진행할 수 없는 단계임" });
     
     const now = new Date(); // 오늘
     const submitDate = formatdate.getFormatDate(new Date(), 1); // 날짜,시간
@@ -61,7 +71,7 @@ router.post("/payBaseCost", async function (req, res, next) {
     validDate = formatdate.getFormatDate(validDate, 2); // 날짜
     validDate = validDate + " 11:59:59";
 
-    const result1 = await connection.query(sql1, [
+    const result2 = await connection.query(sql2, [
       payment_state.waitDepositPay,
       "무통장입금",
       bankName,
@@ -70,7 +80,7 @@ router.post("/payBaseCost", async function (req, res, next) {
       reservationId,
     ]);
     
-    const result2 = await connection.query(sql2, [
+    const result3 = await connection.query(sql3, [
       reservation_payment_state.waitBaseDepositPay,
       reservationId,
     ]);
@@ -99,10 +109,20 @@ router.post("/payExtraCost", async function (req, res, next) {
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
-    const sql1 = `UPDATE extra_payment SET payment_state_id=?, payment_method=?, bank_name=?,
+    const sql1 = `SELECT reservation_payment_state_id FROM reservation WHERE reservation_id=?;`;
+
+    const sql2 = `UPDATE extra_payment SET payment_state_id=?, payment_method=?, bank_name=?,
                   submit_payment_date=?, valid_payment_date=? WHERE reservation_id=?;`;
 
-    const sql2 = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
+    const sql3 = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
+
+    const result1 = await connection.query(sql1, [reservationId]);
+    const sql_data1 = result1[0];
+
+    if (sql_data1.length == 0)
+      return res.status(400).send({ msg: "해당하는 예약이 존재하지 않음" });
+    else if (sql_data1[0].reservation_payment_state_id != 4)
+      return res.status(400).send({ msg: "결제 진행할 수 없는 단계임" });
 
     const now = new Date(); // 오늘
     const submitDate = formatdate.getFormatDate(new Date(), 1); // 날짜,시간
@@ -110,7 +130,7 @@ router.post("/payExtraCost", async function (req, res, next) {
     validDate = formatdate.getFormatDate(validDate, 2); // 날짜
     validDate = validDate + " 11:59:59";
     
-    const result1 = await connection.query(sql1, [
+    const result2 = await connection.query(sql2, [
       payment_state.waitDepositPay,
       "무통장입금",
       bankName,
@@ -119,7 +139,7 @@ router.post("/payExtraCost", async function (req, res, next) {
       reservationId,
     ]);
 
-    const result2 = await connection.query(sql2, [
+    const result3 = await connection.query(sql3, [
       reservation_payment_state.waitExtraDepositPay,
       reservationId,
     ]);
