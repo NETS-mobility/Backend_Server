@@ -44,9 +44,6 @@ const route_admin_alarm = require("./routes/admin/view_alarm");
 const route_dispatch = require("./routes/dispatch/dispatch");
 const route_public = require("./routes/public");
 
-//const route_client_feedback = require('./routes/client/feedback');
-//const route_client_pay = require('./routes/client/pay');
-
 // npm 모듈 목록
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -76,8 +73,6 @@ app.use("/client/reserve", route_client_reserve);
 app.use("/client/cost", route_client_cost);
 app.use("/client/bankpay", route_client_bankpay);
 app.use("/client/view_alarm", route_client_alarm);
-//app.use('/client/feedback', route_client_feedback);
-//app.use('/client/pay', route_client_pay);
 
 app.use("/manager/service", route_manager_service);
 app.use("/manager/mypage", route_manager_mypage);
@@ -99,37 +94,3 @@ app.use("/admin/view_alarm", route_admin_alarm);
 app.use("/dispatch", route_dispatch);
 app.use("/public", route_public);
 app.use("/getToken", route_getToken);
-/*
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-    var err = new Error('Not Found');
-    err.status = 404;
-    next(err);
-  });
-  
-  // error handlers
-  
-  // development error handler
-  // will print stacktrace
-  if (app.get('env') === 'development') {
-    app.use(function(err, req, res, next) {
-      res.status(err.status || 500);
-      res.render('error', {
-        message: err.message,
-        error: err
-      });
-    });
-  }
-  
-  // production error handler
-  // no stacktraces leaked to user
-  app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('error', {
-      message: err.message,
-      error: {}
-    });
-  });
-
-  module.exports = app;
-*/
