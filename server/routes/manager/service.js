@@ -331,10 +331,12 @@ router.post(
       if (next_state == service_state.complete) {
         result_extraCost = await extracost.calExtracost(service_id);
         if (extraCost > 0) {
-          const sql_cost = `INSERT INTO extra_payment(reservation_id, payment_state_id, payment_amount,
-                            over_gowith_cost, over_gowith_time, delay_cost, delay_time) VALUES(?,?,?,?,?,?,?);`;
+          const sql_cost = `INSERT INTO extra_payment(reservation_id, merchant_uid, payment_state_id, payment_amount,
+                            over_gowith_cost, over_gowith_time, delay_cost, delay_time
+                            ) VALUES(?,?,?,?,?,?,?,?);`;
           await connection.query(sql_cost, [
             service_id,
+            String(service_id)+"E",
             payment_state.waitPay,
             result_extraCost.TotalExtraCost,
             result_extraCost.overGowithTimeCost,
