@@ -33,7 +33,7 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     let sql1 =
       "select S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, `pickup_address`, `drop_address`, " +
       "`hospital_address` as `hos_address`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, " +
-      "`gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time` " +
+      "`gowithumanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time` " +
       "from `reservation` as R, `service_info` as S " +
       "where `user_number`=? and R.`service_kind_id`=S.`service_kind_id` ";
 
@@ -98,7 +98,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     // 서비스 정보
     const sql_service =
       "select cast(`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, `pickup_address` as `pickup_address`, `hospital_address` as `hos_address`, `drop_address`, `reservation_payment_state_id`, " +
-      "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time` " +
+      "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithumanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time` " +
       "from `reservation` where `reservation_id`=?;";
     const result_service = await connection.query(sql_service, [service_id]);
     const data_service = result_service[0];
