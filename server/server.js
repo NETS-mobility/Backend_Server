@@ -21,6 +21,7 @@ const route_client_register = require("./routes/client/register");
 const route_client_reserve = require("./routes/client/reserve");
 const route_client_cost = require("./routes/client/cost");
 const route_client_bankpay = require("./routes/client/bankpay");
+const route_client_pay = require("./routes/client/pay");
 const route_client_alarm = require("./routes/client/view_alarm");
 const route_getToken = require("./routes/getToken");
 
@@ -72,6 +73,7 @@ app.use("/client/register", route_client_register);
 app.use("/client/reserve", route_client_reserve);
 app.use("/client/cost", route_client_cost);
 app.use("/client/bankpay", route_client_bankpay);
+app.use("/client/pay", route_client_pay);
 app.use("/client/view_alarm", route_client_alarm);
 
 app.use("/manager/service", route_manager_service);
