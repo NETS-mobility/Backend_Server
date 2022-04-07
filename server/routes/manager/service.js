@@ -51,7 +51,7 @@ router.post("/serviceList/:listType/:date", async function (req, res, next) {
     let sql1 =
       "select distinct S.`service_kind` as `service_type`, cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, `pickup_address`, `drop_address`, " +
       "`hospital_address` as `hos_address`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `move_direction_id`, `gowith_hospital_time`, " +
-      "U.`user_name` as `user_name`, U.`user_phone` as `user_phone`, `gowithmanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " +
+      "U.`user_name` as `user_name`, U.`user_phone` as `user_phone`, `gowithumanager_name` as `gowithumanager`, `reservation_state_id` as `reservation_state` " +
       "from `car_dispatch` as C, `reservation` as R, `service_info` as S, `user` as U, `netsmanager` as NM " +
       "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and C.`netsmanager_number`=NM.`netsmanager_number` and R.`user_number`=U.`user_number` ";
 
@@ -120,7 +120,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     // 서비스 정보
     const sql_service =
       "select cast(R.`reservation_id` as char) as `service_id`, `pickup_address`, `hospital_address` as `hos_address`, `drop_address`, U.`user_name` as `user_name`, U.`user_phone` as `user_phone`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time`, " +
-      "`expect_pickup_time` as `pickup_time`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, S.`service_kind` as `service_type`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, `gowithmanager_name` as `gowithumanager_name` " +
+      "`expect_pickup_time` as `pickup_time`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, S.`service_kind` as `service_type`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, `gowithumanager_name` as `gowithumanager_name` " +
       "from `reservation` as R, `service_info` as S, `user` as U " +
       "where R.`reservation_id`=? and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number`;";
     const result_service = await connection.query(sql_service, [service_id]);
