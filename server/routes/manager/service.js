@@ -130,7 +130,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     // 서비스 상태정보
     const sql_prog =
       "select date_format(`real_car_departure_time`,'%Y-%m-%d %T') as `real_car_departure_time`, date_format(`real_pickup_time`,'%Y-%m-%d %T') as `real_pickup_time`, date_format(`real_hospital_arrival_time`,'%Y-%m-%d %T') as `real_hospital_arrival_time`, date_format(`real_return_hospital_arrival_time`,'%Y-%m-%d %T') as `real_return_hospital_arrival_time`, " + 
-      "date_format(`real_return_start_time`,'%Y-%m-%d %T') as `real_return_start_time`, date_format(`real_service_end_time`,'%Y-%m-%d %T') as `real_service_end_time` from `service_progress` where `reservation_id`=?;";
+      "date_format(`real_return_start_time`,'%Y-%m-%d %T') as `real_return_start_time`, date_format(`real_service_end_time`,'%Y-%m-%d %T') as `real_service_end_time`, `service_state_id` from `service_progress` where `reservation_id`=?;";
     const result_prog = await connection.query(sql_prog, [service_id]);
     const data_prog = result_prog[0];
 
@@ -204,7 +204,7 @@ router.post(
     try {
       const sql_prog =
       "select date_format(`real_car_departure_time`,'%Y-%m-%d %T') as `real_car_departure_time`, date_format(`real_pickup_time`,'%Y-%m-%d %T') as `real_pickup_time`, date_format(`real_hospital_arrival_time`,'%Y-%m-%d %T') as `real_hospital_arrival_time`, date_format(`real_return_hospital_arrival_time`,'%Y-%m-%d %T') as `real_return_hospital_arrival_time`, " + 
-      "date_format(`real_return_start_time`,'%Y-%m-%d %T') as `real_return_start_time`, date_format(`real_service_end_time`,'%Y-%m-%d %T') as `real_service_end_time` from `service_progress` where `reservation_id`=?;";
+      "date_format(`real_return_start_time`,'%Y-%m-%d %T') as `real_return_start_time`, date_format(`real_service_end_time`,'%Y-%m-%d %T') as `real_service_end_time`, `service_state_id` from `service_progress` where `reservation_id`=?;";
       const result_prog = await connection.query(sql_prog, [service_id]);
       const data_prog = result_prog[0];
 
@@ -329,7 +329,7 @@ router.post(
       // 서비스 종료 후 추가 요금 정보
       let next_pay_state;
       if (next_state == service_state.complete) {
-        result_extraCost = await extracost.calExtracost(service_id);
+        /*result_extraCost = await extracost.calExtracost(service_id);
         if (extraCost > 0) {
           const sql_cost = `INSERT INTO extra_payment(reservation_id, merchant_uid, payment_state_id, payment_amount,
                             over_gowith_cost, over_gowith_time, delay_cost, delay_time
@@ -353,7 +353,7 @@ router.post(
           reservation_state.complete,
           next_pay_state,
           service_id,
-        ]);
+        ]);*/
 
         /*// == 알림 전송 ==
 
@@ -376,7 +376,7 @@ router.post(
 
         res
           .status(200)
-          .send({ success: true, extraCost: result_extraCost.TotalExtraCost });
+          .send({ success: true, extraCost: 0 }); // extraCost: result_extraCost.TotalExtraCost
       } else res.status(200).send({ success: true });
       await connection.commit();
     } catch (err) {
