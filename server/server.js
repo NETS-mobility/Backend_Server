@@ -23,7 +23,6 @@ const route_client_cost = require("./routes/client/cost");
 const route_client_bankpay = require("./routes/client/bankpay");
 const route_client_pay = require("./routes/client/pay");
 const route_client_alarm = require("./routes/client/view_alarm");
-const route_getToken = require("./routes/getToken");
 
 const route_manager_service = require("./routes/manager/service");
 const route_manager_mypage = require("./routes/manager/mypage");
@@ -44,6 +43,7 @@ const route_admin_alarm = require("./routes/admin/view_alarm");
 
 const route_dispatch = require("./routes/dispatch/dispatch");
 const route_public = require("./routes/public");
+const route_getToken = require("./routes/getToken");
 
 // npm 모듈 목록
 const cors = require("cors");

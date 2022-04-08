@@ -3,11 +3,11 @@ const admin = require("firebase-admin");
 const logger = require("../config/logger");
 
 // SDK 초기화
-let serviceAccount = require("../config/nets-339714-firebase-adminsdk-w7rz6-cbc6b343db.json");
+let serviceAccount = require("../config/gcp-nets-firebase-adminsdk-wxtyz-14b7a9b55e.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  // databaseURL: "https://nets-339714.firebaseio.com",
+  //databaseURL: "https://gcp-nets.firebaseio.com",
 });
 
 /*getMessaging()
@@ -30,6 +30,9 @@ exports.pushAlarm = async function (
 
   // 알림 setting
   let message = {
+    android: {
+      priority: "high",
+    },
     notification: {
       // 알림 화면에서 표시될 내용
       title: push_alarm_title,
@@ -48,10 +51,10 @@ exports.pushAlarm = async function (
     .messaging()
     .send(message)
     .then(function (response) {
-      logger.info("successfully sent push message: ", response);
+      logger.info("successfully sent push message: " + response);
     })
     .catch(function (err) {
-      logger.error("Error Sending Push Message!!: ", err);
+      logger.error("Error Sending Push Message!!: " + err);
     });
 };
 /////////////////////////////////////////
