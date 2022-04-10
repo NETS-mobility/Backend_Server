@@ -29,7 +29,6 @@ const TmapTimeMachine = async (
       searchOption: "01", //교통최적+무료우선 옵션 선택
     },
   };
-  console.log(data);
 
   //예상 소요시간 계산
   let estimatedTime = 60;
@@ -43,7 +42,6 @@ const TmapTimeMachine = async (
     body: data,
     json: true
   }, function(error, response, body) {
-    console.log(response.body);
     estimatedTime = Math.round(response.body.features[0].properties.totalTime / 60); //tmap에서 계산한 시간에서 반올림(단위: 분)
     estimatedDistance = response.body.features[0].properties.totalDistance;
   });
