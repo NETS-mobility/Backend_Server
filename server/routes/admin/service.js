@@ -89,7 +89,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     // 서비스 정보
     const sql_service =
       "select cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_address`, `hospital_address` as `hos_address`, `drop_address`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, " +
-      "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithumanager_name` as `gowithumanager`, " +
+      "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithumanager_name` as `gowithumanager`, `gowithumanager_phone`, " +
       "`reservation_state_id` as `reservation_state`, R.`user_number` as `customer_number`, U.`user_name` as `customer_name`, S.`service_kind` as `service_type`, `move_direction_id`, `gowith_hospital_time` " +
       "from `reservation` as R, `user` as U, `service_info` as S " +
       "where R.`reservation_id`=? and R.`user_number`=U.`user_number` and R.`service_kind_id`=S.`service_kind_id`;";
