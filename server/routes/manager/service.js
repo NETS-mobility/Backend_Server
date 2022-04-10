@@ -260,17 +260,24 @@ router.post(
     try {
       await connection.beginTransaction();
 
+      const sql_dire =
+        "select `move_direction_id` from `reservation` where `reservation_id`=?;";
+      const result_dire = await connection.query(sql_dire, [service_id]);
+      const data_dire = result_dire[0];
+      const direction = data_dire[0].move_direction_id; // 이동 방향 (집-병원=1, 병원-집=2, 집-집=3)
+
       // 현재 서비스 상태 구하기
       const sql_prog =
         "select `service_state_id` from `service_progress` where `reservation_id`=?;";
       const result_prog = await connection.query(sql_prog, [service_id]);
       const data_prog = result_prog[0];
-      console.log("data_prog=", data_prog);
+      
       let next_state = data_prog[0].service_state_id + 1;
-      if (next_state > service_state.complete)
+      if (direction != 1 && next_state > service_state.complete)
         next_state = service_state.complete;
-      console.log("next_state=", next_state);
-
+      if (direction == 1 && next_state > service_state.arrivalHos)
+        next_state = service_state.arrivalHos;
+      
       // 상태 설정
       let prog;
       switch (next_state) {
@@ -293,7 +300,6 @@ router.post(
           prog = "real_service_end_time";
           break; // 서비스종료
       }
-      console.log("prog=", prog);
 
       const spl =
         "update `service_progress` set `" +
@@ -328,7 +334,9 @@ router.post(
 
       // 서비스 종료 후 추가 요금 정보
       let next_pay_state;
-      if (next_state == service_state.complete) {
+      const srv_end = (direction != 1) ? next_state == service_state.complete : next_state == service_state.arrivalHos;
+      
+      if (srv_end) {
         /*result_extraCost = await extracost.calExtracost(service_id);
         if (extraCost > 0) {
           const sql_cost = `INSERT INTO extra_payment(reservation_id, merchant_uid, payment_state_id, payment_amount,
