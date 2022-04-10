@@ -158,8 +158,8 @@ router.post(
         // 이동 방향이 병원-집(편도)
         const result4 = await connection.query(sql4, [
           reservationId,
-          dp1.netsmanagerNum,
-          dp1.carId,
+          dp1.netsmanager_number,
+          dp1.car_id,
           2,
           user.hospitalAddr,
           user.dropAddr,
@@ -172,8 +172,8 @@ router.post(
         // 이동 방향이 집-병원(편도), 집-집(왕복)
         const result4 = await connection.query(sql4, [
           reservationId,
-          dp1.netsmanagerNum,
-          dp1.carId,
+          dp1.netsmanager_number,
+          dp1.car_id,
           1,
           user.pickupAddr,
           user.hospitalAddr,
@@ -189,8 +189,8 @@ router.post(
         // 왕복
         const result5 = await connection.query(sql5, [
           reservationId,
-          dp2.netsmanagerNum,
-          dp2.carId,
+          dp2.netsmanager_number,
+          dp2.car_id,
           2,
           user.hospitalAddr,
           user.dropAddr,
