@@ -13,18 +13,24 @@ const resultDispatch = async (dispatchResult, revData, dire, is3) => {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     let car_id;
+    let car_num;
     let manager_num;
+    let manager_name;
+    let manager_id;
 
     // 매니저 매칭 - 기본적으로 차량의 운전자로 배정
     for(let i = 0; i < dispatchResult.dispatch.length; i++)
     {
       car_id = dispatchResult.dispatch[i].car_id;
       const sqlm =
-      "select M.`netsmanager_number` from `car` as C, `netsmanager` as M where C.`car_id`=? and C.`netsmanager_number`=M.`netsmanager_number` and M.`netsmanager_possible`!=0;";
+      "select M.`netsmanager_number`, `netsmanager_id`, `netsmanager_name`, `car_number` from `car` as C, `netsmanager` as M where C.`car_id`=? and C.`netsmanager_number`=M.`netsmanager_number` and M.`netsmanager_possible`!=0;";
       const sqlmd = await connection.query(sqlm, [car_id]);
       if (sqlmd[0].length != 0)
       {
         manager_num = sqlmd[0][0].netsmanager_number;
+        manager_id = sqlmd[0][0].netsmanager_id;
+        manager_name = sqlmd[0][0].netsmanager_name;
+        car_num = sqlmd[0][0].car_number;
         break;
       }
     }
@@ -54,6 +60,9 @@ const resultDispatch = async (dispatchResult, revData, dire, is3) => {
       expMoveTime: expect_move_time,
       expCarPickupTime: time_start,
       expCarTerminateServiceTime: time_end,
+      carNumber: car_num,
+      netsmanagerName: manager_name,
+      netsmanagerId: manager_id,
     };
   } catch (err) {
     logger.error(__filename + " : " + err);
