@@ -62,7 +62,7 @@ router.post("/payBaseCost", async function (req, res, next) {
 
     if (sql_data1.length == 0)
       return res.status(400).send({ msg: "해당하는 예약이 존재하지 않음" });
-    else if (sql_data1[0].reservation_payment_state_id != 1)
+    else if (sql_data1[0].reservation_payment_state_id != reservation_payment_state.waitBasePay)
       return res.status(400).send({ msg: "결제 진행할 수 없는 단계임" });
     
     const now = new Date(); // 오늘
@@ -121,7 +121,7 @@ router.post("/payExtraCost", async function (req, res, next) {
 
     if (sql_data1.length == 0)
       return res.status(400).send({ msg: "해당하는 예약이 존재하지 않음" });
-    else if (sql_data1[0].reservation_payment_state_id != 4)
+    else if (sql_data1[0].reservation_payment_state_id != reservation_payment_state.waitExtraPay)
       return res.status(400).send({ msg: "결제 진행할 수 없는 단계임" });
 
     const now = new Date(); // 오늘
