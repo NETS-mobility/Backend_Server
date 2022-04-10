@@ -54,15 +54,15 @@ const resultDispatch = async (dispatchResult, revData, dire, is3) => {
     time_end = time_end.substr(0, 10) + " " + time_end.substr(11, 8);
 
     result = {
-      netsmanagerNum: manager_num,
-      carId: car_id,
+      netsmanager_number: manager_num,
+      car_id: car_id,
       expMoveDistance: expect_move_distance,
       expMoveTime: expect_move_time,
       expCarPickupTime: time_start,
       expCarTerminateServiceTime: time_end,
-      carNumber: car_num,
-      netsmanagerName: manager_name,
-      netsmanagerId: manager_id,
+      car_number: car_num,
+      netsmanager_name: manager_name,
+      netsmanager_id: manager_id,
     };
   } catch (err) {
     logger.error(__filename + " : " + err);
