@@ -53,7 +53,7 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     // 매니저 & 차량 구하기
     for (let i = 0; i < data1.length; i++) {
       const sqlm =
-        "select C.`car_id`, `car_number`, NM.`netsmanager_id`, NM.`netsmanager_number`, NM.`netsmanager_name` " +
+        "select C.`car_id`, `car_number`, NM.`netsmanager_id`, NM.`netsmanager_number`, NM.`netsmanager_name`, date_format(`expect_car_pickup_time`,'%Y-%m-%d %T') as `expCarPickupTime`, date_format(`expect_car_terminate_service_time`,'%Y-%m-%d %T') as `expCarTerminateServiceTime` " +
         "from `reservation` as R, `car_dispatch`as D, `netsmanager` as NM, `car` as C " +
         "where R.`reservation_id`=? and R.`reservation_id`=D.`reservation_id` and D.`netsmanager_number`=NM.`netsmanager_number` and D.`car_id`=C.`car_id`;";
       const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
@@ -129,7 +129,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     // 매니저 정보
     const sqld =
       "select C.`car_id`, `car_number`, NM.`netsmanager_id`, NM.`netsmanager_number`, NM.`netsmanager_name`, " +
-      "`netsmanager_about_me` as `netsmanager_intro`, `netsmanager_phone` as `netsmanager_tel`, `netsmanager_notice` as `netsmanager_mention` " +
+      "`netsmanager_about_me` as `netsmanager_intro`, `netsmanager_phone` as `netsmanager_tel`, `netsmanager_notice` as `netsmanager_mention`, date_format(`expect_car_pickup_time`,'%Y-%m-%d %T') as `expCarPickupTime`, date_format(`expect_car_terminate_service_time`,'%Y-%m-%d %T') as `expCarTerminateServiceTime`  " +
       "from `reservation` as R, `car_dispatch`as D, `netsmanager` as NM, `car` as C " +
       "where R.`reservation_id`=? and R.`reservation_id`=D.`reservation_id` and D.`netsmanager_number`=NM.`netsmanager_number` and D.`car_id`=C.`car_id`;";
     const sqldr = await connection.query(sqld, [service_id]);
