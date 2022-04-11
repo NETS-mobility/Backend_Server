@@ -45,7 +45,7 @@ router.post("", async function (req, res, next) {
     hos_depart_time: revData.old_hos_dep_time,
   }
 
-  res.status(200).send({ dispatch1: result.dispatch1, dispatch2: result.dispatch2, service: service, msg: msg });
+  res.status(200).send({ dispatch: [result.dispatch1, result.dispatch2], service: service, msg: msg });
 });
 
 module.exports = router;
