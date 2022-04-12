@@ -43,7 +43,7 @@ router.post("", async function (req, res, next) {
 
       // 고객의 디바이스 토큰값 갱신(push 알림에 사용)
       const sql2 = "update user set `user_device_token` =? where `user_id` =?;";
-      //await connection.query(sql2, [device_token, id]);
+      await connection.query(sql2, [device_token, id]);
     }
   } catch (err) {
     logger.error(__filename + " : " + err);
