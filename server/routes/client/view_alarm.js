@@ -34,135 +34,135 @@ router.post("/alarmList/", async function (req, res, next) {
 
     let arr = new Array();
     for (let i = 0; i < data.length; i++) {
-      arr[i] = new Array();
-      arr[i][0] = data[i].alarm_id;
-      arr[i][1] = "";
-      arr[i][2] = data[i].alarm_content; // 알림 내용
-      arr[i][3] = new Object();
-      arr[i][4] = new Object();
+      arr[i] = new Object();
+      arr[i].alarm_id = data[i].alarm_id;
+      arr[i].alarm_title = "";
+      arr[i].alarm_content = data[i].alarm_content; // 알림 내용
+      arr[i].alarm_object_title = new Object(); // alarm object title
+      arr[i].alarm_object_data = new Object(); // alarm object data
       temp_title = data[i].alarm_object_title.split(","); // TODO: 이게 object title
       temp_data = data[i].alarm_object_data.split(",");
       switch (data[i].alarm_kind) {
         case alarm_kind.request_payment:
-          arr[i][1] = "결제요청";
+          arr[i].alarm_title = "결제요청";
 
-          arr[i][3].object1 = temp_title[0];
-          arr[i][3].object2 = temp_title[1];
-          arr[i][3].object3 = temp_title[2];
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
+          arr[i].alarm_object_title.object3 = temp_title[2];
 
-          arr[i][4].reservation_id = temp_data[0];
-          arr[i][4].reservation_date = temp_data[1];
-          arr[i][4].pickup_time = temp_data[2];
+          arr[i].alarm_object_data.reservation_id = temp_data[0];
+          arr[i].alarm_object_data.reservation_date = temp_data[1];
+          arr[i].alarm_object_data.pickup_time = temp_data[2];
           break;
         case alarm_kind.press_payment:
-          arr[i][1] = "결제독촉";
+          arr[i].alarm_title = "결제독촉";
 
-          arr[i][3].object1 = temp_title[0];
-          arr[i][3].object2 = temp_title[1];
-          arr[i][3].object3 = temp_title[2];
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
+          arr[i].alarm_object_title.object3 = temp_title[2];
 
-          arr[i][4].reservation_id = temp_data[0];
-          arr[i][4].reservation_date = temp_data[1];
-          arr[i][4].pickup_time = temp_data[2];
+          arr[i].alarm_object_data.reservation_id = temp_data[0];
+          arr[i].alarm_object_data.reservation_date = temp_data[1];
+          arr[i].alarm_object_data.pickup_time = temp_data[2];
           break;
         case alarm_kind.cancellation:
-          arr[i][1] = "취소안내";
+          arr[i].alarm_title = "취소안내";
 
-          arr[i][3].object1 = temp_title[0];
-          arr[i][3].object2 = temp_title[1];
-          arr[i][3].object3 = temp_title[2];
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
+          arr[i].alarm_object_title.object3 = temp_title[2];
 
-          arr[i][4].reservation_id = temp_data[0];
-          arr[i][4].reservation_date = temp_data[1];
-          arr[i][4].pickup_time = temp_data[2];
+          arr[i].alarm_object_data.reservation_id = temp_data[0];
+          arr[i].alarm_object_data.reservation_date = temp_data[1];
+          arr[i].alarm_object_data.pickup_time = temp_data[2];
           break;
         case alarm_kind.visit:
-          arr[i][1] = "방문예정";
+          arr[i].alarm_title = "방문예정";
 
-          arr[i][3].object1 = temp_title[0];
-          arr[i][3].object2 = temp_title[1];
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
 
-          arr[i][4].netsmanager_name = temp_data[0];
-          arr[i][4].visit_time = temp_data[1];
+          arr[i].alarm_object_data.netsmanager_name = temp_data[0];
+          arr[i].alarm_object_data.visit_time = temp_data[1];
           break;
         case alarm_kind.delay:
-          arr[i][1] = "지연예상";
+          arr[i].alarm_title = "지연예상";
 
-          arr[i][3].object1 = temp_title[0];
-          arr[i][3].object2 = temp_title[1];
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
 
-          arr[i][4].netsmanager_name = temp_data[0];
-          arr[i][4].delay_time = temp_data[1];
+          arr[i].alarm_object_data.netsmanager_name = temp_data[0];
+          arr[i].alarm_object_data.delay_time = temp_data[1];
           break;
         case alarm_kind.delay_over_20min:
-          arr[i][1] = "20분이상지연";
+          arr[i].alarm_title = "20분이상지연";
 
-          arr[i][3].object1 = temp_title[0];
-          arr[i][3].object2 = temp_title[1];
-          arr[i][3].object3 = temp_title[2];
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
+          arr[i].alarm_object_title.object3 = temp_title[2];
           arr[i][3].object4 = temp_title[3];
           arr[i][3].object5 = temp_title[4];
           arr[i][3].object6 = temp_title[5];
           arr[i][3].object7 = temp_title[6];
 
-          arr[i][4].reservation_id = temp_data[0];
-          arr[i][4].pickup_time = temp_data[1];
-          arr[i][4].patient_name = temp_data[2];
-          arr[i][4].patient_phone = temp_data[3];
-          arr[i][4].protector_name = temp_data[4];
-          arr[i][4].protector_phone = temp_data[5];
-          arr[i][4].netsmanager_name = temp_data[6];
+          arr[i].alarm_object_data.reservation_id = temp_data[0];
+          arr[i].alarm_object_data.pickup_time = temp_data[1];
+          arr[i].alarm_object_data.patient_name = temp_data[2];
+          arr[i].alarm_object_data.patient_phone = temp_data[3];
+          arr[i].alarm_object_data.protector_name = temp_data[4];
+          arr[i].alarm_object_data.protector_phone = temp_data[5];
+          arr[i].alarm_object_data.netsmanager_name = temp_data[6];
           break;
         case alarm_kind.report_progress:
-          arr[i][1] = "동행상황보고";
+          arr[i].alarm_title = "동행상황보고";
 
-          arr[i][3].object1 = temp_title[0];
-          arr[i][3].object2 = temp_title[1];
-          arr[i][3].object3 = temp_title[2];
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
+          arr[i].alarm_object_title.object3 = temp_title[2];
           arr[i][3].object4 = temp_title[3];
 
-          arr[i][4].user_name = temp_data[0];
-          arr[i][4].fixed_medical_detail = temp_data[1];
-          arr[i][4].accompany_picture_path = temp_data[2];
-          arr[i][4].servey_url = temp_data[3];
+          arr[i].alarm_object_data.user_name = temp_data[0];
+          arr[i].alarm_object_data.fixed_medical_detail = temp_data[1];
+          arr[i].alarm_object_data.accompany_picture_path = temp_data[2];
+          arr[i].alarm_object_data.servey_url = temp_data[3];
           break;
         case alarm_kind.report_end:
-          arr[i][1] = "동행 상황 보고(동행 완료)";
+          arr[i].alarm_title = "동행 상황 보고(동행 완료)";
 
-          arr[i][3].object1 = temp_title[0];
-          arr[i][3].object2 = temp_title[1];
-          arr[i][3].object3 = temp_title[2];
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
+          arr[i].alarm_object_title.object3 = temp_title[2];
 
-          arr[i][4].user_name = temp_data[0];
-          arr[i][4].fixed_medical_detail = temp_data[1];
-          arr[i][4].accompany_picture_path = temp_data[2];
+          arr[i].alarm_object_data.user_name = temp_data[0];
+          arr[i].alarm_object_data.fixed_medical_detail = temp_data[1];
+          arr[i].alarm_object_data.accompany_picture_path = temp_data[2];
           break;
         case alarm_kind.extra_payment:
-          arr[i][1] = "병원동행 추가요금 결제";
+          arr[i].alarm_title = "병원동행 추가요금 결제";
 
-          arr[i][3].object1 = temp_title[0];
-          arr[i][3].object2 = temp_title[1];
-          arr[i][3].object3 = temp_title[2];
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
+          arr[i].alarm_object_title.object3 = temp_title[2];
           arr[i][3].object4 = temp_title[3];
           arr[i][3].object5 = temp_title[4];
 
-          arr[i][4].reservation_id = temp_data[0];
-          arr[i][4].origin_service_time = temp_data[1];
-          arr[i][4].real_service_time = temp_data[2];
-          arr[i][4].over_time = temp_data[3];
-          arr[i][4].over_cost = temp_data[4];
+          arr[i].alarm_object_data.reservation_id = temp_data[0];
+          arr[i].alarm_object_data.origin_service_time = temp_data[1];
+          arr[i].alarm_object_data.real_service_time = temp_data[2];
+          arr[i].alarm_object_data.over_time = temp_data[3];
+          arr[i].alarm_object_data.over_cost = temp_data[4];
 
           break;
         case alarm_kind.waiting_payment:
-          arr[i][1] = "대기요금 결제";
+          arr[i].alarm_title = "대기요금 결제";
 
-          arr[i][3].object1 = temp_title[0];
-          arr[i][3].object2 = temp_title[1];
-          arr[i][3].object3 = temp_title[2];
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
+          arr[i].alarm_object_title.object3 = temp_title[2];
 
-          arr[i][4].reservation_id = temp_data[0];
-          arr[i][4].wait_time = temp_data[1];
-          arr[i][4].wait_cost = temp_data[2];
+          arr[i].alarm_object_data.reservation_id = temp_data[0];
+          arr[i].alarm_object_data.wait_time = temp_data[1];
+          arr[i].alarm_object_data.wait_cost = temp_data[2];
 
           break;
       }

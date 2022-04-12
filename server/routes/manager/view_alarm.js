@@ -36,41 +36,41 @@ router.post("/alarmList/", async function (req, res, next) {
     let arr = new Array();
     for (let i = 0; i < data.length; i++) {
       arr[i] = new Array();
-      arr[i][0] = data[i].alarm_id;
-      arr[i][1] = "";
-      arr[i][2] = data[i].alarm_content; // 알림 내용
-      arr[i][3] = new Object();
-      arr[i][4] = new Object();
+      arr[i].alarm_id = data[i].alarm_id;
+      arr[i].alarm_title = "";
+      arr[i].alarm_content = data[i].alarm_content; // 알림 내용
+      arr[i].alarm_object_title = new Object();
+      arr[i].alarm_object_data = new Object();
       temp_title = data[i].alarm_object_title.split(","); // TODO: 이게 object title
       temp_data = data[i].alarm_object_data.split(",");
       switch (data[i].alarm_kind) {
         case alarm_kind.m_confirm_reservation:
           arr[i][1] = "예약확정";
 
-          arr[i][3].object1 = temp_title[0];
-          arr[i][3].object2 = temp_title[1];
-          arr[i][3].object3 = temp_title[2];
-          arr[i][3].object4 = temp_title[3];
-          arr[i][3].object5 = temp_title[4];
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
+          arr[i].alarm_object_title.object3 = temp_title[2];
+          arr[i].alarm_object_title.object4 = temp_title[3];
+          arr[i].alarm_object_title.object5 = temp_title[4];
 
-          arr[i][4].reservation_id = temp_data[0];
-          arr[i][4].reservation_date = temp_data[1];
-          arr[i][4].pickup_time = temp_data[2];
-          arr[i][4].pickup_address = temp_data[3];
-          arr[i][4].customer_name = temp_data[4];
+          arr[i].alarm_object_data.reservation_id = temp_data[0];
+          arr[i].alarm_object_data.reservation_date = temp_data[1];
+          arr[i].alarm_object_data.pickup_time = temp_data[2];
+          arr[i].alarm_object_data.pickup_address = temp_data[3];
+          arr[i].alarm_object_data.customer_name = temp_data[4];
           break;
         case alarm_kind.m_prev_notice:
           arr[i][1] = "하루 전 알림";
 
-          arr[i][3].object1 = temp_title[0];
-          arr[i][3].object2 = temp_title[1];
-          arr[i][3].object3 = temp_title[2];
-          arr[i][3].object4 = temp_title[3];
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
+          arr[i].alarm_object_title.object3 = temp_title[2];
+          arr[i].alarm_object_title.object4 = temp_title[3];
 
-          arr[i][4].reservation_date = temp_data[0];
-          arr[i][4].pickup_time = temp_data[1];
-          arr[i][4].pickup_address = temp_data[2];
-          arr[i][4].customer_name = temp_data[3];
+          arr[i].alarm_object_data.reservation_date = temp_data[0];
+          arr[i].alarm_object_data.pickup_time = temp_data[1];
+          arr[i].alarm_object_data.pickup_address = temp_data[2];
+          arr[i].alarm_object_data.customer_name = temp_data[3];
           break;
       }
     }
