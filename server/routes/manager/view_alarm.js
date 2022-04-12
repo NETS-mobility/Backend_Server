@@ -35,7 +35,7 @@ router.post("/alarmList/", async function (req, res, next) {
 
     let arr = new Array();
     for (let i = 0; i < data.length; i++) {
-      arr[i] = new Array();
+      arr[i] = new Object();
       arr[i].alarm_id = data[i].alarm_id;
       arr[i].alarm_title = "";
       arr[i].alarm_content = data[i].alarm_content; // 알림 내용
@@ -45,7 +45,7 @@ router.post("/alarmList/", async function (req, res, next) {
       temp_data = data[i].alarm_object_data.split(",");
       switch (data[i].alarm_kind) {
         case alarm_kind.m_confirm_reservation:
-          arr[i][1] = "예약확정";
+          arr[i].alarm_title = "예약확정";
 
           arr[i].alarm_object_title.object1 = temp_title[0];
           arr[i].alarm_object_title.object2 = temp_title[1];
@@ -60,7 +60,7 @@ router.post("/alarmList/", async function (req, res, next) {
           arr[i].alarm_object_data.customer_name = temp_data[4];
           break;
         case alarm_kind.m_prev_notice:
-          arr[i][1] = "하루 전 알림";
+          arr[i].alarm_title = "하루 전 알림";
 
           arr[i].alarm_object_title.object1 = temp_title[0];
           arr[i].alarm_object_title.object2 = temp_title[1];
