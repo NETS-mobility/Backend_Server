@@ -7,6 +7,7 @@ const logger = require("../../config/logger");
 const jwt = require("../../modules/jwt");
 const pool2 = require("../../modules/mysql2");
 const uplPath = require("../../config/upload_path");
+const alarm_kind = require("../../config/alarm_kind");
 
 // ===== 알림 조회 =====
 router.post("/alarmList/", async function (req, res, next) {
@@ -24,13 +25,57 @@ router.post("/alarmList/", async function (req, res, next) {
     let param = [manager_id];
 
     const sql =
-      "select ma.*, m.`netsmanager_name` from `manager_alarm` as ma left join `netsmanager` as m on ma.`netsmanager_number` = m.`netsmanager_number` " +
+      "select ma.* from `manager_alarm` as ma left join `netsmanager` as m on ma.`netsmanager_number` = m.`netsmanager_number` " +
       "where m.netsmanager_id =? " +
       "order by ma.`alarm_id` desc;";
     const result = await connection.query(sql, param);
     const data = result[0];
 
-    res.send(data);
+    let temp_title, temp_data;
+
+    let arr = new Array();
+    for (let i = 0; i < data.length; i++) {
+      arr[i] = new Object();
+      arr[i].alarm_id = data[i].alarm_id;
+      arr[i].alarm_title = "";
+      arr[i].alarm_content = data[i].alarm_content; // 알림 내용
+      arr[i].alarm_object_title = new Object();
+      arr[i].alarm_object_data = new Object();
+      temp_title = data[i].alarm_object_title.split(","); // TODO: 이게 object title
+      temp_data = data[i].alarm_object_data.split(",");
+      switch (data[i].alarm_kind) {
+        case alarm_kind.m_confirm_reservation:
+          arr[i].alarm_title = "예약확정";
+
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
+          arr[i].alarm_object_title.object3 = temp_title[2];
+          arr[i].alarm_object_title.object4 = temp_title[3];
+          arr[i].alarm_object_title.object5 = temp_title[4];
+
+          arr[i].alarm_object_data.reservation_id = temp_data[0];
+          arr[i].alarm_object_data.reservation_date = temp_data[1];
+          arr[i].alarm_object_data.pickup_time = temp_data[2];
+          arr[i].alarm_object_data.pickup_address = temp_data[3];
+          arr[i].alarm_object_data.customer_name = temp_data[4];
+          break;
+        case alarm_kind.m_prev_notice:
+          arr[i].alarm_title = "하루 전 알림";
+
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
+          arr[i].alarm_object_title.object3 = temp_title[2];
+          arr[i].alarm_object_title.object4 = temp_title[3];
+
+          arr[i].alarm_object_data.reservation_date = temp_data[0];
+          arr[i].alarm_object_data.pickup_time = temp_data[1];
+          arr[i].alarm_object_data.pickup_address = temp_data[2];
+          arr[i].alarm_object_data.customer_name = temp_data[3];
+          break;
+      }
+    }
+
+    res.send(arr);
   } catch (err) {
     logger.error(__filename + " : " + err);
     if (err == 0) res.status(401).send({ err: "잘못된 인자 전달" });
