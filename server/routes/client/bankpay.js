@@ -65,11 +65,12 @@ router.post("/payBaseCost", async function (req, res, next) {
     else if (sql_data1[0].reservation_payment_state_id != reservation_payment_state.waitBasePay)
       return res.status(400).send({ msg: "결제 진행할 수 없는 단계임" });
     
+    // 입금 기한
     const now = new Date(); // 오늘
-    const submitDate = formatdate.getFormatDate(new Date(), 1); // 날짜,시간
-    let validDate = new Date(now.setDate(now.getDate() + 1)); // 내일
-    validDate = formatdate.getFormatDate(validDate, 2); // 날짜
-    validDate = validDate + " 11:59:59";
+    const submitDate = formatdate.getFormatDate(now, 1); // 날짜,시간
+    let validDate = new Date(now.setMinutes(now.getMinutes() + 90)); // 1시간 30분 후
+    validDate = formatdate.getFormatDate(validDate, 1); // 날짜,시간
+    validDate = validDate.substring(0, 17) + "59";
 
     const result2 = await connection.query(sql2, [
       payment_state.waitDepositPay,
@@ -85,7 +86,10 @@ router.post("/payBaseCost", async function (req, res, next) {
       reservationId,
     ]);
 
-    res.status(200).send({ success: true });
+    res.status(200).send({ 
+      success: true,
+      vbankDue: validDate,
+    });
   } catch (err) {
     logger.error(__filename + " : " + err);
     // res.status(500).send({ err : "서버 오류" });
@@ -123,12 +127,13 @@ router.post("/payExtraCost", async function (req, res, next) {
       return res.status(400).send({ msg: "해당하는 예약이 존재하지 않음" });
     else if (sql_data1[0].reservation_payment_state_id != reservation_payment_state.waitExtraPay)
       return res.status(400).send({ msg: "결제 진행할 수 없는 단계임" });
-
+    
+    // 입금 기한
     const now = new Date(); // 오늘
-    const submitDate = formatdate.getFormatDate(new Date(), 1); // 날짜,시간
-    let validDate = new Date(now.setDate(now.getDate() + 1)); // 내일
-    validDate = formatdate.getFormatDate(validDate, 2); // 날짜
-    validDate = validDate + " 11:59:59";
+    const submitDate = formatdate.getFormatDate(now, 1); // 날짜,시간
+    let validDate = new Date(now.setMinutes(now.getMinutes() + 90)); // 1시간 30분 후
+    validDate = formatdate.getFormatDate(validDate, 1); // 날짜,시간
+    validDate = validDate.substring(0, 17) + "59";
     
     const result2 = await connection.query(sql2, [
       payment_state.waitDepositPay,
@@ -144,7 +149,10 @@ router.post("/payExtraCost", async function (req, res, next) {
       reservationId,
     ]);
 
-    res.status(200).send({ success: true });
+    res.status(200).send({
+      success: true,
+      vbankDue: validDate,
+    });
   } catch (err) {
     logger.error(__filename + " : " + err);
     // res.status(500).send({ err : "서버 오류" });
