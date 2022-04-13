@@ -99,17 +99,23 @@ router.post(
       }
 
       // 예약 신청일=매칭 완료일(날짜,시간)
-      const now = formatdate.getFormatDate(new Date(), 1);
+      const now = new Date();
+      const submitDate = formatdate.getFormatDate(now, 1); // 날짜,시간
 
       // 예약 번호
       reservationId = Number(
-        now.substring(2, 4) +
-        now.substring(5, 7) +
-        now.substring(8, 10) +
-        now.substring(11, 13) +
-        now.substring(14, 16) +
-        now.substring(17)
+        submitDate.substring(2, 4) +
+        submitDate.substring(5, 7) +
+        submitDate.substring(8, 10) +
+        submitDate.substring(11, 13) +
+        submitDate.substring(14, 16) +
+        submitDate.substring(17)
       );
+
+      // 결제 가능일
+      let validDate = new Date(now.setMinutes(now.getMinutes() + 90)); // 1시간 30분 후
+      validDate = formatdate.getFormatDate(validDate, 1); // 날짜,시간
+      validDate = validDate.substring(0, 17) + "59";
 
       // 예약 정보 저장
       const result2 = await connection.query(sql2, [
@@ -213,8 +219,9 @@ router.post(
       // === 기본 요금 정보 ===
       const sql6 = `INSERT INTO base_payment(reservation_id, merchant_uid, payment_state_id, payment_amount,
                     base_cost, over_move_distance_cost, over_move_distance, over_gowith_cost, over_gowith_time,
-                    night_cost, night_time, weekend_cost
-                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?);`;
+                    night_cost, night_time, weekend_cost,
+                    valid_payment_date
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?);`;
 
       result_baseCost = await basecost.calBasecost(reservationId);
       const result6 = await connection.query(sql6, [
@@ -230,6 +237,7 @@ router.post(
         result_baseCost.nightCost,
         result_baseCost.nightmin,
         result_baseCost.weekendCost,
+        validDate,
       ]);
       
       res
@@ -238,6 +246,7 @@ router.post(
           success: true,
           reservationId: String(reservationId),
           baseCost: result_baseCost.TotalBaseCost,
+          validDate: validDate,
         });
     } catch (err) {
       logger.error(__filename + " : " + err);
