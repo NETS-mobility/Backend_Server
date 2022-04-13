@@ -138,15 +138,19 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     let sstate_time = undefined;
     if (data_prog.length > 0) {
       sstate = data_prog[0].service_state_id;
-      sstate_time = [];
-      sstate_time[service_state.carDep] = data_prog[0].real_car_departure_time; // 차량출발
-      sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
-      sstate_time[service_state.arrivalHos] =
-        data_prog[0].real_hospital_arrival_time; // 병원도착
-      sstate_time[service_state.carReady] =
-        data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
-      sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
-      sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
+      sstate_time = [ 0 ];
+      if(data_service[0].move_direction_id != 2)
+      {
+        sstate_time.push(data_prog[0].real_car_departure_time); // 차량출발
+        sstate_time.push(data_prog[0].real_pickup_time); // 픽업완료
+        sstate_time.push(data_prog[0].real_hospital_arrival_time); // 병원도착
+      }
+      if(data_service[0].move_direction_id != 1)
+      {
+        sstate_time.push(data_prog[0].real_return_hospital_arrival_time); // 귀가차량 병원도착
+        sstate_time.push(data_prog[0].real_return_start_time); // 귀가출발
+        sstate_time.push(data_prog[0].real_service_end_time); // 서비스종료
+      }
     }
 
     // 매니저 정보
@@ -202,6 +206,12 @@ router.post(
     const service_id = req.params.service_id;
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
+      const sql_service =
+        "select `move_direction_id` from `reservation` where `reservation_id`=?;";
+      const result_service = await connection.query(sql_service, [service_id]);
+      const data_service = result_service[0]; // 이동 방향 (집-병원=1, 병원-집=2, 집-집=3)
+      if (data_service.length == 0) throw (err = 0);
+
       const sql_prog =
       "select date_format(`real_car_departure_time`,'%Y-%m-%d %T') as `real_car_departure_time`, date_format(`real_pickup_time`,'%Y-%m-%d %T') as `real_pickup_time`, date_format(`real_hospital_arrival_time`,'%Y-%m-%d %T') as `real_hospital_arrival_time`, date_format(`real_return_hospital_arrival_time`,'%Y-%m-%d %T') as `real_return_hospital_arrival_time`, " + 
       "date_format(`real_return_start_time`,'%Y-%m-%d %T') as `real_return_start_time`, date_format(`real_service_end_time`,'%Y-%m-%d %T') as `real_service_end_time`, `service_state_id` from `service_progress` where `reservation_id`=?;";
@@ -212,16 +222,19 @@ router.post(
       let sstate_time = undefined;
       if (data_prog.length > 0) {
         sstate = data_prog[0].service_state_id;
-        sstate_time = [];
-        sstate_time[service_state.carDep] = data_prog[0].real_car_departure_time; // 차량출발
-        sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
-        sstate_time[service_state.arrivalHos] =
-          data_prog[0].real_hospital_arrival_time; // 병원도착
-        sstate_time[service_state.carReady] =
-          data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
-        sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
-        sstate_time[service_state.complete] =
-          data_prog[0].real_service_end_time; // 서비스종료
+        sstate_time = [ 0 ];
+        if(data_service[0].move_direction_id != 2)
+        {
+          sstate_time.push(data_prog[0].real_car_departure_time); // 차량출발
+          sstate_time.push(data_prog[0].real_pickup_time); // 픽업완료
+          sstate_time.push(data_prog[0].real_hospital_arrival_time); // 병원도착
+        }
+        if(data_service[0].move_direction_id != 1)
+        {
+          sstate_time.push(data_prog[0].real_return_hospital_arrival_time); // 귀가차량 병원도착
+          sstate_time.push(data_prog[0].real_return_start_time); // 귀가출발
+          sstate_time.push(data_prog[0].real_service_end_time); // 서비스종료
+        }
       }
       if (sstate == service_state.carDep) {
         checking_over_20min(service_id);
@@ -232,7 +245,9 @@ router.post(
       });
     } catch (err) {
       logger.error(__filename + " : " + err);
-      res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
+      if (err == 0)
+        res.status(401).send({ err: "해당 서비스 정보가 존재하지 않습니다." });
+      else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
     } finally {
       connection.release();
     }
@@ -273,6 +288,8 @@ router.post(
       const data_prog = result_prog[0];
       
       let next_state = data_prog[0].service_state_id + 1;
+      if (direction == 2 && next_state == service_state.carDep)
+        next_state = service_state.carReady;
       if (direction != 1 && next_state > service_state.complete)
         next_state = service_state.complete;
       if (direction == 1 && next_state > service_state.arrivalHos)

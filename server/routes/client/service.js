@@ -115,15 +115,19 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     let sstate_time = undefined;
     if (data_prog.length > 0) {
       sstate = data_prog[0].service_state_id;
-      sstate_time = [];
-      sstate_time[service_state.carDep] = data_prog[0].real_car_departure_time; // 차량출발
-      sstate_time[service_state.pickup] = data_prog[0].real_pickup_time; // 픽업완료
-      sstate_time[service_state.arrivalHos] =
-        data_prog[0].real_hospital_arrival_time; // 병원도착
-      sstate_time[service_state.carReady] =
-        data_prog[0].real_return_hospital_arrival_time; // 귀가차량 병원도착
-      sstate_time[service_state.goHome] = data_prog[0].real_return_start_time; // 귀가출발
-      sstate_time[service_state.complete] = data_prog[0].real_service_end_time; // 서비스종료
+      sstate_time = [ 0 ];
+      if(data_service[0].move_direction_id != 2)
+      {
+        sstate_time.push(data_prog[0].real_car_departure_time); // 차량출발
+        sstate_time.push(data_prog[0].real_pickup_time); // 픽업완료
+        sstate_time.push(data_prog[0].real_hospital_arrival_time); // 병원도착
+      }
+      if(data_service[0].move_direction_id != 1)
+      {
+        sstate_time.push(data_prog[0].real_return_hospital_arrival_time); // 귀가차량 병원도착
+        sstate_time.push(data_prog[0].real_return_start_time); // 귀가출발
+        sstate_time.push(data_prog[0].real_service_end_time); // 서비스종료
+      }
     }
 
     // 매니저 정보
