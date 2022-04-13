@@ -44,4 +44,34 @@ router.post("", async function (req, res, next) {
   }
 });
 
+// ===== 휴게시간 기록 API =====
+router.post("/recodeBreaktime", async function (req, res, next) {
+  const token = req.body.jwtToken;
+  const btime = req.body.break_time;
+  const bstate = req.body.break_state;
+  const token_res = await jwt.verify(token);
+
+  if (token_res == jwt.TOKEN_EXPIRED)
+    return res.status(401).send({ err: "만료된 토큰입니다." });
+  if (token_res == jwt.TOKEN_INVALID)
+    return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
+  const user_num = token_res.num;
+
+  const connection = await pool2.getConnection(async (conn) => conn);
+  try {
+    const now = date_to_string(new Date());
+    const sql = "insert into `manager_time_checking`(`netsmanager_number`, `date`, `time`, `state`) values(?,?,?,?)";
+    const sql_result = await connection.query(sql, [user_num, now.substr(0, 10), btime, bstate]);
+    const sql_data = sql_result[0];
+    res.send();
+  } catch (err) {
+    logger.error(__filename + " : " + err);
+    // res.status(500).send({ err : "서버 오류" });
+    res.status(500).send({ err: "오류-" + err });
+  } finally {
+    connection.release();
+  }
+});
+
+
 module.exports = router;
