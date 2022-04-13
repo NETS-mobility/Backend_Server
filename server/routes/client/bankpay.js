@@ -52,10 +52,12 @@ router.post("/payBaseCost", async function (req, res, next) {
   try {
     const sql1 = `SELECT reservation_payment_state_id FROM reservation WHERE reservation_id=?;`;
 
-    const sql2 = `UPDATE base_payment SET payment_state_id=?, payment_method=?, bank_name=?,
-                  submit_payment_date=?, valid_payment_date=? WHERE reservation_id=?;`;
+    const sql2 = `SELECT DATE_FORMAT(valid_payment_date, '%Y-%m-%d %T') AS valid_payment_date FROM base_payment WHERE reservation_id=?;`;
 
-    const sql3 = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
+    const sql3 = `UPDATE base_payment SET payment_state_id=?, payment_method=?, bank_name=?,
+                  submit_payment_date=? WHERE reservation_id=?;`;
+
+    const sql4 = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
     
     const result1 = await connection.query(sql1, [reservationId]);
     const sql_data1 = result1[0];
@@ -65,23 +67,31 @@ router.post("/payBaseCost", async function (req, res, next) {
     else if (sql_data1[0].reservation_payment_state_id != reservation_payment_state.waitBasePay)
       return res.status(400).send({ msg: "결제 진행할 수 없는 단계임" });
     
-    // 입금 기한
+    // 결제 신청일(무통장입금)
     const now = new Date(); // 오늘
     const submitDate = formatdate.getFormatDate(now, 1); // 날짜,시간
-    let validDate = new Date(now.setMinutes(now.getMinutes() + 90)); // 1시간 30분 후
-    validDate = formatdate.getFormatDate(validDate, 1); // 날짜,시간
-    validDate = validDate.substring(0, 17) + "59";
+    
+    // 입금 기한
+    // const now = new Date(); // 오늘
+    // const submitDate = formatdate.getFormatDate(now, 1); // 날짜,시간
+    // let validDate = new Date(now.setMinutes(now.getMinutes() + 90)); // 1시간 30분 후
+    // validDate = formatdate.getFormatDate(validDate, 1); // 날짜,시간
+    // validDate = validDate.substring(0, 17) + "59";
 
-    const result2 = await connection.query(sql2, [
+    // 결제 가능일
+    const result2 = await connection.query(sql2, [reservationId]);
+    const sql_data = result2[0];
+    const validDate = sql_data[0].valid_payment_date;
+
+    const result3 = await connection.query(sql3, [
       payment_state.waitDepositPay,
       "무통장입금",
       bankName,
       submitDate,
-      validDate,
       reservationId,
     ]);
     
-    const result3 = await connection.query(sql3, [
+    const result4 = await connection.query(sql4, [
       reservation_payment_state.waitBaseDepositPay,
       reservationId,
     ]);
@@ -115,10 +125,10 @@ router.post("/payExtraCost", async function (req, res, next) {
   try {
     const sql1 = `SELECT reservation_payment_state_id FROM reservation WHERE reservation_id=?;`;
 
-    const sql2 = `UPDATE extra_payment SET payment_state_id=?, payment_method=?, bank_name=?,
-                  submit_payment_date=?, valid_payment_date=? WHERE reservation_id=?;`;
+    const sql3 = `UPDATE extra_payment SET payment_state_id=?, payment_method=?, bank_name=?,
+                  submit_payment_date=? WHERE reservation_id=?;`;
 
-    const sql3 = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
+    const sql4 = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
 
     const result1 = await connection.query(sql1, [reservationId]);
     const sql_data1 = result1[0];
@@ -128,30 +138,32 @@ router.post("/payExtraCost", async function (req, res, next) {
     else if (sql_data1[0].reservation_payment_state_id != reservation_payment_state.waitExtraPay)
       return res.status(400).send({ msg: "결제 진행할 수 없는 단계임" });
     
-    // 입금 기한
+    // 결제 신청일(무통장입금)
     const now = new Date(); // 오늘
     const submitDate = formatdate.getFormatDate(now, 1); // 날짜,시간
-    let validDate = new Date(now.setMinutes(now.getMinutes() + 90)); // 1시간 30분 후
-    validDate = formatdate.getFormatDate(validDate, 1); // 날짜,시간
-    validDate = validDate.substring(0, 17) + "59";
     
-    const result2 = await connection.query(sql2, [
+    // 입금 기한
+    // const now = new Date(); // 오늘
+    // const submitDate = formatdate.getFormatDate(now, 1); // 날짜,시간
+    // let validDate = new Date(now.setMinutes(now.getMinutes() + 90)); // 1시간 30분 후
+    // validDate = formatdate.getFormatDate(validDate, 1); // 날짜,시간
+    // validDate = validDate.substring(0, 17) + "59";
+    
+    const result3 = await connection.query(sql3, [
       payment_state.waitDepositPay,
       "무통장입금",
       bankName,
       submitDate,
-      validDate,
       reservationId,
     ]);
 
-    const result3 = await connection.query(sql3, [
+    const result4 = await connection.query(sql4, [
       reservation_payment_state.waitExtraDepositPay,
       reservationId,
     ]);
 
     res.status(200).send({
       success: true,
-      vbankDue: validDate,
     });
   } catch (err) {
     logger.error(__filename + " : " + err);
