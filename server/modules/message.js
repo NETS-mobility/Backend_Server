@@ -1,8 +1,8 @@
 // === SMS로 메세지 인증번호 전송 ===
 
-const accountSid = 'AC1a83473cd20eb2b01f96e14f23e9238a';
-const authToken = '533c9215965e253634b7cbb3218c28ed';
-const twilioPhone = '+18454425725';
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
 const twilio = require("twilio")(accountSid, authToken);
 
 module.exports = {
