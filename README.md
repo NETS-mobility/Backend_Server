@@ -6,13 +6,13 @@ https://app.swaggerhub.com/apis/YunseoKang/NETS-Backend2.0/1.0.0
 https://app.swaggerhub.com/apis/NETS-mobility1/Backend_Server/1.0.1
 
 ## DB-main
-2022.04.13 NETS_db_v3.2.mwb
+2022.04.13 NETS_db_v3.3.mwb
 
 ## DB-setting(need to import)
 2022.03.31 base_setting_v5  
 2022.04.09 test_setting_v3
 
-## Setting_v3
+## Setting_v4
 Backend_Server 내에 .env 파일  
 Backend_Server/server/config 내에 .json 파일
 
