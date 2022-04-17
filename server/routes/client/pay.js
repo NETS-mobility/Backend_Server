@@ -6,7 +6,10 @@ const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const formatdate = require("../../modules/formatdate");
 
+const reservation_state = require("../../config/reservation_state");
+const service_state = require("../../config/service_state");
 const reservation_payment_state = require("../../config/reservation_payment_state");
+const payment_state = require("../../config/payment_state");
 const service_kind = require("../../config/service_kind");
 const logger = require("../../config/logger");
 
@@ -110,6 +113,169 @@ router.post("/getPayInfo", async function (req, res, next) {
         buyerEmail: id,
         payMethods: ["card", "vbank"],
         cardQuotas: [2, 3],
+      });
+    }
+  } catch (err) {
+    logger.error(__filename + " : " + err);
+    // res.status(500).send({ err : "서버 오류" });
+    res.status(500).send({ err: "오류-" + err });
+  } finally {
+    connection.release();
+  }
+});
+
+// ===== 결제 완료 처리 =====
+router.post("/setComplete", async function (req, res, next) {
+  const { impUid, merchantUid } = req.body;
+
+  const connection = await pool2.getConnection(async (conn) => conn);
+  try {
+    // === Access Token 발급 ===
+    const getToken = await axios({
+      url: "https://api.iamport.kr/users/getToken",
+      method: "post", // POST method
+      headers: { "Content-Type": "application/json" },
+      data: {
+        imp_key: process.env.IMP_REST_API_KEY, // REST API키
+        imp_secret: process.env.IMP_REST_API_KEY_SECRET // REST API Secret
+      }
+    });
+
+    const { access_token } = getToken.data.response;
+
+    // === 아임포트 서버에서 결제 정보 조회 ===
+    const getPaymentData = await axios({
+      url: `https://api.iamport.kr/payments/${impUid}`, // imp_uid 전달
+      method: "get", // GET method
+      headers: { "Authorization": access_token } // 인증 토큰 Authorization header에 추가
+    });
+
+    const paymentData = getPaymentData.data.response;
+    const {
+      amount, status, // 결제 금액, 결제 상태
+      pay_method, // 결제 방식
+      card_code, card_name, card_quota, card_number, // 카드사 코드번호, 카드사 명칭, 할부개월 수, 카드 번호
+      vbank_code, vbank_name, vbank_num, vbank_holder, vbank_issued_at, // 가상계좌 은행 표준코드, 가상계좌 은행명, 가상계좌 계좌번호, 가상계좌 예금주, 가상계좌 생성시각
+      fail_reason, // 결제 실패 사유
+      paid_at, // 결제 완료 시점
+      cancel_amount, // 결제 취소 금액
+      cancelled_at, // 결제 취소 시점
+    } = paymentData;
+
+    // === 결제 정보 조회 ===
+    // 예약 번호, 결제 금액, 결제 타입
+    let reservationId, paymentAmount, paymentType;
+    // 다음 예약 상태, 다음 예약 결제 상태
+    let nextReservationStateId, nextReservationPaymentStateId;
+
+    if (merchantUid[12] == "B") { // 기본 결제
+      const sql_pay = `SELECT reservation_id, payment_amount FROM base_payment WHERE merchant_uid=?;`;
+      const result_pay = await connection.query(sql_pay, [merchantUid]);
+      const sql_data_pay = result_pay[0];
+
+      reservationId = sql_data_pay[0].reservation_id;
+      paymentAmount = sql_data_pay[0].payment_amount;
+      paymentType = "base_payment";
+    } else if (merchantUid[12] == "E") { // 추가 결제
+      const sql_pay = `SELECT reservation_id, payment_amount FROM extra_payment WHERE merchant_uid=?;`;
+      const result_pay = await connection.query(sql_pay, [merchantUid]);
+      const sql_data_pay = result_pay[0];
+
+      reservationId = sql_data_pay[0].reservation_id;
+      paymentAmount = sql_data_pay[0].payment_amount;
+      paymentType = "extra_payment";
+    }
+
+    // === 결제 금액 일치 확인 ===
+    if (amount != paymentAmount) { // 결제 금액 불일치
+      return res.status(400).send({ msg: "위조된 결제 시도" });
+    }
+
+    // === 결제 상태에 따라 처리 ===
+    if (status == "ready") { // 가상계좌 발급
+      const vbankIssuedDate = formatdate.getFormatDate(vbank_issued_at, 1); // 날짜,시간
+      const sql_vbank_ready = `UPDATE ${paymentType} SET payment_state_id=?,
+                               payment_method=?, vbank_code=?, vbank_name=?, vbank_num=?, vbank_holder=?, vbank_issued_date=?
+                               WHERE reservation_id=?;`;
+      const result_vbank_ready = await connection.query(sql_vbank_ready, [
+        payment_state.waitDepositPay,
+        pay_method,
+        vbank_code,
+        vbank_name,
+        vbank_num,
+        vbank_holder,
+        vbankIssuedDate,
+        reservationId,
+      ]);
+
+      // 가상계좌 발급 시 다음 예약 결제 상태
+      nextReservationPaymentStateId = reservation_payment_state.waitBaseDepositPay;
+      const sql_reservation_state = `UPDATE reservation SET reservation_payment_state_id=? WHERE reservation_id=?;`;
+      const result_reservation_state = await connection.query(sql_reservation_state, [
+        nextReservationPaymentStateId,
+        reservationId,
+      ]);
+
+      res.status(200).send({
+        success: true,
+        msg: "가상계좌 발급 성공",
+      });
+    } else if (status == "paid") { // 결제 완료
+      const completePaymentDate = formatdate.getFormatDate(paid_at, 1); // 날짜,시간
+
+      if (pay_method == 'card') {
+        // 카드 결제이면
+        const sql_card = `UPDATE ${paymentType} SET payment_state_id=?, complete_payment_date=?,
+                          payment_method=?, card_code=?, card_name=?, card_quota=?, card_number=?
+                          WHERE reservation_id=?;`;
+        const result_card = await connection.query(sql_card, [
+          payment_state.completePay,
+          completePaymentDate,
+          pay_method,
+          card_code,
+          card_name,
+          card_quota,
+          card_number,
+          reservationId,
+        ]);
+      } else if (pay_method == 'vbank') {
+        // 가상계좌 결제이면
+        const sql_vbank = `UPDATE ${paymentType} SET payment_state_id=?, complete_payment_date=?
+                           WHERE reservation_id=?;`;
+        const result_vbank = await connection.query(sql_vbank, [
+          payment_state.completePay,
+          completePaymentDate,
+          reservationId,
+        ]);
+      }
+
+      // 결제 완료 시 다음 예약 상태, 다음 예약 결제 상태
+      if (paymentType == "base_payment") { // 기본 결제
+        // 예약 확정 처리 및 서비스 준비
+        const sql_new_service = `INSERT INTO service_progress(reservation_id, service_state_id
+                                 ) VALUES(?,?);`;
+        const result_new_service = await connection.query(sql_new_service, [
+          reservationId,
+          service_state.ready,
+        ]);
+
+        nextReservationStateId = reservation_state.ready;
+        nextReservationPaymentStateId = reservation_payment_state.completeBasePay;
+      } else if (paymentType == "extra_payment") { // 추가 결제
+        nextReservationStateId = reservation_state.complete;
+        nextReservationPaymentStateId = reservation_payment_state.completeAllPay;
+      }
+
+      const sql_reservation_state = `UPDATE reservation SET reservation_state_id=?, reservation_payment_state_id=? WHERE reservation_id=?;`;
+      const result_reservation_state = await connection.query(sql_reservation_state, [
+        nextReservationStateId,
+        nextReservationPaymentStateId,
+        reservationId,
+      ]);
+
+      res.status(200).send({
+        success: true,
+        msg: "일반 결제 성공",
       });
     }
   } catch (err) {
