@@ -313,10 +313,11 @@ router.post("/iamport-webhook", async function (req, res, next) {
 
       if (pay_method == 'card') {
         // 카드 결제이면
-        const sql_card = `UPDATE ${paymentType} SET payment_state_id=?, complete_payment_date=?,
+        const sql_card = `UPDATE ${paymentType} SET imp_uid=?, payment_state_id=?, complete_payment_date=?,
                           payment_method=?, card_code=?, card_name=?, card_quota=?, card_number=?
                           WHERE reservation_id=?;`;
         const result_card = await connection.query(sql_card, [
+          impUid,
           payment_state.completePay,
           completePaymentDate,
           pay_method,
@@ -328,9 +329,10 @@ router.post("/iamport-webhook", async function (req, res, next) {
         ]);
       } else if (pay_method == 'vbank') {
         // 가상계좌 결제이면
-        const sql_vbank = `UPDATE ${paymentType} SET payment_state_id=?, complete_payment_date=?
+        const sql_vbank = `UPDATE ${paymentType} SET imp_uid=?, payment_state_id=?, complete_payment_date=?
                            WHERE reservation_id=?;`;
         const result_vbank = await connection.query(sql_vbank, [
+          impUid,
           payment_state.completePay,
           completePaymentDate,
           reservationId,
