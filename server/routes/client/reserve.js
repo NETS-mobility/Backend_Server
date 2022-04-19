@@ -17,6 +17,43 @@ const alarm_kind = require("../../config/alarm_kind");
 const reciever = require("../../config/push_alarm_reciever");
 const logger = require("../../config/logger");
 
+// ===== 예약 전 미결제 내역 확인 =====
+router.post("/checkWaitPay", async function (req, res, next) {
+  const token = req.body.jwtToken;
+
+  const token_res = await jwt.verify(token);
+    if (token_res == jwt.TOKEN_EXPIRED)
+      return res.status(401).send({ err: "만료된 토큰입니다." });
+    if (token_res == jwt.TOKEN_INVALID)
+      return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
+  const num = token_res.num; // 고객 고유 번호
+
+  const connection = await pool2.getConnection(async (conn) => conn);
+  try {
+    const sql = `SELECT user_number, reservation_id, payment_amount FROM payment_waiting_list WHERE user_number=?;`;
+    const result = await connection.query(sql, [num]);
+    const sql_data = result[0];
+
+    if (sql_data.length == 0)
+      return res.status(200).send({ msg : "미결제 내역 없음-예약 가능" });
+    
+    const reservationId = sql_data[0].reservation_id;
+    const paymentAmount = sql_data[0].payment_amount;
+    
+    res.status(200).send({
+      msg: "미결제 내역 있음-예약 불가능",
+      reservationId: String(reservationId),
+      amount: paymentAmount,
+    });
+  } catch (err) {
+    logger.error(__filename + " : " + err);
+    // res.status(500).send({ err : "서버 오류" });
+    res.status(500).send({ err: "오류-" + err });
+  } finally {
+    connection.release();
+  }
+});
+
 // ===== 예약 =====
 router.post(
   "",
