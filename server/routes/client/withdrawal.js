@@ -78,7 +78,7 @@ router.post("", async function (req, res, next) {
     else res.status(500).send({ err: "오류-" + err });
   } finally {
     if (!send_res.false) res.send("success");
-    else res.send(send_res);
+    else res.status(404).send(send_res);
   }
 });
 
