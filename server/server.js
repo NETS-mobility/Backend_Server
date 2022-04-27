@@ -23,6 +23,7 @@ const route_client_cost = require("./routes/client/cost");
 const route_client_bankpay = require("./routes/client/bankpay");
 const route_client_pay = require("./routes/client/pay");
 const route_client_alarm = require("./routes/client/view_alarm");
+const route_client_withdrawal = require("./routes/client/withdrawal");
 const route_client_company = require("./routes/client/company/company");
 
 const route_manager_service = require("./routes/manager/service");
@@ -76,6 +77,7 @@ app.use("/client/cost", route_client_cost);
 app.use("/client/bankpay", route_client_bankpay);
 app.use("/client/pay", route_client_pay);
 app.use("/client/view_alarm", route_client_alarm);
+app.use("/client/withdrawal", route_client_withdrawal);
 app.use("/client/company", route_client_company);
 
 app.use("/manager/service", route_manager_service);
