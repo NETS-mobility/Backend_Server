@@ -32,13 +32,12 @@ exports.pushAlarm = async function (
   let message = {
     android: {
       priority: "high",
+      notification: {
+        channel_id: "basic",
+        default_vibrate_timings: true,
+      },
     },
     notification: {
-      // 알림 화면에서 표시될 내용
-      title: push_alarm_title,
-      body: push_alarm_body,
-    },
-    data: {
       // 알림 화면에서 표시될 내용
       title: push_alarm_title,
       body: push_alarm_body,
