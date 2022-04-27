@@ -17,6 +17,7 @@ router.post("", async function (req, res, next) {
     return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
   const user_id = token_res.id; // 이용자 id
   const input_password = req.body.password;
+  const input_id = req.body.id;
   const drop_reason = req.body.drop_reason;
 
   const connection = await pool2.getConnection(async (conn) => conn);
@@ -50,10 +51,14 @@ router.post("", async function (req, res, next) {
     if (data_reservation.count_waiting_reservation > 0) {
       send_res.false = "reservation"; // 탈퇴 실패사유: 진행중인 예약 존재
     }
+    if (input_id != user_id) {
+      send_res.false = "id"; // 탈퇴 실패사유: 아이디 불일치
+    }
     const validPassword = await bcrypt.compare(input_password, password); // 복호화 비교
     if (validPassword == 0) {
       send_res.false = "password"; // 탈퇴 실패사유: 비밀번호 불일치
     }
+
     /////////// 회원 탈퇴 진행 ///////////
     if (!send_res.false) {
       const sql_move_userInfo =
