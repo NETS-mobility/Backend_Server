@@ -18,7 +18,7 @@ router.post("", async function (req, res, next) {
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
-    const sql1 = `SELECT netsmanager_password, netsmanager_name,netsmanager_number, is_check_phone FROM netsmanager WHERE netsmanager_id=?;`;
+    const sql1 = `SELECT netsmanager_password, netsmanager_name, netsmanager_number, is_check_phone FROM netsmanager WHERE netsmanager_id=?;`;
     const result1 = await connection.query(sql1, [id]);
     const sql_data = result1[0];
 
