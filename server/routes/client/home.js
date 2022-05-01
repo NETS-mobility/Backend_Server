@@ -31,8 +31,7 @@ router.post("", async function (req, res, next) {
     const sql_result = await connection.query(sql, [user_num, payment_state.waitPay, payment_state.waitPay]);
     const data1 = sql_result[0];
 
-    for(let i = 0; i < data1.length; i++)
-    {
+    for (let i = 0; i < data1.length; i++) {
       const sql2 = "select * from `base_payment` where `payment_state_id`=1 and `reservation_id`=?;";
       const sqlr2 = await connection.query(sql2, [data1[i].id]);
       const isNeedBasePay = sqlr2[0].length > 0;
@@ -41,8 +40,8 @@ router.post("", async function (req, res, next) {
       const sqlr3 = await connection.query(sql3, [data1[i].id]);
       const isNeedExtraPay = sqlr3[0].length > 0;
 
-      if(isNeedBasePay) data1[i].pay_state = 2;
-      else if(isNeedExtraPay) data1[i].pay_state = 3;
+      if (isNeedBasePay) data1[i].pay_state = 2;
+      else if (isNeedExtraPay) data1[i].pay_state = 3;
       else data1[i].pay_state = 1;
     }
 
@@ -56,6 +55,33 @@ router.post("", async function (req, res, next) {
     res.status(500).send({ err: "오류-" + err });
   } finally {
     connection.release();
+  }
+});
+
+// ===== 토큰 생성 =====
+router.post("/getNewToken", async function (req, res, next) {
+  const token = req.body.jwtToken;
+
+  try {
+    const token_res = await jwt.verify(token);
+    if (token_res == jwt.TOKEN_EXPIRED)
+      return res.status(401).send({ err: "만료된 토큰입니다." });
+    if (token_res == jwt.TOKEN_INVALID)
+      return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
+
+    const payload = {
+      // 고객 정보
+      id: token_res.id,
+      name: token_res.name,
+      num: token_res.num,
+    };
+
+    const new_token_res = await jwt.sign(payload); // 토큰 생성
+    res.status(200).send({ success: true, token: new_token_res });
+  } catch (err) {
+    logger.error(__filename + " : " + err);
+    // res.status(500).send({ err : "서버 오류" });
+    res.status(500).send({ err: "오류-" + err });
   }
 });
 
