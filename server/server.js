@@ -24,7 +24,13 @@ const route_client_bankpay = require("./routes/client/bankpay");
 const route_client_pay = require("./routes/client/pay");
 const route_client_alarm = require("./routes/client/view_alarm");
 const route_client_withdrawal = require("./routes/client/withdrawal");
-const route_client_company = require("./routes/client/company/company");
+
+const route_client_company_serviceCost = require("./routes/client/company/serviceCost");
+const route_client_company_FAQ = require("./routes/client/company/FAQ");
+const route_client_company_fee = require("./routes/client/company/fee");
+const route_client_company_clause = require("./routes/client/company/clause");
+const route_client_company_getCompanyInfo = require("./routes/client/company/getCompanyInfo");
+const route_client_company_serviceCenterNumber = require("./routes/client/company/serviceCenterNumber");
 
 const route_manager_service = require("./routes/manager/service");
 const route_manager_mypage = require("./routes/manager/mypage");
@@ -78,7 +84,13 @@ app.use("/client/bankpay", route_client_bankpay);
 app.use("/client/pay", route_client_pay);
 app.use("/client/view_alarm", route_client_alarm);
 app.use("/client/withdrawal", route_client_withdrawal);
-app.use("/client/company", route_client_company);
+
+app.use("/client/company/serviceCost", route_client_company_serviceCost);
+app.use("/client/company/FAQ", route_client_company_FAQ);
+app.use("/client/company/fee", route_client_company_fee);
+app.use("/client/company/clause", route_client_company_clause);
+app.use("/client/company/getCompanyInfo", route_client_company_getCompanyInfo);
+app.use("/client/company/serviceCenterNumber", route_client_company_serviceCenterNumber);
 
 app.use("/manager/service", route_manager_service);
 app.use("/manager/mypage", route_manager_mypage);
