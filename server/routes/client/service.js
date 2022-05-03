@@ -82,7 +82,7 @@ router.post("/serviceList/:listType", async function (req, res, next) {
     res.send(data1);
   } catch (err) {
     logger.error(__filename + " : " + err);
-    if (err == 0) res.status(401).send({ err: "잘못된 인자 전달" });
+    if (err == 0) res.status(400).send({ err: "잘못된 인자 전달" });
     else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
   } finally {
     connection.release();
@@ -193,7 +193,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
   } catch (err) {
     logger.error(__filename + " : " + err);
     if (err == 0)
-      res.status(401).send({ err: "해당 서비스 정보가 존재하지 않습니다." });
+      res.status(400).send({ err: "해당 서비스 정보가 존재하지 않습니다." });
     else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
   } finally {
     connection.release();
