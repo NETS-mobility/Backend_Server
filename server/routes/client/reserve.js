@@ -108,11 +108,11 @@ router.post(
 
       const sql2 = `INSERT INTO reservation(reservation_id, reservation_state_id, reservation_payment_state_id, user_number,
                     move_direction_id, service_kind_id, gowith_hospital_time,
-                    pickup_address, drop_address, hospital_address,
+                    pickup_address, drop_address, hospital_address, hospital_name,
                     hope_reservation_date, hope_hospital_arrival_time, fixed_medical_time, hope_hospital_departure_time,
                     expect_pickup_time, expect_terminate_service_time,
                     fixed_medical_detail, hope_requires
-                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
 
       const sql3 = `INSERT INTO reservation_user(reservation_id, patient_name, patient_phone, protector_name, protector_phone, valid_target_kind
                     ) VALUES(?,?,?,?,?,?);`;
@@ -166,6 +166,7 @@ router.post(
         user.pickupAddr,
         user.dropAddr,
         user.hospitalAddr,
+        user.hospitalName,
         user.hopeReservationDate,
         user.hopeHospitalArrivalTime,
         user.fixedMedicalTime,
