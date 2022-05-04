@@ -9,6 +9,7 @@ const date_to_string = require("../../modules/date_to_string");
 const evidence_checker = require("../../modules/user_evidence_check");
 const upload = require("../../modules/fileupload");
 const rev_state_msg = require("../../modules/reservation_state_msg");
+const get_service_progress = require("../../modules/get_service_progress");
 const extracost = require("../../modules/extracost");
 const case_finder = require("../../modules/dispatch_case_finder");
 const gowith_finder = require("../../modules/dispatch_isOverPoint_finder");
@@ -128,30 +129,8 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     if (data_service.length == 0) throw (err = 0);
 
     // 서비스 상태정보
-    const sql_prog =
-      "select date_format(`real_car_departure_time`,'%Y-%m-%d %T') as `real_car_departure_time`, date_format(`real_pickup_time`,'%Y-%m-%d %T') as `real_pickup_time`, date_format(`real_hospital_arrival_time`,'%Y-%m-%d %T') as `real_hospital_arrival_time`, date_format(`real_return_hospital_arrival_time`,'%Y-%m-%d %T') as `real_return_hospital_arrival_time`, " + 
-      "date_format(`real_return_start_time`,'%Y-%m-%d %T') as `real_return_start_time`, date_format(`real_service_end_time`,'%Y-%m-%d %T') as `real_service_end_time`, `service_state_id` from `service_progress` where `reservation_id`=?;";
-    const result_prog = await connection.query(sql_prog, [service_id]);
-    const data_prog = result_prog[0];
-
-    let sstate = 0;
-    let sstate_time = undefined;
-    if (data_prog.length > 0) {
-      sstate = data_prog[0].service_state_id;
-      sstate_time = [ 0 ];
-      if(data_service[0].move_direction_id != 2)
-      {
-        sstate_time.push(data_prog[0].real_car_departure_time); // 차량출발
-        sstate_time.push(data_prog[0].real_pickup_time); // 픽업완료
-        sstate_time.push(data_prog[0].real_hospital_arrival_time); // 병원도착
-      }
-      if(data_service[0].move_direction_id != 1)
-      {
-        sstate_time.push(data_prog[0].real_return_hospital_arrival_time); // 귀가차량 병원도착
-        sstate_time.push(data_prog[0].real_return_start_time); // 귀가출발
-        sstate_time.push(data_prog[0].real_service_end_time); // 서비스종료
-      }
-    }
+    const service_prog = await get_service_progress(service_id, data_service[0].move_direction_id);
+    if(service_prog === undefined) throw (err = 0);
 
     // 매니저 정보
     const sql_manager =
@@ -184,8 +163,8 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
 
     res.send({
       document_isSubmit: document_isSubmit,
-      service_state: sstate,
-      service_state_time: sstate_time,
+      service_state: service_prog.service_state,
+      service_state_time: service_prog.service_state_time,
       manager: data_manager[0],
       service: data_service[0],
     });
@@ -218,30 +197,16 @@ router.post(
       const result_prog = await connection.query(sql_prog, [service_id]);
       const data_prog = result_prog[0];
 
-      let sstate = 0;
-      let sstate_time = undefined;
-      if (data_prog.length > 0) {
-        sstate = data_prog[0].service_state_id;
-        sstate_time = [ 0 ];
-        if(data_service[0].move_direction_id != 2)
-        {
-          sstate_time.push(data_prog[0].real_car_departure_time); // 차량출발
-          sstate_time.push(data_prog[0].real_pickup_time); // 픽업완료
-          sstate_time.push(data_prog[0].real_hospital_arrival_time); // 병원도착
-        }
-        if(data_service[0].move_direction_id != 1)
-        {
-          sstate_time.push(data_prog[0].real_return_hospital_arrival_time); // 귀가차량 병원도착
-          sstate_time.push(data_prog[0].real_return_start_time); // 귀가출발
-          sstate_time.push(data_prog[0].real_service_end_time); // 서비스종료
-        }
-      }
-      if (sstate == service_state.carDep) {
+      // 서비스 상태정보
+      const service_prog = await get_service_progress(service_id, data_service[0].move_direction_id);
+      if(service_prog === undefined) throw (err = 0);
+
+      if (service_prog.service_state == service_state.carDep) {
         checking_over_20min(service_id);
       }
       res.send({
-        service_state: sstate,
-        service_state_time: sstate_time,
+        service_state: service_prog.service_state,
+        service_state_time: service_prog.service_state_time,
       });
     } catch (err) {
       logger.error(__filename + " : " + err);
@@ -288,7 +253,7 @@ router.post(
       const data_prog = result_prog[0];
       
       let next_state = data_prog[0].service_state_id + 1;
-      if (direction == 2 && next_state == service_state.carDep)
+      if (direction == 2 && next_state == service_state.pickup)
         next_state = service_state.carReady;
       if (direction != 1 && next_state > service_state.complete)
         next_state = service_state.complete;
