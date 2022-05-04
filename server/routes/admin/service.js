@@ -89,7 +89,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
   try {
     // 서비스 정보
     const sql_service =
-      "select cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_address`, `hospital_address` as `hos_address`, `drop_address`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, " +
+      "select cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_address`, `hospital_address` as `hos_address`, `hospital_name` as `hos_name`, `drop_address`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, " +
       "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithumanager_name` as `gowithumanager`, `gowithumanager_phone`, " +
       "`reservation_state_id` as `reservation_state`, R.`user_number` as `customer_number`, U.`user_name` as `customer_name`, S.`service_kind` as `service_type`, `move_direction_id`, `gowith_hospital_time` " +
       "from `reservation` as R, `user` as U, `service_info` as S " +
@@ -170,7 +170,7 @@ router.post(
       const target = ["service_state_id", "real_car_departure_time", "real_pickup_time", "real_hospital_arrival_time", "real_return_hospital_arrival_time", "real_return_start_time", "real_service_end_time"];
       for(let i = 0; i <= 6; i++)
       {
-        if(param[i] === undefined) continue;
+        if(param[i] === undefined || param[i] === null) continue;
         const sql = "update `service_progress` set `" + target[i] + "`=? where `reservation_id`=?;";
         const result = await connection.query(sql, [param[i], service_id]);
         if (result[0].affectedRows == 0) throw (err = 0);
