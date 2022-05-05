@@ -16,21 +16,33 @@ router.post("/extra", async function (req, res, next) {
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
-    const sql0 =
-      "select `service_kind_id` as `id`, `service_kind` as `name`, `service_base_move_distance` as `dist`, `service_base_hospital_gowith_time` as `time`, `service_base_cost` as `cost` from `service_info` order by `service_kind_id`;";
+    // 서비스요금
+    const sql0 = `SELECT service_kind_id AS id, service_kind AS name,
+                  service_base_move_distance AS dist, service_base_hospital_gowith_time AS time, service_base_cost AS cost 
+                  FROM service_info ORDER BY service_kind_id;`;
     const result0 = await connection.query(sql0, []);
     const data0 = result0[0];
 
-    const sql1 = "select * from `extra_cost` order by `extra_cost_kind_id`;";
+    // 추가요금
+    const sql1 = `SELECT extra_cost_kind_id, extra_cost_kind,
+                  extra_cost_unit, extra_cost_unit_value,
+                  CAST(extra_cost_per_unit_value AS FLOAT) AS extra_cost_per_unit_value,
+                  extra_cost_free_unit_value, extra_cost_max_unit_value
+                  FROM extra_cost ORDER BY extra_cost_kind_id;`;
     const result1 = await connection.query(sql1, []);
     const data1 = result1[0];
 
-    const sql2 =
-      "select `company_time_start` as `start`, `company_time_end` as `end` from `company_time_schedule`;";
-    const result2 = await connection.query(sql2, []);
+    // 심야시간
+    const sql2 = `SELECT company_time_start AS start, company_time_end AS end 
+                  FROM company_time_schedule WHERE company_time_kind=?;`;
+    const result2 = await connection.query(sql2, ["심야시간"]);
     const data2 = result2[0];
 
-    const sql3 = "select * from `manager_extra_pay` order by `extra_pay_id`;";
+    // 매니저 추가수당
+    const sql3 = `SELECT extra_pay_id, CAST(extra_pay_percentage AS FLOAT) AS extra_pay_percentage,
+                  extra_pay_start_time, extra_pay_end_time,
+                  extra_pay_day_standard_time, extra_pay_week_standard_time
+                  FROM manager_extra_pay ORDER BY extra_pay_id;`;
     const result3 = await connection.query(sql3, []);
     const data3 = result3[0];
 
