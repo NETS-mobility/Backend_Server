@@ -47,6 +47,7 @@ const route_admin_cost = require("./routes/admin/cost");
 const route_admin_login = require("./routes/admin/login");
 const route_admin_register = require("./routes/admin/register");
 const route_admin_bankpay = require("./routes/admin/bankpay");
+const route_admin_cancel = require("./routes/admin/cancel");
 const route_admin_alarm = require("./routes/admin/view_alarm");
 
 const route_dispatch = require("./routes/dispatch/dispatch");
@@ -107,6 +108,7 @@ app.use("/admin/cost", route_admin_cost);
 app.use("/admin/login", route_admin_login);
 app.use("/admin/register", route_admin_register);
 app.use("/admin/bankpay", route_admin_bankpay);
+app.use("/admin/cancel", route_admin_cancel);
 app.use("/admin/view_alarm", route_admin_alarm);
 
 app.use("/dispatch", route_dispatch);
