@@ -44,6 +44,14 @@ router.post("/reserve", async function (req, res, next) {
     } else if (reservationStateId == reservation_state.new) { // 결제 대기(기본 결제 미완료 시)
       await cancel_reservation.cancelReservation(reservationId, 2); // 예약 취소 완료
 
+      const sql_cancel = `UPDATE base_payment SET cancel_amount=?, cancel_reason=?
+                          WHERE reservation_id=?;`;
+      const result_cancel = await connection.query(sql_cancel, [
+        0,
+        reason,
+        reservationId,
+      ]);
+
       return res.status(200).send({
         success: true,
         msg: "예약 취소 완료-결제 금액 없음",
@@ -51,11 +59,19 @@ router.post("/reserve", async function (req, res, next) {
     } else if (reservationStateId == reservation_state.ready) { // 결제 완료(기본 결제 완료 시)
       // 취소 가능 금액 계산
       const cancelAmount = await cancel_amount.calCancelAmount(reservationId);
+
+      const sql_cancel = `UPDATE base_payment SET cancel_amount=?, cancel_reason=?
+                          WHERE reservation_id=?;`;
+      const result_cancel = await connection.query(sql_cancel, [
+        cancelAmount,
+        reason,
+        reservationId,
+      ]);
       
       // 환불 금액에 따른 처리
       if (cancelAmount == 0) {
         await cancel_reservation.cancelReservation(reservationId, 2); // 예약 취소 완료
-        
+
         return res.status(200).send({
           success: true,
           msg: "예약 취소 완료-환불 금액 없음",

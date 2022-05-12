@@ -71,6 +71,15 @@ module.exports = {
             refund_account // [가상계좌 환불시 필수입력] 환불 수령계좌 번호
           }
         });
+
+        const sql_refund = `UPDATE base_payment SET refund_account=?, refund_bank=?, refund_holder=?
+                            WHERE reservation_id=?;`;
+        const result_refund = await connection.query(sql_refund, [
+          refund_account,
+          refund_bank,
+          refund_holder,
+          reservationId,
+        ]);
       }
       
       const { response } = getCancelData.data; // 환불 결과
