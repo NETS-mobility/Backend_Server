@@ -3,8 +3,8 @@
 
 module.exports = {
   getHopeRequires: (str) => {
-    // 진료실동행, 보호자진료내용전달, 보호자진료서류전달, 약국동행, 기타:입력사항
-    let opt1 = false, opt2 = false, opt3 = false, opt4 = false, opt5 = false, opt6 = false;
+    // 휠체어이동, 진료실동행, 보호자진료내용전달, 보호자진료서류전달, 약국동행, 기타:입력사항
+    let opt1 = true, opt2 = false, opt3 = false, opt4 = false, opt5 = false, opt6 = false;
     let pos;
 
     if (str.indexOf("진료실동행") != -1)
