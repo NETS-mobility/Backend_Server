@@ -170,22 +170,17 @@ router.post("/setComplete", async function (req, res, next) {
     let reservationId, paymentAmount, paymentType;
 
     if (merchantUid[12] == "B") { // 기본 결제
-      const sql_pay = `SELECT reservation_id, payment_amount FROM base_payment WHERE merchant_uid=?;`;
-      const result_pay = await connection.query(sql_pay, [merchantUid]);
-      const sql_data_pay = result_pay[0];
-
-      reservationId = sql_data_pay[0].reservation_id;
-      paymentAmount = sql_data_pay[0].payment_amount;
       paymentType = "base_payment";
     } else if (merchantUid[12] == "E") { // 추가 결제
-      const sql_pay = `SELECT reservation_id, payment_amount FROM extra_payment WHERE merchant_uid=?;`;
-      const result_pay = await connection.query(sql_pay, [merchantUid]);
-      const sql_data_pay = result_pay[0];
-
-      reservationId = sql_data_pay[0].reservation_id;
-      paymentAmount = sql_data_pay[0].payment_amount;
       paymentType = "extra_payment";
     }
+
+    const sql_pay = `SELECT reservation_id, payment_amount FROM ${paymentType} WHERE merchant_uid=?;`;
+    const result_pay = await connection.query(sql_pay, [merchantUid]);
+    const sql_data_pay = result_pay[0];
+
+    reservationId = sql_data_pay[0].reservation_id;
+    paymentAmount = sql_data_pay[0].payment_amount;
 
     // === 결제 금액 일치 확인 ===
     if (amount != paymentAmount) { // 결제 금액 불일치
@@ -254,25 +249,20 @@ router.post("/iamport-webhook", async function (req, res, next) {
     // === 올바른 결제 정보 조회 및 위조 여부 확인 ===
     // 예약 번호, 결제 금액, 취소 금액, 결제 타입
     let reservationId, paymentAmount, cancelAmount, paymentType;
-    
+
     if (status == "ready" || status == "paid") { // 결제 관련
       if (merchantUid[12] == "B") { // 기본 결제
-        const sql_pay = `SELECT reservation_id, payment_amount FROM base_payment WHERE merchant_uid=?;`;
-        const result_pay = await connection.query(sql_pay, [merchantUid]);
-        const sql_data_pay = result_pay[0];
-
-        reservationId = sql_data_pay[0].reservation_id;
-        paymentAmount = sql_data_pay[0].payment_amount;
         paymentType = "base_payment";
       } else if (merchantUid[12] == "E") { // 추가 결제
-        const sql_pay = `SELECT reservation_id, payment_amount FROM extra_payment WHERE merchant_uid=?;`;
-        const result_pay = await connection.query(sql_pay, [merchantUid]);
-        const sql_data_pay = result_pay[0];
-
-        reservationId = sql_data_pay[0].reservation_id;
-        paymentAmount = sql_data_pay[0].payment_amount;
         paymentType = "extra_payment";
       }
+
+      const sql_pay = `SELECT reservation_id, payment_amount FROM ${paymentType} WHERE merchant_uid=?;`;
+      const result_pay = await connection.query(sql_pay, [merchantUid]);
+      const sql_data_pay = result_pay[0];
+
+      reservationId = sql_data_pay[0].reservation_id;
+      paymentAmount = sql_data_pay[0].payment_amount;
 
       // === 결제 금액 일치 확인 ===
       if (amount != paymentAmount) { // 결제 금액 불일치
@@ -287,14 +277,14 @@ router.post("/iamport-webhook", async function (req, res, next) {
         reservationId = sql_data_cancel[0].reservation_id;
         cancelAmount = sql_data_cancel[0].cancel_amount;
         paymentType = "base_payment";
-      } 
+      }
 
       // === 취소 금액 일치 확인 ===
       if (cancel_amount != cancelAmount) { // 취소 금액 불일치
         return res.status(400).send({ msg: "위조된 취소 시도" });
       }
     }
-    
+
     // === 결제 상태에 따라 처리 ===
     // 다음 예약 상태, 다음 예약 결제 상태
     let nextReservationStateId, nextReservationPaymentStateId;
