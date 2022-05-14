@@ -117,9 +117,16 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
 
     // 결제
     const sqlm =
-      "select * from `extra_payment` where `payment_state_id`=? and `reservation_id`=?;";
-    const sqlmr = await connection.query(sqlm, [payment_state.waitPay, service_id]);
-    const isNeedExtraPay = sqlmr[0].length > 0;
+      "select `payment_state_id`, date_format(`complete_payment_date`,'%Y-%m-%d %T') as `complete_payment_date` from `extra_payment` where `reservation_id`=?;";
+    const sqlmr = await connection.query(sqlm, [service_id]);
+    const sqlmd = sqlmr[0];
+    const isExistExtraPay = sqlmd.length > 0;
+    let isNeedExtraPay = false;
+    let complete_payment_date = null;
+    if(isExistExtraPay) {
+      isNeedExtraPay = sqlmd[0].payment_state_id == payment_state.waitPay;
+      complete_payment_date = sqlmd[0].complete_payment_date;
+    }
     data_service[0].reservation_state = rev_state_msg(
       data_service[0].reservation_state,
       isNeedExtraPay
@@ -146,6 +153,9 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       dispatch: sqldr[0],
       payMethod: payMethod,
       payCost: payCost,
+      isExistExtraPay: isExistExtraPay,
+      isNeedExtraPay: isNeedExtraPay,
+      complete_payment_date: complete_payment_date,
     });
   } catch (err) {
     logger.error(__filename + " : " + err);
@@ -171,17 +181,20 @@ router.post(
 
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
+      await connection.beginTransaction();
       const param = [next_state, recTime.carDep, recTime.pickup, recTime.arrivalHos, recTime.carReady, recTime.goHome, recTime.complete];
       const target = ["service_state_id", "real_car_departure_time", "real_pickup_time", "real_hospital_arrival_time", "real_return_hospital_arrival_time", "real_return_start_time", "real_service_end_time"];
       for(let i = 0; i <= 6; i++)
       {
-        if(param[i] === undefined || param[i] === null) continue;
+        if(param[i] === undefined || param[i] === null || param[i] == "") param[i] = null;
         const sql = "update `service_progress` set `" + target[i] + "`=? where `reservation_id`=?;";
         const result = await connection.query(sql, [param[i], service_id]);
         if (result[0].affectedRows == 0) throw (err = 0);
       }
+      await connection.commit();
       res.status(200).send();
     } catch (err) {
+      await connection.rollback();
       logger.error(__filename + " : " + err);
       if (err == 0) res.status(500).send({ err: "정보 변경 실패" });
       else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
