@@ -100,7 +100,12 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
 
     // 서비스 상태정보
     const service_prog = await get_service_progress(service_id, data_service[0].move_direction_id);
-    if(service_prog === undefined) throw (err = 0);
+    let service_state;
+    let service_state_time;
+    if(service_prog !== undefined) {
+      service_state = service_prog.service_state;
+      service_state_time = service_prog.service_state_time;
+    }
 
     // 배차 (매니저 & 차량)
     const sqld =
@@ -135,8 +140,8 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     data_service[0].isOverPoint = gowith_finder(data_service[0].gowith_hospital_time);
 
     res.send({
-      service_state: service_prog.service_state,
-      service_state_time: service_prog.service_state_time,
+      service_state: service_state,
+      service_state_time: service_state_time,
       service: data_service[0],
       dispatch: sqldr[0],
       payMethod: payMethod,
