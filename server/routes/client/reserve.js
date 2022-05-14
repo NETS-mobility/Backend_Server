@@ -278,6 +278,11 @@ router.post(
         validDate,
       ]);
       
+      // === 운행 데이터 추가 ===
+      const sql7 = `INSERT INTO service_progress (reservation_id, real_hospital_gowith_time, real_ready_move_distance, 
+                    real_service_move_distance, real_service_time, service_state_id) VALUES (?,0,0,0,0,0);`;
+      const result7 = await connection.query(sql7, [reservationId]);
+      
       res
         .status(200)
         .send({
