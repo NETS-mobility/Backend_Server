@@ -246,10 +246,11 @@ router.post(
       await connection.beginTransaction();
 
       const sql_dire =
-        "select `move_direction_id` from `reservation` where `reservation_id`=?;";
+        "select `move_direction_id`, `gowith_hospital_time` from `reservation` where `reservation_id`=?;";
       const result_dire = await connection.query(sql_dire, [service_id]);
       const data_dire = result_dire[0];
       const direction = data_dire[0].move_direction_id; // 이동 방향 (집-병원=1, 병원-집=2, 집-집=3)
+      const isOverPoint = gowith_finder(data_dire[0].gowith_hospital_time); // 왕복 결정 (동행 2시간 이상=1, 그렇지 않으면=0)
 
       // 현재 서비스 상태 구하기
       const sql_prog =
@@ -262,6 +263,8 @@ router.post(
         next_state = service_state.carReady;
       if (direction == 1 && next_state == service_state.carReady)
         next_state = service_state.complete;
+      if (direction == 3 && isOverPoint == 0 && next_state == service_state.carReady)
+        next_state = service_state.goHome;
       if (next_state > service_state.complete)
         next_state = service_state.complete;
       
