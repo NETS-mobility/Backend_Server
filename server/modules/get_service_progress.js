@@ -21,6 +21,7 @@ module.exports = async function (service_id, move_direction_id) {
         sstate_time.carDep = data_prog[0].real_car_departure_time; // 차량출발
         sstate_time.pickup = data_prog[0].real_pickup_time; // 픽업완료
         sstate_time.arrivalHos = data_prog[0].real_hospital_arrival_time; // 병원도착
+        sstate_time.complete = data_prog[0].real_service_end_time; // 서비스종료
       }
       if(move_direction_id != 1)
       {
