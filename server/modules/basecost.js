@@ -4,6 +4,9 @@ const pool = require("./mysql");
 const pool2 = require("./mysql2");
 const formatdate = require("./formatdate");
 
+const service_kind = require("../config/service_kind");
+const logger = require("../config/logger");
+
 module.exports = {
   calBasecost: async (reservationId) => {
     // 서비스 예약 날짜
@@ -91,7 +94,7 @@ module.exports = {
       let movelevel; // 추가요금 부과 단계
       let overMoveDistanceCost = 0; // 이동 거리 추가요금
 
-      if (serviceKindId == 3 || serviceKindId == 5) {
+      if (serviceKindId == service_kind.wheelD || serviceKindId == service_kind.wheelplusD) {
         // 왕복일 경우 편도 기준으로 바꿈
         expMoveDistance = expMoveDistance / 2;
         baseMoveDistance = baseMoveDistance / 2;
@@ -106,7 +109,7 @@ module.exports = {
         if (overMoveDistance % moveDistanceUnit != 0) movelevel += 1;
 
         overMoveDistanceCost = movelevel * moveDistanceUnitValue;
-        if (serviceKindId == 3 || serviceKindId == 5)
+        if (serviceKindId == service_kind.wheelD || serviceKindId == service_kind.wheelplusD)
           // 왕복일 경우 2배
           overMoveDistanceCost *= 2;
       } else {
@@ -118,7 +121,7 @@ module.exports = {
       let timelevel; // 추가요금 부과 단계
       let overGowithTimeCost = 0; // 동행 시간 추가요금
 
-      if (serviceKindId != 1) {
+      if (serviceKindId != service_kind.move) {
         // 네츠 무브는 제외
         overGowithTime = gowithTime - baseGowithTime; // 추가 동행 시간(분)
 
@@ -187,7 +190,7 @@ module.exports = {
 
       day = expPickupTime.getDay(); // 요일
 
-      if (day == 0 || day == 6) { // 주말-계산 처리
+      if (day == 0 || day == 6) { // 주말
         weekendCost = parseInt(TotalBaseCost * (weekendRatio - 1));
       }
 
@@ -209,6 +212,7 @@ module.exports = {
       return result;
     } catch (err) {
       console.error("err : " + err);
+      logger.error(__filename + " : " + err);
     } finally {
       connection.release();
     }
