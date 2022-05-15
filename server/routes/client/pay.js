@@ -165,7 +165,7 @@ router.post("/setComplete", async function (req, res, next) {
       cancelled_at, // 결제 취소 시점
     } = paymentData;
 
-    // === 결제 정보 조회 ===
+    // === 올바른 결제 정보 조회 ===
     // 예약 번호, 결제 금액, 결제 타입
     let reservationId, paymentAmount, paymentType;
 
@@ -210,7 +210,8 @@ router.post("/setComplete", async function (req, res, next) {
 
 // ===== 아임포트 웹훅 설정 =====
 router.post("/iamport-webhook", async function (req, res, next) {
-  const { impUid, merchantUid } = req.body;
+  const impUid = req.body.imp_uid;
+  const merchantUid = req.body.merchant_uid;
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
@@ -246,7 +247,7 @@ router.post("/iamport-webhook", async function (req, res, next) {
       cancelled_at, // 결제 취소 시점
     } = paymentData;
 
-    // === 올바른 결제 정보 조회 및 위조 여부 확인 ===
+    // === 올바른 결제 정보 조회 ===
     // 예약 번호, 결제 금액, 취소 금액, 결제 타입
     let reservationId, paymentAmount, cancelAmount, paymentType;
 
@@ -360,6 +361,9 @@ router.post("/iamport-webhook", async function (req, res, next) {
 
         nextReservationStateId = reservation_state.ready;
         nextReservationPaymentStateId = reservation_payment_state.completeBasePay;
+
+        // 기본 결제 완료 시 알림 전송
+        // ***** 작성 필요 *****
       } else if (paymentType == "extra_payment") { // 추가 결제
         nextReservationStateId = reservation_state.complete;
         nextReservationPaymentStateId = reservation_payment_state.completeAllPay;
