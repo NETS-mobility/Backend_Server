@@ -7,6 +7,7 @@ const jwt = require("../../modules/jwt");
 const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const formatdate = require("../../modules/formatdate");
+const alarm = require("../../modules/setting_alarm");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
@@ -15,6 +16,8 @@ const payment_state = require("../../config/payment_state");
 const service_kind = require("../../config/service_kind");
 const cancel_reservation = require("../../modules/cancel_reservation");
 const logger = require("../../config/logger");
+const alarm_kind = require('../../config/alarm_kind');
+const reciever = require('../../config/push_alarm_reciever');
 
 // ===== 결제 전 정보 조회 =====
 router.post("/getPayInfo", async function (req, res, next) {
@@ -381,7 +384,15 @@ router.post("/iamport-webhook", async function (req, res, next) {
         nextReservationPaymentStateId = reservation_payment_state.completeBasePay;
 
         // 기본 결제 완료 시 알림 전송
-        // ***** 작성 필요 *****
+        const sql_alarm = 'select netsmanager_id, user_id from netsmanager as nm inner join car_dispatch as cd inner join user as u inner join reservation as r where cd.reservation_id = ? and cd.netsmanager_number = nm.netsmanager_number and r.reservation_id = cd.reservation_id and r.user_number = u.user_number;'
+        const sql_res = await connection.query(sql_alarm, reservationId); 
+        const data =  Object.values(sql_res[0][0]);
+        if (data.length == 0) throw (err = 0);
+        const netsmanagerId = data[0];
+        const userId = data[1];
+        alarm.set_alarm(reciever.manager, reservationId, alarm_kind.m_confirm_reservation, netsmanagerId);  // 매니저에게 예약 확정 알림 전송
+        alarm.set_alarm(reciever.client, reservationId, alarm_kind.confirm_reservation, userId);    // 고객 예약 확정 알림
+
       } else if (paymentType == "extra_payment") { // 추가 결제
         nextReservationStateId = reservation_state.complete;
         nextReservationPaymentStateId = reservation_payment_state.completeAllPay;
