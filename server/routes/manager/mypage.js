@@ -461,4 +461,43 @@ router.post(
   }
 );
 
+// ===== 매니저 공지사항 - 목록 조회 =====
+router.post("/notice", async function (req, res, next) {
+  const connection = await pool2.getConnection(async (conn) => conn);
+  try {
+    const sql1 =
+      "select `post_id` as `id`, `post_title` as `title`, date_format(`post_date`,'%Y-%m-%d') as `date` from `manager_notice` order by `post_id`;";
+    const result1 = await connection.query(sql1, []);
+    res.send(result1[0]);
+  } catch (err) {
+    logger.error(__filename + " : " + err);
+    // res.status(500).send({ err : "서버 오류" });
+    res.status(500).send({ err: "오류-" + err });
+  } finally {
+    connection.release();
+  }
+});
+
+// ===== 매니저 공지사항 - 내용 조회 =====
+router.post("/notice/read/:idx", async function (req, res, next) {
+  const idx = req.params.idx;
+  const connection = await pool2.getConnection(async (conn) => conn);
+  try {
+    const sql1 =
+      "select `post_id` as `id`, `post_title` as `title`, date_format(`post_date`,'%Y-%m-%d') as `date`, `post_content` as `content`, " +
+      "`view_number` as `view`, `post_writer_id` as `writer_id` from `manager_notice` where `post_id`=?;";
+    const result1 = await connection.query(sql1, [idx]);
+    const data1 = result1[0];
+    if (data1.length == 0) throw (err = 0);
+    res.send(data1[0]);
+  } catch (err) {
+    logger.error(__filename + " : " + err);
+    if (err == 0)
+      res.status(500).send({ err: "해당 게시글을 불러올 수 없습니다." });
+    else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
+  } finally {
+    connection.release();
+  }
+});
+
 module.exports = router;
