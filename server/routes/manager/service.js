@@ -260,10 +260,10 @@ router.post(
       let next_state = data_prog[0].service_state_id + 1;
       if (direction == 2 && next_state == service_state.pickup)
         next_state = service_state.carReady;
-      if (direction != 1 && next_state > service_state.complete)
+      if (direction == 1 && next_state == service_state.carReady)
         next_state = service_state.complete;
-      if (direction == 1 && next_state > service_state.arrivalHos)
-        next_state = service_state.arrivalHos;
+      if (next_state > service_state.complete)
+        next_state = service_state.complete;
       
       // 상태 설정
       let prog;
@@ -319,11 +319,13 @@ router.post(
         "A1@naver.com"
       );*/
 
-      // 서비스 종료 후 추가 요금 정보
+      // 서비스 종료
       let next_pay_state;
-      const srv_end = (direction != 1) ? next_state == service_state.complete : next_state == service_state.arrivalHos;
-      
-      if (srv_end) {
+      if (next_state == service_state.complete) {
+        const sql_cprog = "update `reservation` set `reservation_state_id`=? where `reservation_id`=?;";
+        await connection.query(sql_cprog, [reservation_state.complete, service_id]);
+
+        // 서비스 종료 후 추가 요금 정보
         /*result_extraCost = await extracost.calExtracost(service_id);
         if (extraCost > 0) {
           const sql_cost = `INSERT INTO extra_payment(reservation_id, merchant_uid, payment_state_id, payment_amount,
