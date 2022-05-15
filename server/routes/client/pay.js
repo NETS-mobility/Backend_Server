@@ -306,8 +306,11 @@ router.post("/iamport-webhook", async function (req, res, next) {
     let nextReservationStateId, nextReservationPaymentStateId;
 
     if (status == "ready") { // 가상계좌 발급
+      const vbankIssuedDate = formatdate.getFormatDate(new Date(vbank_issued_at*1000), 1); // 날짜,시간
+      logger.info("vbankIssuedDate: " + vbankIssuedDate); // ==============테스트==============
+
       const sql_vbank_ready = `UPDATE ${paymentType} SET payment_state_id=?,
-                               payment_method=?, vbank_code=?, vbank_name=?, vbank_num=?, vbank_holder=?
+                               payment_method=?, vbank_code=?, vbank_name=?, vbank_num=?, vbank_holder=?, vbank_issued_date=?
                                WHERE reservation_id=?;`;
       const result_vbank_ready = await connection.query(sql_vbank_ready, [
         payment_state.waitDepositPay,
@@ -316,6 +319,7 @@ router.post("/iamport-webhook", async function (req, res, next) {
         vbank_name,
         vbank_num,
         vbank_holder,
+        vbankIssuedDate,
         reservationId,
       ]);
 
@@ -353,11 +357,8 @@ router.post("/iamport-webhook", async function (req, res, next) {
         ]);
       } else if (pay_method == 'vbank') {
         // 가상계좌 결제이면
-        const vbankIssuedDate = formatdate.getFormatDate(new Date(vbank_issued_at*1000), 1); // 날짜,시간
-        logger.info("vbankIssuedDate: " + vbankIssuedDate); // ==============테스트==============
-
         const sql_vbank = `UPDATE ${paymentType} SET imp_uid=?, payment_state_id=?, complete_payment_date=?,
-                           payment_method=?, vbank_code=?, vbank_name=?, vbank_num=?, vbank_holder=?, vbank_issued_date=?
+                           payment_method=?, vbank_code=?, vbank_name=?, vbank_num=?, vbank_holder=?
                            WHERE reservation_id=?;`;
         const result_vbank = await connection.query(sql_vbank, [
           impUid,
@@ -368,7 +369,6 @@ router.post("/iamport-webhook", async function (req, res, next) {
           vbank_name,
           vbank_num,
           vbank_holder,
-          vbankIssuedDate,
           reservationId,
         ]);
       }
