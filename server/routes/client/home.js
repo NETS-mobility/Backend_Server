@@ -24,9 +24,9 @@ router.post("", async function (req, res, next) {
     const sql =
       "select S.`service_kind` as `service_type`, `expect_pickup_time` as `pickup_time`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, cast(`reservation_id` as char) as `id` " +
       "from `reservation` as R, `service_info` as S " +
-      "where `user_number`=? and R.`service_kind_id`=S.`service_kind_id` and `reservation_state_id`>=1 and (`reservation_state_id`=2 " +
-      "or exists(select * from `base_payment` as P where `payment_state_id`=? and R.`reservation_id`=P.`reservation_id`) " +
-      "or exists(select * from `extra_payment` as P where `payment_state_id`=? and R.`reservation_id`=P.`reservation_id`)) " +
+      "where `user_number`=? and R.`service_kind_id`=S.`service_kind_id` " + //and `reservation_state_id`>=0 and (`reservation_state_id`=2 " +
+      //"or exists(select * from `base_payment` as P where `payment_state_id`=? and R.`reservation_id`=P.`reservation_id`) " +
+      //"or exists(select * from `extra_payment` as P where `payment_state_id`=? and R.`reservation_id`=P.`reservation_id`)) " +
       "order by `pickup_time`;";
     const sql_result = await connection.query(sql, [user_num, payment_state.waitPay, payment_state.waitPay]);
     const data1 = sql_result[0];
