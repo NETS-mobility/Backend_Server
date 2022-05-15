@@ -12,7 +12,7 @@ https://app.swaggerhub.com/apis/NETS-mobility1/Backend_Server/1.0.1
 2022.03.31 base_setting_v5  
 2022.05.03 test_setting_v4
 
-## Setting_v4
+## Setting_v5
 Backend_Server 내에 .env 파일  
 Backend_Server/server/config 내에 .json 파일
 
