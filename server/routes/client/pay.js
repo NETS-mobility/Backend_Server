@@ -311,7 +311,7 @@ router.post("/iamport-webhook", async function (req, res, next) {
     let nextReservationStateId, nextReservationPaymentStateId;
 
     if (status == "ready") { // 가상계좌 발급
-      const vbankIssuedDate = formatdate.getFormatDate(vbank_issued_at, 1); // 날짜,시간
+      const vbankIssuedDate = formatdate.getFormatDate(new Date(vbank_issued_at), 1); // 날짜,시간
       logger.info("vbankIssuedDate: " + vbankIssuedDate); // ==============테스트==============
 
       const sql_vbank_ready = `UPDATE ${paymentType} SET payment_state_id=?,
@@ -341,7 +341,7 @@ router.post("/iamport-webhook", async function (req, res, next) {
         msg: "가상계좌 발급 성공",
       });
     } else if (status == "paid") { // 결제 완료
-      const completePaymentDate = formatdate.getFormatDate(paid_at, 1); // 날짜,시간
+      const completePaymentDate = formatdate.getFormatDate(new Date(paid_at), 1); // 날짜,시간
       logger.info("completePaymentDate: " + completePaymentDate); // ==============테스트==============
 
       if (pay_method == 'card') {
@@ -406,7 +406,7 @@ router.post("/iamport-webhook", async function (req, res, next) {
     } else if (status == "cancelled") { // 결제 취소
       await cancel_reservation.cancelReservation(reservationId, 2); // 예약 취소 완료
 
-      const completeCancelDate = formatdate.getFormatDate(cancelled_at, 1); // 날짜,시간
+      const completeCancelDate = formatdate.getFormatDate(new Date(cancelled_at), 1); // 날짜,시간
       logger.info("completeCancelDate: " + completeCancelDate); // ==============테스트==============
 
       const sql_cancel = `UPDATE base_payment SET complete_cancel_date=?
