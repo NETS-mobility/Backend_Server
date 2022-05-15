@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const axios = require("axios");
+import axios from 'axios';
 
 const jwt = require("../../modules/jwt");
 const pool = require("../../modules/mysql");
