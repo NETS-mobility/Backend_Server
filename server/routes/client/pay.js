@@ -130,6 +130,7 @@ router.post("/getPayInfo", async function (req, res, next) {
 // ===== 결제 완료 처리 =====
 router.post("/setComplete", async function (req, res, next) {
   const { impUid, merchantUid } = req.body;
+  logger.info("impUid: " + impUid + ", merchantUid: " + merchantUid); // ==============테스트==============
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
@@ -145,6 +146,7 @@ router.post("/setComplete", async function (req, res, next) {
     });
 
     const { access_token } = getToken.data.response;
+    logger.info("access_token: " + access_token); // ==============테스트==============
 
     // === 아임포트 서버에서 결제 정보 조회 ===
     const getPaymentData = await axios({
@@ -164,6 +166,7 @@ router.post("/setComplete", async function (req, res, next) {
       cancel_amount, // 결제 취소 금액
       cancelled_at, // 결제 취소 시점
     } = paymentData;
+    logger.info("paymentData: " + paymentData); // ==============테스트==============
 
     // === 올바른 결제 정보 조회 ===
     // 예약 번호, 결제 금액, 결제 타입
@@ -181,6 +184,9 @@ router.post("/setComplete", async function (req, res, next) {
 
     reservationId = sql_data_pay[0].reservation_id;
     paymentAmount = sql_data_pay[0].payment_amount;
+    logger.info("reservationId: " + reservationId); // ==============테스트==============
+    logger.info("기존paymentAmount: " + paymentAmount); // ==============테스트==============
+    logger.info("요청amount: " + amount); // ==============테스트==============
 
     // === 결제 금액 일치 확인 ===
     if (amount != paymentAmount) { // 결제 금액 불일치
@@ -212,6 +218,7 @@ router.post("/setComplete", async function (req, res, next) {
 router.post("/iamport-webhook", async function (req, res, next) {
   const impUid = req.body.imp_uid;
   const merchantUid = req.body.merchant_uid;
+  logger.info("impUid: " + impUid + ", merchantUid: " + merchantUid); // ==============테스트==============
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
@@ -227,6 +234,7 @@ router.post("/iamport-webhook", async function (req, res, next) {
     });
 
     const { access_token } = getToken.data.response;
+    logger.info("access_token: " + access_token); // ==============테스트==============
 
     // === 아임포트 서버에서 결제 정보 조회 ===
     const getPaymentData = await axios({
@@ -246,6 +254,7 @@ router.post("/iamport-webhook", async function (req, res, next) {
       cancel_amount, // 결제 취소 금액
       cancelled_at, // 결제 취소 시점
     } = paymentData;
+    logger.info("paymentData: " + paymentData); // ==============테스트==============
 
     // === 올바른 결제 정보 조회 ===
     // 예약 번호, 결제 금액, 취소 금액, 결제 타입
@@ -264,6 +273,9 @@ router.post("/iamport-webhook", async function (req, res, next) {
 
       reservationId = sql_data_pay[0].reservation_id;
       paymentAmount = sql_data_pay[0].payment_amount;
+      logger.info("reservationId: " + reservationId); // ==============테스트==============
+      logger.info("기존paymentAmount: " + paymentAmount); // ==============테스트==============
+      logger.info("요청amount: " + amount); // ==============테스트==============
 
       // === 결제 금액 일치 확인 ===
       if (amount != paymentAmount) { // 결제 금액 불일치
@@ -279,6 +291,9 @@ router.post("/iamport-webhook", async function (req, res, next) {
         cancelAmount = sql_data_cancel[0].cancel_amount;
         paymentType = "base_payment";
       }
+      logger.info("reservationId: " + reservationId); // ==============테스트==============
+      logger.info("기존cancelAmount: " + cancelAmount); // ==============테스트==============
+      logger.info("요청amount: " + cancel_amount); // ==============테스트==============
 
       // === 취소 금액 일치 확인 ===
       if (cancel_amount != cancelAmount) { // 취소 금액 불일치
@@ -292,6 +307,8 @@ router.post("/iamport-webhook", async function (req, res, next) {
 
     if (status == "ready") { // 가상계좌 발급
       const vbankIssuedDate = formatdate.getFormatDate(vbank_issued_at, 1); // 날짜,시간
+      logger.info("vbankIssuedDate: " + vbankIssuedDate); // ==============테스트==============
+
       const sql_vbank_ready = `UPDATE ${paymentType} SET payment_state_id=?,
                                payment_method=?, vbank_code=?, vbank_name=?, vbank_num=?, vbank_holder=?, vbank_issued_date=?
                                WHERE reservation_id=?;`;
@@ -320,6 +337,7 @@ router.post("/iamport-webhook", async function (req, res, next) {
       });
     } else if (status == "paid") { // 결제 완료
       const completePaymentDate = formatdate.getFormatDate(paid_at, 1); // 날짜,시간
+      logger.info("completePaymentDate: " + completePaymentDate); // ==============테스트==============
 
       if (pay_method == 'card') {
         // 카드 결제이면
@@ -352,12 +370,12 @@ router.post("/iamport-webhook", async function (req, res, next) {
       // 결제 완료 시 다음 예약 상태, 다음 예약 결제 상태
       if (paymentType == "base_payment") { // 기본 결제
         // 예약 확정 처리 및 서비스 준비
-        const sql_new_service = `INSERT INTO service_progress(reservation_id, service_state_id
+        /*const sql_new_service = `INSERT INTO service_progress(reservation_id, service_state_id
                                  ) VALUES(?,?);`;
         const result_new_service = await connection.query(sql_new_service, [
           reservationId,
           service_state.ready,
-        ]);
+        ]);*/
 
         nextReservationStateId = reservation_state.ready;
         nextReservationPaymentStateId = reservation_payment_state.completeBasePay;
@@ -384,6 +402,8 @@ router.post("/iamport-webhook", async function (req, res, next) {
       await cancel_reservation.cancelReservation(reservationId, 2); // 예약 취소 완료
 
       const completeCancelDate = formatdate.getFormatDate(cancelled_at, 1); // 날짜,시간
+      logger.info("completeCancelDate: " + completeCancelDate); // ==============테스트==============
+
       const sql_cancel = `UPDATE base_payment SET complete_cancel_date=?
                           WHERE reservation_id=?;`;
       const result_cancel = await connection.query(sql_cancel, [
