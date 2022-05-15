@@ -99,7 +99,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     // 서비스 정보
     const sql_service =
       "select cast(`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, `pickup_address` as `pickup_address`, `hospital_address` as `hos_address`, `hospital_name` as `hos_name`, `drop_address`, `reservation_payment_state_id`, " +
-      "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithumanager_name` as `gowithumanager`, `gowithumanager_phone`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time` " +
+      "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithumanager_name` as `gowithumanager`, `gowithumanager_phone`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time`, `netsmanager_notice` " +
       "from `reservation` where `reservation_id`=?;";
     const result_service = await connection.query(sql_service, [service_id]);
     const data_service = result_service[0];
@@ -117,11 +117,13 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     // 매니저 정보
     const sqld =
       "select C.`car_id`, `car_number`, NM.`netsmanager_id`, NM.`netsmanager_number`, NM.`netsmanager_name`, " +
-      "`netsmanager_about_me` as `netsmanager_intro`, `netsmanager_phone` as `netsmanager_tel`, `netsmanager_notice` as `netsmanager_mention`, date_format(`expect_car_pickup_time`,'%Y-%m-%d %T') as `expCarPickupTime`, date_format(`expect_car_terminate_service_time`,'%Y-%m-%d %T') as `expCarTerminateServiceTime`  " +
+      "`netsmanager_about_me` as `netsmanager_intro`, `netsmanager_phone` as `netsmanager_tel`, NM.`netsmanager_notice` as `netsmanager_mention`, date_format(`expect_car_pickup_time`,'%Y-%m-%d %T') as `expCarPickupTime`, date_format(`expect_car_terminate_service_time`,'%Y-%m-%d %T') as `expCarTerminateServiceTime`  " +
       "from `reservation` as R, `car_dispatch`as D, `netsmanager` as NM, `car` as C " +
       "where R.`reservation_id`=? and R.`reservation_id`=D.`reservation_id` and D.`netsmanager_number`=NM.`netsmanager_number` and D.`car_id`=C.`car_id`;";
     const sqldr = await connection.query(sqld, [service_id]);
     const sqldd = sqldr[0];
+    if(data_service[0].netsmanager_notice !== null && data_service[0].netsmanager_notice != "")
+        sqldd[0].netsmanager_mention = data_service[0].netsmanager_notice;
 
     // 매니저 자격증
     for (let i = 0; i < sqldd.length; i++) {

@@ -10,4 +10,5 @@ module.exports = {
   accompany_picture: "/user_data/accompany_picture/", // 동행 사진
   manager_notice_file: "/user_data/manager_notice_file/", // 매니저 공지사항 업로드파일
   customer_notice_file: "/user_data/customer_notice_file/", // 고객 공지사항 업로드파일
+  service_manager_introimage: "/user_data/service_manager_introimage/", // 서비스 - 매니저 전달사항 첨부사진
 };

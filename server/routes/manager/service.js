@@ -120,7 +120,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
   try {
     // 서비스 정보
     const sql_service =
-      "select cast(R.`reservation_id` as char) as `service_id`, `pickup_address`, `hospital_address` as `hos_address`, `hospital_name` as `hos_name`, `drop_address`, U.`user_name` as `user_name`, U.`user_phone` as `user_phone`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time`, " +
+      "select cast(R.`reservation_id` as char) as `service_id`, `pickup_address`, `hospital_address` as `hos_address`, `hospital_name` as `hos_name`, `drop_address`, U.`user_name` as `user_name`, U.`user_phone` as `user_phone`, `reservation_state_id` as `reservation_state`, `move_direction_id`, `gowith_hospital_time`, `netsmanager_notice`, " +
       "`expect_pickup_time` as `pickup_time`, `hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, S.`service_kind` as `service_type`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, `gowithumanager_name` as `gowithumanager_name`, `gowithumanager_phone` " +
       "from `reservation` as R, `service_info` as S, `user` as U " +
       "where R.`reservation_id`=? and R.`service_kind_id`=S.`service_kind_id` and R.`user_number`=U.`user_number`;";
@@ -143,6 +143,8 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
       "from `netsmanager` as NM where NM.`netsmanager_number`=?;";
     const result_manager = await connection.query(sql_manager, [user_num]);
     const data_manager = result_manager[0];
+    if(data_service[0].netsmanager_notice !== null && data_service[0].netsmanager_notice != "")
+        data_manager[0].mention = data_service[0].netsmanager_notice;
 
     // 결제 구하기
     const sqlm =
@@ -406,6 +408,52 @@ router.post(
     try {
       const spl =
         "update `reservation_user` set `valid_target_evidence_path`=?, `is_submit_evidence`=1 where `reservation_id`=?;";
+      const sqlr = await connection.query(spl, [filepath, service_id]);
+      if (sqlr[0].affectedRows == 0) throw (err = 0);
+      res.send();
+    } catch (err) {
+      logger.error(__filename + " : " + err);
+      if (err == 0) res.status(500).send({ err: "파일 업로드 등록 실패!" });
+      else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
+    } finally {
+      connection.release();
+    }
+  }
+);
+
+// ===== 서비스 - 매니저 전달사항 설정 =====
+router.post("/serviceDetail/:service_id/managerNotice", async function (req, res, next) {
+    const service_id = req.params.service_id;
+    const content = req.body.content;
+    const connection = await pool2.getConnection(async (conn) => conn);
+    try {
+      const spl =
+        "update `reservation` set `netsmanager_notice`=? where `reservation_id`=?;";
+      const sqlr = await connection.query(spl, [content, service_id]);
+      res.send();
+    } catch (err) {
+      logger.error(__filename + " : " + err);
+      res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
+    } finally {
+      connection.release();
+    }
+  }
+);
+
+// ===== 서비스 - 매니저 전달사항 첨부파일 업로드 =====
+router.post("/serviceDetail/:service_id/managerNotice/file", upload(uplPath.service_manager_introimage).single("file"),
+  async function (req, res, next) {
+    const file = req.file;
+    if (file === undefined)
+      return res.status(400).send({ err: "파일이 업로드되지 않았습니다." });
+
+    const service_id = req.params.service_id;
+    const filepath = uplPath.service_manager_introimage + file.filename; // 업로드 파일 경로
+
+    const connection = await pool2.getConnection(async (conn) => conn);
+    try {
+      const spl =
+        "update `reservation` set `netsmanager_notice_file_path`=? where `reservation_id`=?;";
       const sqlr = await connection.query(spl, [filepath, service_id]);
       if (sqlr[0].affectedRows == 0) throw (err = 0);
       res.send();
