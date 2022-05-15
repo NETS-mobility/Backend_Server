@@ -219,11 +219,6 @@ router.post("/iamport-webhook", async function (req, res, next) {
   const impUid = req.body.imp_uid;
   const merchantUid = req.body.merchant_uid;
   logger.info("impUid: " + impUid + ", merchantUid: " + merchantUid); // ==============테스트==============
-  
-  /*return res.status(200).send({
-    impUid: impUid,
-    merchantUid: merchantUid,
-  });*/
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
