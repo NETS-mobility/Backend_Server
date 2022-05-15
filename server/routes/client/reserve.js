@@ -10,6 +10,7 @@ const basecost = require("../../modules/basecost");
 const alarm = require("../../modules/setting_alarm");
 
 const reservation_state = require("../../config/reservation_state");
+const service_state = require("../../config/service_state");
 const reservation_payment_state = require("../../config/reservation_payment_state");
 const payment_state = require("../../config/payment_state");
 const uplPath = require("../../config/upload_path");
@@ -279,9 +280,13 @@ router.post(
       ]);
       
       // === 운행 데이터 추가 ===
-      const sql7 = `INSERT INTO service_progress (reservation_id, real_hospital_gowith_time, real_ready_move_distance, 
-                    real_service_move_distance, real_service_time, service_state_id) VALUES (?,0,0,0,0,0);`;
-      const result7 = await connection.query(sql7, [reservationId]);
+      const sql7 = `INSERT INTO service_progress(reservation_id, service_state_id,
+                    real_hospital_gowith_time, real_ready_move_distance, real_service_move_distance, real_service_time
+                    ) VALUES(?,?,0,0,0,0);`;
+      const result7 = await connection.query(sql7, [
+        reservationId,
+        service_state.ready,
+      ]);
       
       res
         .status(200)
