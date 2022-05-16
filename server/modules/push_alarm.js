@@ -3,7 +3,7 @@ const admin = require("firebase-admin");
 const logger = require("../config/logger");
 
 // SDK 초기화
-let serviceAccount = require("../config/gcp-nets-firebase-adminsdk-wxtyz-14b7a9b55e.json");
+let serviceAccount = require("../config/" + process.env.FCM_SECRET_KEY);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
