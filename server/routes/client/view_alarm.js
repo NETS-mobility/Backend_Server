@@ -240,7 +240,6 @@ router.post("/checkState", async function (req, res, next) {
   const reservation_id = req.body.reservation_id;
   try {
     const connection = await pool2.getConnection(async (conn) => conn);
-    logger.info(state_kind);
     let sql;
     if (state_kind == "결제") {
       sql =
