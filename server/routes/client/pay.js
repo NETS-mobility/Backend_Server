@@ -207,6 +207,15 @@ router.post("/setComplete", async function (req, res, next) {
         success: true,
         msg: "일반 결제 성공",
       });
+      // TODO: delete (임시로 이동) - 예약 확정 알림 생성
+      const sql_alarm = 'select netsmanager_id, user_id from netsmanager as nm inner join car_dispatch as cd inner join user as u inner join reservation as r where cd.reservation_id = ? and cd.netsmanager_number = nm.netsmanager_number and r.reservation_id = cd.reservation_id and r.user_number = u.user_number;'
+      const sql_res = await connection.query(sql_alarm, reservationId); 
+      const data =  Object.values(sql_res[0][0]);
+      if (data.length == 0) throw (err = 0);
+      const netsmanagerId = data[0];
+      const userId = data[1];
+      alarm.set_alarm(reciever.manager, reservationId, alarm_kind.m_confirm_reservation, netsmanagerId);  // 매니저에게 예약 확정 알림 전송
+      alarm.set_alarm(reciever.customer, reservationId, alarm_kind.confirm_reservation, userId);    // 고객 예약 확정 알림
     }
   } catch (err) {
     logger.error(__filename + " : " + err);
@@ -397,7 +406,7 @@ router.post("/iamport-webhook", async function (req, res, next) {
         const netsmanagerId = data[0];
         const userId = data[1];
         alarm.set_alarm(reciever.manager, reservationId, alarm_kind.m_confirm_reservation, netsmanagerId);  // 매니저에게 예약 확정 알림 전송
-        alarm.set_alarm(reciever.client, reservationId, alarm_kind.confirm_reservation, userId);    // 고객 예약 확정 알림
+        alarm.set_alarm(reciever.customer, reservationId, alarm_kind.confirm_reservation, userId);    // 고객 예약 확정 알림
 
       } else if (paymentType == "extra_payment") { // 추가 결제
         nextReservationStateId = reservation_state.complete;
