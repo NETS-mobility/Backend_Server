@@ -13,6 +13,7 @@ const get_service_progress = require("../../modules/get_service_progress");
 const extracost = require("../../modules/extracost");
 const case_finder = require("../../modules/dispatch_case_finder");
 const gowith_finder = require("../../modules/dispatch_isOverPoint_finder");
+const get_gowith_hostime = require("../../modules/get_gowith_hostime");
 const alarm = require("../../modules/setting_alarm");
 const { checking_over_20min } = require("../../modules/time_alarm");
 
@@ -329,6 +330,8 @@ router.post(
       if (next_state == service_state.complete) {
         const sql_cprog = "update `reservation` set `reservation_state_id`=? where `reservation_id`=?;";
         await connection.query(sql_cprog, [reservation_state.complete, service_id]);
+
+        const gowith_time = await get_gowith_hostime(service_id, data_dire[0].move_direction_id);
 
         // 서비스 종료 후 추가 요금 정보
         /*result_extraCost = await extracost.calExtracost(service_id);
