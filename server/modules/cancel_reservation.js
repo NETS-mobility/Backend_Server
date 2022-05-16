@@ -22,7 +22,7 @@ module.exports = {
         "update `reservation` set `reservation_state_id`=?, `reservation_payment_state_id`=? where reservation_id=?;";
       const sql_cancel_pay =
         "update `base_payment` set `payment_state_id`=? where reservation_id=?;";
-      const sql_cancel_dispath =
+      const sql_cancel_dispatch =
         "delete from `car_dispatch` where `reservation_id`=?;";
 
       if (opt == 1) {
@@ -55,7 +55,7 @@ module.exports = {
         ]);
 
         // 배차 정보 제거
-        await connection.query(sql_cancel_dispath, [reservationId]);
+        await connection.query(sql_cancel_dispatch, [reservationId]);
       }
     } catch (err) {
       console.error("err : " + err);
