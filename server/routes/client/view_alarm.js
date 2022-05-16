@@ -249,7 +249,7 @@ router.post("/checkState", async function (req, res, next) {
       sql =
         "select `reservation_state_id` from `reservation` where `reservation_id` = ?";
     } else {
-      res.status(200).send("해당사항이 없습니다.");
+      res.status(200).send({ message: "해당사항이 없습니다." });
       return 0;
     }
     const result = await connection.query(sql, reservation_id);
@@ -257,27 +257,29 @@ router.post("/checkState", async function (req, res, next) {
     let message;
     try {
       if (state_kind == "결제") {
-        if (data[0].payment_state_id == 3) message = "결제 완료 되었습니다.";
-        else if (data[0].payment_state_id < 3) message = "결제를 진행해주세요.";
-        else message = "결제 취소 상태입니다.";
+        if (data[0].payment_state_id == 3)
+          message = { message: "결제 완료 되었습니다." };
+        else if (data[0].payment_state_id < 3)
+          message = { message: "결제를 진행해주세요." };
+        else message = { message: "결제 취소 상태입니다." };
       } else if (state_kind == "예약") {
         if (data[0].reservation_state_id < 4) {
-          message = "서비스 진행중입니다.";
+          message = { message: "서비스 진행중입니다." };
         }
         if (
           data[0].reservation_state_id == 4 ||
           data[0].reservation_state_id == 5
         ) {
-          message = "예약 취소 상태입니다.";
+          message = { message: "예약 취소 상태입니다." };
         }
       } else {
-        message = "fail";
+        message = { message: "fail" };
       }
     } catch (err) {
       logger.error(__filename + " : " + err);
     }
     console.log(data[0].payment_state_id);
-    if (data[0] == null) message = "내역이 없습니다.";
+    if (data[0] == null) message = { message: "내역이 없습니다." };
     res.status(200).send(message);
   } catch (err) {
     logger.error(__filename + " : " + err);
