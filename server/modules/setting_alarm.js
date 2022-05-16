@@ -1,5 +1,5 @@
 // 알림을 생성하는 module
-// 사용법:alarm.set_alarm(reciever,reservation_id, user_number, alarm_kind, 기타 값);
+// 사용법:alarm.set_alarm(reciever,reservation_id, alarm_kind, user_id,  기타 값);
 /* 기타값: visit -> 방문 예정시간
           delay -> delay_time
           extra_payment -> [실제 서비스 시간, 초과요금]
@@ -265,7 +265,7 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
             let car_id, netsmanager_name;
 
             let sql =
-              "select cd.`car_id`, m.`netsmanager_name`, date_format(cd.`expect_car_pickup_time`, '%Y-%m-%d') as `reservation_date`, time(cd.`expect_car_pickup_time`) as `pickup_time`, " +
+              "select cd.`car_id`, m.`netsmanager_name`, cd.`expect_car_pickup_time` as `reservation_date`, time(cd.`expect_car_pickup_time`) as `pickup_time`, " +
               "YEAR(cd.`expect_car_pickup_time`) as year, month(cd.expect_car_pickup_time) as month, day(cd.`expect_car_pickup_time`) as day, " +
               "hour(cd.`expect_car_pickup_time`) as hour, minute(cd.`expect_car_pickup_time`) as min, second(cd.`expect_car_pickup_time`) as sec " +
               "from `car_dispatch` as cd inner join `reservation` as r inner join `netsmanager` as m " +
@@ -294,8 +294,8 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
             );
 
             alarm.add_alarm_object("서비스번호: ", reservation_id);
-            alarm.add_alarm_object(" 예약일정:", reservation_date);
-            alarm.add_alarm_object(" 픽업 예정시간: ", pickup_time);
+            alarm.add_alarm_object(" 예약일정:", alarm.reservation_date);
+            alarm.add_alarm_object(" 픽업 예정시간: ", alarm.pickup_time);
             alarm.add_alarm_object(" 배차 차량번호: ", car_id);
             alarm.add_alarm_object(" 네츠 매니저: ", netsmanager_name);
 
