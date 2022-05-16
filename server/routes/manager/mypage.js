@@ -50,6 +50,11 @@ router.post("/changeInfo", async function (req, res, next) {
     const result2 = await connection.query(sql2, [user_num]);
     const data2 = result2[0];
 
+    const npp = data1[0].netsmanager_picture_path;
+    const nnpu = data1[0].netsmanager_notice_picture_url;
+    const url_profile = (npp === null || npp == "") ? null : public_url + npp;
+    const url_introimg = (nnpu === null || nnpu == "") ? null : public_url + nnpu;
+
     res.status(200).send({
       info: {
         phone: data1[0].netsmanager_phone,
@@ -59,8 +64,8 @@ router.post("/changeInfo", async function (req, res, next) {
         name: data1[0].netsmanager_name,
       },
       certificate: data2,
-      url_profile: public_url + data1[0].netsmanager_picture_path,
-      url_introimg: public_url + data1[0].netsmanager_notice_picture_url,
+      url_profile: url_profile,
+      url_introimg: url_introimg,
     });
   } catch (err) {
     logger.error(__filename + " : " + err);

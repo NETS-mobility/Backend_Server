@@ -142,7 +142,9 @@ router.post("/manager/detail", async function (req, res, next) {
     const result4 = await connection.query(sql4, [number, now]);
     const data4 = result4[0];
 
-    if(data1[0].path_pic != "") data1[0].path_pic = public_url + data1[0].path_pic;
+    const npp = data1[0].path_pic;
+    data1[0].path_pic = (npp === null || npp == "") ? null : public_url + npp;
+
     res.send({
       manager: data1[0],
       certificate: data2,
@@ -352,7 +354,9 @@ router.post("/admin/detail", async function (req, res, next) {
     const data1 = result1[0];
     if (data1.length == 0) throw (err = 0);
 
-    if(data1[0].path_pic != "") data1[0].path_pic = public_url + data1[0].path_pic;
+    const npp = data1[0].path_pic;
+    data1[0].path_pic = (npp === null || npp == "") ? null : public_url + npp;
+
     res.send(data1[0]);
   } catch (err) {
     logger.error(__filename + " : " + err);
