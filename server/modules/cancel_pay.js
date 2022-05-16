@@ -12,13 +12,13 @@ module.exports = {
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
       // === 결제 정보 조회 ===
-      const sql_pay_info = `SELECT merchant_uid, imp_uid, pay_method FROM base_payment WHERE reservation_id=?;`;
+      const sql_pay_info = `SELECT merchant_uid, imp_uid, payment_method FROM base_payment WHERE reservation_id=?;`;
       const result_pay_info = await connection.query(sql_pay_info, [reservationId]);
       const sql_data_pay_info = result_pay_info[0];
 
       const merchantUid = sql_data_pay_info[0].merchant_uid;
       const impUid = sql_data_pay_info[0].imp_uid;
-      const payMethod = sql_data_pay_info[0].pay_method;
+      const payMethod = sql_data_pay_info[0].payment_method;
 
       // === Access Token 발급 ===
       const getToken = await axios({
@@ -71,19 +71,9 @@ module.exports = {
             refund_account // [가상계좌 환불시 필수입력] 환불 수령계좌 번호
           }
         });
-
-        const sql_refund = `UPDATE base_payment SET refund_account=?, refund_bank=?, refund_holder=?
-                            WHERE reservation_id=?;`;
-        const result_refund = await connection.query(sql_refund, [
-          refund_account,
-          refund_bank,
-          refund_holder,
-          reservationId,
-        ]);
       }
       
       const { response } = getCancelData.data; // 환불 결과
-      // 환불 결과 동기화
     } catch (err) {
       console.error("err : " + err);
       logger.error(__filename + " : " + err);
