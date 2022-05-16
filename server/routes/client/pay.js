@@ -7,6 +7,7 @@ const jwt = require("../../modules/jwt");
 const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const formatdate = require("../../modules/formatdate");
+const cancel_reservation = require("../../modules/cancel_reservation");
 const alarm = require("../../modules/setting_alarm");
 
 const reservation_state = require("../../config/reservation_state");
@@ -14,7 +15,6 @@ const service_state = require("../../config/service_state");
 const reservation_payment_state = require("../../config/reservation_payment_state");
 const payment_state = require("../../config/payment_state");
 const service_kind = require("../../config/service_kind");
-const cancel_reservation = require("../../modules/cancel_reservation");
 const logger = require("../../config/logger");
 const alarm_kind = require('../../config/alarm_kind');
 const reciever = require('../../config/push_alarm_reciever');
