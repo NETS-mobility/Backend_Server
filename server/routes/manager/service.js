@@ -65,8 +65,8 @@ router.post("/serviceList/:listType/:date", async function (req, res, next) {
 
     // 서비스 진행상태 분기점
     if (listType == 0) {
-      sql1 += "and `reservation_state_id` in (?,?,?) ";
-      param.push(reservation_state.new, reservation_state.ready, reservation_state.inProgress);
+      sql1 += "and `reservation_state_id` in (?,?) ";
+      param.push(reservation_state.ready, reservation_state.inProgress);
     } else {
       sql1 += "and `reservation_state_id`=? ";
       param.push(reservation_state.complete);
