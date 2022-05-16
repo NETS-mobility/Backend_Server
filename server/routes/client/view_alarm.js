@@ -8,6 +8,7 @@ const pool2 = require("../../modules/mysql2");
 const alarm = require("../../modules/setting_alarm");
 const fcm = require("../../config/fcm");
 const alarm_kind = require("../../config/alarm_kind");
+const push_alarm_reciever = require("../../config/push_alarm_reciever");
 
 // ===== 알람 조회 =====
 router.post("/alarmList/", async function (req, res, next) {
@@ -192,6 +193,92 @@ router.post("/serverKey", async function (req, res, next) {
     const data = fcm.serverKey;
 
     res.send(data);
+  } catch (err) {
+    logger.error(__filename + " : " + err);
+    if (err == 0) res.status(401).send({ err: "잘못된 인자 전달" });
+    else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
+  } finally {
+  }
+});
+
+router.post("/addAlarm", async function (req, res, next) {
+  try {
+    const kind = req.body.alarmKind;
+    const id = req.body.userId;
+    const reservation_id = req.body.reservation_id;
+    const temp = req.body.temp;
+
+    alarm.set_alarm(
+      push_alarm_reciever.customer,
+      reservation_id,
+      kind,
+      id,
+      temp
+    );
+
+    res.status(200).send("success!");
+  } catch (err) {
+    logger.error(__filename + " : " + err);
+    if (err == 0) res.status(401).send({ err: "잘못된 인자 전달" });
+    else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err: "서버 오류" });
+  } finally {
+  }
+});
+
+router.post("/checkState", async function (req, res, next) {
+  const token = req.body.jwtToken;
+
+  const token_res = await jwt.verify(token);
+  if (token_res == jwt.TOKEN_EXPIRED)
+    return res.status(401).send({ err: "만료된 토큰입니다." });
+  if (token_res == jwt.TOKEN_INVALID)
+    return res.status(401).send({ err: "유효하지 않은 토큰입니다." });
+
+  const user_id = token_res.id; // 이용자 id
+
+  const state_kind = req.body.kind;
+  const reservation_id = req.body.reservation_id;
+  try {
+    const connection = await pool2.getConnection(async (conn) => conn);
+    logger.info(state_kind);
+    let sql;
+    if (state_kind == "결제") {
+      sql =
+        "select `payment_state_id` from `base_payment` as bp where `reservation_id` = ?";
+    } else if (state_kind == "예약") {
+      sql =
+        "select `reservation_state_id` from `reservation` where `reservation_id` = ?";
+    } else {
+      res.status(200).send("해당사항이 없습니다.");
+      return 0;
+    }
+    const result = await connection.query(sql, reservation_id);
+    const data = result[0];
+    let message;
+    try {
+      if (state_kind == "결제") {
+        if (data[0].payment_state_id == 3) message = "결제 완료 되었습니다.";
+        else if (data[0].payment_state_id < 3) message = "결제를 진행해주세요.";
+        else message = "결제 취소 상태입니다.";
+      } else if (state_kind == "예약") {
+        if (data[0].reservation_state_id < 4) {
+          message = "서비스 진행중입니다.";
+        }
+        if (
+          data[0].reservation_state_id == 4 ||
+          data[0].reservation_state_id == 5
+        ) {
+          message = "예약 취소 상태입니다.";
+        }
+      } else {
+        message = "fail";
+      }
+    } catch (err) {
+      logger.error(__filename + " : " + err);
+    }
+    console.log(data[0].payment_state_id);
+    if (data[0] == null) message = "내역이 없습니다.";
+    res.status(200).send(message);
   } catch (err) {
     logger.error(__filename + " : " + err);
     if (err == 0) res.status(401).send({ err: "잘못된 인자 전달" });
