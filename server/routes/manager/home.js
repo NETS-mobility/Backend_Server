@@ -23,13 +23,18 @@ router.post("", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const now = date_to_string(new Date());
+    const nowSplited = now.substr(0, 10);
     const sql =
       "select distinct S.`service_kind` as `service_type`, cast(C.`expect_car_pickup_time` as time) as `pickup_time`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, C.`departure_address`, cast(R.`reservation_id` as char) as `id` " +
       "from `car_dispatch` as C, `reservation` as R, `service_info` as S " +
-      "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`hope_reservation_date`=? " //and R.`reservation_state_id`>=0 " +
-      //"and exists(select * from `base_payment` as P where `payment_state_id`=? and R.`reservation_id`=P.`reservation_id`) " + 
-      "order by `pickup_time`;";
-    const sql_result = await connection.query(sql, [user_num, now, payment_state.completePay]);
+      "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`hope_reservation_date`=? "; //and R.`reservation_state_id`>=0 " +
+    //"and exists(select * from `base_payment` as P where `payment_state_id`=? and R.`reservation_id`=P.`reservation_id`) " +
+    ("order by `pickup_time`;");
+    const sql_result = await connection.query(sql, [
+      user_num,
+      nowSplited,
+      payment_state.completePay,
+    ]);
     const sql_data = sql_result[0];
     res.send({
       name: user_name,
@@ -60,8 +65,14 @@ router.post("/recodeBreaktime", async function (req, res, next) {
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
     const now = date_to_string(new Date());
-    const sql = "insert into `manager_time_checking`(`netsmanager_number`, `date`, `time`, `state`) values(?,?,?,?)";
-    const sql_result = await connection.query(sql, [user_num, now.substr(0, 10), btime, bstate]);
+    const sql =
+      "insert into `manager_time_checking`(`netsmanager_number`, `date`, `time`, `state`) values(?,?,?,?)";
+    const sql_result = await connection.query(sql, [
+      user_num,
+      now.substr(0, 10),
+      btime,
+      bstate,
+    ]);
     const sql_data = sql_result[0];
     res.send();
   } catch (err) {
@@ -72,6 +83,5 @@ router.post("/recodeBreaktime", async function (req, res, next) {
     connection.release();
   }
 });
-
 
 module.exports = router;
