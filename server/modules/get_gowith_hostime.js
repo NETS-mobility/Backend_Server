@@ -21,9 +21,9 @@ module.exports = async function (service_id, move_direction_id) {
       const complete = new Date(data_prog[0].real_service_end_time); // 서비스종료
       let gotime = 0;
 
-      if(move_direction_id == 1)
+      if(move_direction_id == 1) // 편도(집-병원)
         gotime = Math.floor(Math.abs(complete.getTime() - arrivalHos.getTime()) / (1000 * 60))
-      if(move_direction_id == 3)
+      if(move_direction_id == 3) // 왕복
         gotime = Math.floor(Math.abs(goHome.getTime() - arrivalHos.getTime()) / (1000 * 60))
 
       res = gotime;
