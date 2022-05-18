@@ -262,11 +262,11 @@ router.post(
       const data_prog = result_prog[0];
       
       let next_state = data_prog[0].service_state_id + 1;
-      if (direction == 2 && next_state == service_state.pickup)
+      if (direction == 2 && next_state == service_state.pickup) // 편도(병원-집)
         next_state = service_state.carReady;
-      if (direction == 1 && next_state == service_state.carReady)
+      if (direction == 1 && next_state == service_state.carReady) // 편도(집-병원)
         next_state = service_state.complete;
-      if (direction == 3 && isOverPoint == 0 && next_state == service_state.carReady)
+      if (direction == 3 && isOverPoint == 0 && next_state == service_state.carReady) // 왕복(2시간 미만)
         next_state = service_state.goHome;
       if (next_state > service_state.complete)
         next_state = service_state.complete;
@@ -326,16 +326,20 @@ router.post(
       );*/
 
       // 서비스 종료
-      let next_pay_state;
+      let next_pay_state; // 예약 결제 상태
       if (next_state == service_state.complete) {
         const sql_cprog = "update `reservation` set `reservation_state_id`=? where `reservation_id`=?;";
         await connection.query(sql_cprog, [reservation_state.complete, service_id]);
 
+        // 실제 병원동행 시간 저장
         const gowith_time = await get_gowith_hostime(service_id, data_dire[0].move_direction_id);
+        const sql_gowith_time = "update `service_progress` set `real_hospital_gowith_time`=? where `reservation_id`=?;";
+        await connection.query(sql_gowith_time, [gowith_time, service_id]);
+        await connection.commit();
 
         // 서비스 종료 후 추가 요금 정보
-        /*result_extraCost = await extracost.calExtracost(service_id);
-        if (extraCost > 0) {
+        result_extraCost = await extracost.calExtracost(service_id);
+        if (result_extraCost.TotalExtraCost > 0) {
           const sql_cost = `INSERT INTO extra_payment(reservation_id, merchant_uid, payment_state_id, payment_amount,
                             over_gowith_cost, over_gowith_time, delay_cost, delay_time
                             ) VALUES(?,?,?,?,?,?,?,?);`;
@@ -358,7 +362,7 @@ router.post(
           reservation_state.complete,
           next_pay_state,
           service_id,
-        ]);*/
+        ]);
 
         /*// == 알림 전송 ==
 
@@ -378,12 +382,13 @@ router.post(
           user_id,
           [result_extraCost.delayTime, result_extraCost.delayTimeCost]
         );*/
-
         res
           .status(200)
-          .send({ success: true, extraCost: 0 }); // extraCost: result_extraCost.TotalExtraCost
-      } else res.status(200).send({ success: true });
-      await connection.commit();
+          .send({ success: true, extraCost: result_extraCost.TotalExtraCost });
+      } else {
+        await connection.commit();
+        res.status(200).send({ success: true });
+      }
     } catch (err) {
       await connection.rollback();
       logger.error(__filename + " : " + err);
