@@ -99,7 +99,7 @@ module.exports = {
         // 병원에서 귀가 출발 시간 확인
         hopeHospitalDepartureTime = hopeDate + " " + hopeHospitalDepartureTime;
         hopeHospitalDepartureTime = new Date(hopeHospitalDepartureTime);
-        realHospitalDepartureTime = new Date(realHospitalDepartureTime * 1000);
+        realHospitalDepartureTime = new Date(realHospitalDepartureTime);
 
         // 승차 지연인지 판단
         if (realHospitalDepartureTime > hopeHospitalDepartureTime) {
@@ -113,7 +113,7 @@ module.exports = {
         // 픽업 시간 확인
         expPickupTime = hopeDate + " " + expPickupTime;
         expPickupTime = new Date(expPickupTime);
-        realPickupTime = new Date(realPickupTime * 1000);
+        realPickupTime = new Date(realPickupTime);
 
         // 승차 지연인지 판단
         if (realPickupTime > expPickupTime) {
