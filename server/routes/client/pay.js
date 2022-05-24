@@ -7,6 +7,8 @@ const jwt = require("../../modules/jwt");
 const pool = require("../../modules/mysql");
 const pool2 = require("../../modules/mysql2");
 const formatdate = require("../../modules/formatdate");
+const cancel_reservation = require("../../modules/cancel_reservation");
+const alarm = require("../../modules/setting_alarm");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
@@ -14,6 +16,8 @@ const reservation_payment_state = require("../../config/reservation_payment_stat
 const payment_state = require("../../config/payment_state");
 const service_kind = require("../../config/service_kind");
 const logger = require("../../config/logger");
+const alarm_kind = require('../../config/alarm_kind');
+const reciever = require('../../config/push_alarm_reciever');
 
 // ===== 결제 전 정보 조회 =====
 router.post("/getPayInfo", async function (req, res, next) {
@@ -129,6 +133,7 @@ router.post("/getPayInfo", async function (req, res, next) {
 // ===== 결제 완료 처리 =====
 router.post("/setComplete", async function (req, res, next) {
   const { impUid, merchantUid } = req.body;
+  logger.info("impUid: " + impUid + ", merchantUid: " + merchantUid); // ==============테스트==============
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
@@ -144,6 +149,7 @@ router.post("/setComplete", async function (req, res, next) {
     });
 
     const { access_token } = getToken.data.response;
+    logger.info("access_token: " + access_token); // ==============테스트==============
 
     // === 아임포트 서버에서 결제 정보 조회 ===
     const getPaymentData = await axios({
@@ -163,28 +169,27 @@ router.post("/setComplete", async function (req, res, next) {
       cancel_amount, // 결제 취소 금액
       cancelled_at, // 결제 취소 시점
     } = paymentData;
+    logger.info("paymentData: " + paymentData); // ==============테스트==============
 
-    // === 결제 정보 조회 ===
+    // === 올바른 결제 정보 조회 ===
     // 예약 번호, 결제 금액, 결제 타입
     let reservationId, paymentAmount, paymentType;
 
     if (merchantUid[12] == "B") { // 기본 결제
-      const sql_pay = `SELECT reservation_id, payment_amount FROM base_payment WHERE merchant_uid=?;`;
-      const result_pay = await connection.query(sql_pay, [merchantUid]);
-      const sql_data_pay = result_pay[0];
-
-      reservationId = sql_data_pay[0].reservation_id;
-      paymentAmount = sql_data_pay[0].payment_amount;
       paymentType = "base_payment";
     } else if (merchantUid[12] == "E") { // 추가 결제
-      const sql_pay = `SELECT reservation_id, payment_amount FROM extra_payment WHERE merchant_uid=?;`;
-      const result_pay = await connection.query(sql_pay, [merchantUid]);
-      const sql_data_pay = result_pay[0];
-
-      reservationId = sql_data_pay[0].reservation_id;
-      paymentAmount = sql_data_pay[0].payment_amount;
       paymentType = "extra_payment";
     }
+
+    const sql_pay = `SELECT reservation_id, payment_amount FROM ${paymentType} WHERE merchant_uid=?;`;
+    const result_pay = await connection.query(sql_pay, [merchantUid]);
+    const sql_data_pay = result_pay[0];
+
+    reservationId = sql_data_pay[0].reservation_id;
+    paymentAmount = sql_data_pay[0].payment_amount;
+    logger.info("reservationId: " + reservationId); // ==============테스트==============
+    logger.info("기존paymentAmount: " + paymentAmount); // ==============테스트==============
+    logger.info("요청amount: " + amount); // ==============테스트==============
 
     // === 결제 금액 일치 확인 ===
     if (amount != paymentAmount) { // 결제 금액 불일치
@@ -202,6 +207,15 @@ router.post("/setComplete", async function (req, res, next) {
         success: true,
         msg: "일반 결제 성공",
       });
+      // TODO: delete (임시로 이동) - 예약 확정 알림 생성
+      const sql_alarm = 'select netsmanager_id, user_id from netsmanager as nm inner join car_dispatch as cd inner join user as u inner join reservation as r where cd.reservation_id = ? and cd.netsmanager_number = nm.netsmanager_number and r.reservation_id = cd.reservation_id and r.user_number = u.user_number;'
+      const sql_res = await connection.query(sql_alarm, reservationId); 
+      const data =  Object.values(sql_res[0][0]);
+      if (data.length == 0) throw (err = 0);
+      const netsmanagerId = data[0];
+      const userId = data[1];
+      alarm.set_alarm(reciever.manager, reservationId, alarm_kind.m_confirm_reservation, netsmanagerId);  // 매니저에게 예약 확정 알림 전송
+      alarm.set_alarm(reciever.customer, reservationId, alarm_kind.confirm_reservation, userId);    // 고객 예약 확정 알림
     }
   } catch (err) {
     logger.error(__filename + " : " + err);
@@ -214,7 +228,9 @@ router.post("/setComplete", async function (req, res, next) {
 
 // ===== 아임포트 웹훅 설정 =====
 router.post("/iamport-webhook", async function (req, res, next) {
-  const { impUid, merchantUid } = req.body;
+  const impUid = req.body.imp_uid;
+  const merchantUid = req.body.merchant_uid;
+  logger.info("impUid: " + impUid + ", merchantUid: " + merchantUid); // ==============테스트==============
 
   const connection = await pool2.getConnection(async (conn) => conn);
   try {
@@ -230,6 +246,7 @@ router.post("/iamport-webhook", async function (req, res, next) {
     });
 
     const { access_token } = getToken.data.response;
+    logger.info("access_token: " + access_token); // ==============테스트==============
 
     // === 아임포트 서버에서 결제 정보 조회 ===
     const getPaymentData = await axios({
@@ -249,39 +266,61 @@ router.post("/iamport-webhook", async function (req, res, next) {
       cancel_amount, // 결제 취소 금액
       cancelled_at, // 결제 취소 시점
     } = paymentData;
+    logger.info("paymentData: " + JSON.stringify(paymentData)); // ==============테스트==============
 
-    // === 결제 정보 조회 ===
-    // 예약 번호, 결제 금액, 결제 타입
-    let reservationId, paymentAmount, paymentType;
-    // 다음 예약 상태, 다음 예약 결제 상태
-    let nextReservationStateId, nextReservationPaymentStateId;
+    // === 올바른 결제 정보 조회 ===
+    // 예약 번호, 결제 금액, 취소 금액, 결제 타입
+    let reservationId, paymentAmount, cancelAmount, paymentType;
 
-    if (merchantUid[12] == "B") { // 기본 결제
-      const sql_pay = `SELECT reservation_id, payment_amount FROM base_payment WHERE merchant_uid=?;`;
+    if (status == "ready" || status == "paid") { // 결제 관련
+      if (merchantUid[12] == "B") { // 기본 결제
+        paymentType = "base_payment";
+      } else if (merchantUid[12] == "E") { // 추가 결제
+        paymentType = "extra_payment";
+      }
+
+      const sql_pay = `SELECT reservation_id, payment_amount FROM ${paymentType} WHERE merchant_uid=?;`;
       const result_pay = await connection.query(sql_pay, [merchantUid]);
       const sql_data_pay = result_pay[0];
 
       reservationId = sql_data_pay[0].reservation_id;
       paymentAmount = sql_data_pay[0].payment_amount;
-      paymentType = "base_payment";
-    } else if (merchantUid[12] == "E") { // 추가 결제
-      const sql_pay = `SELECT reservation_id, payment_amount FROM extra_payment WHERE merchant_uid=?;`;
-      const result_pay = await connection.query(sql_pay, [merchantUid]);
-      const sql_data_pay = result_pay[0];
+      logger.info("reservationId: " + reservationId); // ==============테스트==============
+      logger.info("기존paymentAmount: " + paymentAmount); // ==============테스트==============
+      logger.info("요청amount: " + amount); // ==============테스트==============
 
-      reservationId = sql_data_pay[0].reservation_id;
-      paymentAmount = sql_data_pay[0].payment_amount;
-      paymentType = "extra_payment";
-    }
+      // === 결제 금액 일치 확인 ===
+      if (amount != paymentAmount) { // 결제 금액 불일치
+        return res.status(400).send({ msg: "위조된 결제 시도" });
+      }
+    } else if (status == "cancelled") { // 결제 취소 관련
+      if (merchantUid[12] == "B") { // 기본 결제
+        const sql_cancel = `SELECT reservation_id, cancel_amount FROM base_payment WHERE merchant_uid=?;`;
+        const result_cancel = await connection.query(sql_cancel, [merchantUid]);
+        const sql_data_cancel = result_cancel[0];
 
-    // === 결제 금액 일치 확인 ===
-    if (amount != paymentAmount) { // 결제 금액 불일치
-      return res.status(400).send({ msg: "위조된 결제 시도" });
+        reservationId = sql_data_cancel[0].reservation_id;
+        cancelAmount = sql_data_cancel[0].cancel_amount;
+        paymentType = "base_payment";
+      }
+      logger.info("reservationId: " + reservationId); // ==============테스트==============
+      logger.info("기존cancelAmount: " + cancelAmount); // ==============테스트==============
+      logger.info("요청amount: " + cancel_amount); // ==============테스트==============
+
+      // === 취소 금액 일치 확인 ===
+      if (cancel_amount != cancelAmount) { // 취소 금액 불일치
+        return res.status(400).send({ msg: "위조된 취소 시도" });
+      }
     }
 
     // === 결제 상태에 따라 처리 ===
+    // 다음 예약 상태, 다음 예약 결제 상태
+    let nextReservationStateId, nextReservationPaymentStateId;
+
     if (status == "ready") { // 가상계좌 발급
-      const vbankIssuedDate = formatdate.getFormatDate(vbank_issued_at, 1); // 날짜,시간
+      const vbankIssuedDate = formatdate.getFormatDate(new Date(vbank_issued_at*1000), 1); // 날짜,시간
+      logger.info("vbankIssuedDate: " + vbankIssuedDate); // ==============테스트==============
+
       const sql_vbank_ready = `UPDATE ${paymentType} SET payment_state_id=?,
                                payment_method=?, vbank_code=?, vbank_name=?, vbank_num=?, vbank_holder=?, vbank_issued_date=?
                                WHERE reservation_id=?;`;
@@ -309,7 +348,8 @@ router.post("/iamport-webhook", async function (req, res, next) {
         msg: "가상계좌 발급 성공",
       });
     } else if (status == "paid") { // 결제 완료
-      const completePaymentDate = formatdate.getFormatDate(paid_at, 1); // 날짜,시간
+      const completePaymentDate = formatdate.getFormatDate(new Date(paid_at*1000), 1); // 날짜,시간
+      logger.info("completePaymentDate: " + completePaymentDate); // ==============테스트==============
 
       if (pay_method == 'card') {
         // 카드 결제이면
@@ -329,12 +369,18 @@ router.post("/iamport-webhook", async function (req, res, next) {
         ]);
       } else if (pay_method == 'vbank') {
         // 가상계좌 결제이면
-        const sql_vbank = `UPDATE ${paymentType} SET imp_uid=?, payment_state_id=?, complete_payment_date=?
+        const sql_vbank = `UPDATE ${paymentType} SET imp_uid=?, payment_state_id=?, complete_payment_date=?,
+                           payment_method=?, vbank_code=?, vbank_name=?, vbank_num=?, vbank_holder=?
                            WHERE reservation_id=?;`;
         const result_vbank = await connection.query(sql_vbank, [
           impUid,
           payment_state.completePay,
           completePaymentDate,
+          pay_method,
+          vbank_code,
+          vbank_name,
+          vbank_num,
+          vbank_holder,
           reservationId,
         ]);
       }
@@ -342,15 +388,26 @@ router.post("/iamport-webhook", async function (req, res, next) {
       // 결제 완료 시 다음 예약 상태, 다음 예약 결제 상태
       if (paymentType == "base_payment") { // 기본 결제
         // 예약 확정 처리 및 서비스 준비
-        const sql_new_service = `INSERT INTO service_progress(reservation_id, service_state_id
+        /*const sql_new_service = `INSERT INTO service_progress(reservation_id, service_state_id
                                  ) VALUES(?,?);`;
         const result_new_service = await connection.query(sql_new_service, [
           reservationId,
           service_state.ready,
-        ]);
+        ]);*/
 
         nextReservationStateId = reservation_state.ready;
         nextReservationPaymentStateId = reservation_payment_state.completeBasePay;
+
+        // 기본 결제 완료 시 알림 전송
+        const sql_alarm = 'select netsmanager_id, user_id from netsmanager as nm inner join car_dispatch as cd inner join user as u inner join reservation as r where cd.reservation_id = ? and cd.netsmanager_number = nm.netsmanager_number and r.reservation_id = cd.reservation_id and r.user_number = u.user_number;'
+        const sql_res = await connection.query(sql_alarm, reservationId); 
+        const data =  Object.values(sql_res[0][0]);
+        if (data.length == 0) throw (err = 0);
+        const netsmanagerId = data[0];
+        const userId = data[1];
+        alarm.set_alarm(reciever.manager, reservationId, alarm_kind.m_confirm_reservation, netsmanagerId);  // 매니저에게 예약 확정 알림 전송
+        alarm.set_alarm(reciever.customer, reservationId, alarm_kind.confirm_reservation, userId);    // 고객 예약 확정 알림
+
       } else if (paymentType == "extra_payment") { // 추가 결제
         nextReservationStateId = reservation_state.complete;
         nextReservationPaymentStateId = reservation_payment_state.completeAllPay;
@@ -366,6 +423,23 @@ router.post("/iamport-webhook", async function (req, res, next) {
       res.status(200).send({
         success: true,
         msg: "일반 결제 성공",
+      });
+    } else if (status == "cancelled") { // 결제 취소
+      await cancel_reservation.cancelReservation(reservationId, 2); // 예약 취소 완료
+
+      const completeCancelDate = formatdate.getFormatDate(new Date(cancelled_at*1000), 1); // 날짜,시간
+      logger.info("completeCancelDate: " + completeCancelDate); // ==============테스트==============
+
+      const sql_cancel = `UPDATE base_payment SET complete_cancel_date=?
+                          WHERE reservation_id=?;`;
+      const result_cancel = await connection.query(sql_cancel, [
+        completeCancelDate,
+        reservationId,
+      ]);
+
+      res.status(200).send({
+        success: true,
+        msg: "결제 취소 성공",
       });
     }
   } catch (err) {

@@ -50,6 +50,11 @@ router.post("/changeInfo", async function (req, res, next) {
     const result2 = await connection.query(sql2, [user_num]);
     const data2 = result2[0];
 
+    const npp = data1[0].netsmanager_picture_path;
+    const nnpu = data1[0].netsmanager_notice_picture_url;
+    const url_profile = (npp === null || npp == "") ? null : public_url + npp;
+    const url_introimg = (nnpu === null || nnpu == "") ? null : public_url + nnpu;
+
     res.status(200).send({
       info: {
         phone: data1[0].netsmanager_phone,
@@ -59,8 +64,8 @@ router.post("/changeInfo", async function (req, res, next) {
         name: data1[0].netsmanager_name,
       },
       certificate: data2,
-      url_profile: public_url + data1[0].netsmanager_picture_path,
-      url_introimg: public_url + data1[0].netsmanager_notice_picture_url,
+      url_profile: url_profile,
+      url_introimg: url_introimg,
     });
   } catch (err) {
     logger.error(__filename + " : " + err);
@@ -460,5 +465,44 @@ router.post(
     }
   }
 );
+
+// ===== 매니저 공지사항 - 목록 조회 =====
+router.post("/notice", async function (req, res, next) {
+  const connection = await pool2.getConnection(async (conn) => conn);
+  try {
+    const sql1 =
+      "select `post_id` as `id`, `post_title` as `title`, date_format(`post_date`,'%Y-%m-%d') as `date` from `manager_notice` order by `post_id`;";
+    const result1 = await connection.query(sql1, []);
+    res.send(result1[0]);
+  } catch (err) {
+    logger.error(__filename + " : " + err);
+    // res.status(500).send({ err : "서버 오류" });
+    res.status(500).send({ err: "오류-" + err });
+  } finally {
+    connection.release();
+  }
+});
+
+// ===== 매니저 공지사항 - 내용 조회 =====
+router.post("/notice/read/:idx", async function (req, res, next) {
+  const idx = req.params.idx;
+  const connection = await pool2.getConnection(async (conn) => conn);
+  try {
+    const sql1 =
+      "select `post_id` as `id`, `post_title` as `title`, date_format(`post_date`,'%Y-%m-%d') as `date`, `post_content` as `content`, " +
+      "`view_number` as `view`, `post_writer_id` as `writer_id` from `manager_notice` where `post_id`=?;";
+    const result1 = await connection.query(sql1, [idx]);
+    const data1 = result1[0];
+    if (data1.length == 0) throw (err = 0);
+    res.send(data1[0]);
+  } catch (err) {
+    logger.error(__filename + " : " + err);
+    if (err == 0)
+      res.status(500).send({ err: "해당 게시글을 불러올 수 없습니다." });
+    else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
+  } finally {
+    connection.release();
+  }
+});
 
 module.exports = router;

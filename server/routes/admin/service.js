@@ -7,11 +7,12 @@ const pool2 = require("../../modules/mysql2");
 const token_checker = require("../../modules/admin_token");
 const case_finder = require("../../modules/dispatch_case_finder");
 const gowith_finder = require("../../modules/dispatch_isOverPoint_finder");
+const rev_state_msg = require("../../modules/reservation_state_msg");
+const get_service_progress = require("../../modules/get_service_progress");
 
 const reservation_state = require("../../config/reservation_state");
 const service_state = require("../../config/service_state");
 const payment_state = require("../../config/payment_state");
-const rev_state_msg = require("../../modules/reservation_state_msg");
 const logger = require("../../config/logger");
 
 // ===== 서비스 목록 조회 =====
@@ -68,7 +69,7 @@ router.post(
       res.send(data1);
     } catch (err) {
       logger.error(__filename + " : " + err);
-      if (err == 0) res.status(401).send({ err: "잘못된 인자 전달" });
+      if (err == 0) res.status(400).send({ err: "잘못된 인자 전달" });
       else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
     } finally {
       connection.release();
@@ -88,7 +89,7 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
   try {
     // 서비스 정보
     const sql_service =
-      "select cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_address`, `hospital_address` as `hos_address`, `drop_address`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, " +
+      "select cast(R.`reservation_id` as char) as `service_id`, `expect_pickup_time` as `pickup_time`, `pickup_address`, `hospital_address` as `hos_address`, `hospital_name` as `hos_name`, `drop_address`, date_format(`hope_reservation_date`,'%Y-%m-%d') as `rev_date`, " +
       "`hope_hospital_arrival_time` as `hos_arrival_time`, `fixed_medical_time` as `hos_care_time`, `hope_hospital_departure_time` as `hos_depart_time`, `gowithumanager_name` as `gowithumanager`, `gowithumanager_phone`, " +
       "`reservation_state_id` as `reservation_state`, R.`user_number` as `customer_number`, U.`user_name` as `customer_name`, S.`service_kind` as `service_type`, `move_direction_id`, `gowith_hospital_time` " +
       "from `reservation` as R, `user` as U, `service_info` as S " +
@@ -98,29 +99,12 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     if (data_service.length == 0) throw (err = 0);
 
     // 서비스 상태정보
-    const sql_prog =
-      "select date_format(`real_car_departure_time`,'%Y-%m-%d %T') as `real_car_departure_time`, date_format(`real_pickup_time`,'%Y-%m-%d %T') as `real_pickup_time`, date_format(`real_hospital_arrival_time`,'%Y-%m-%d %T') as `real_hospital_arrival_time`, date_format(`real_return_hospital_arrival_time`,'%Y-%m-%d %T') as `real_return_hospital_arrival_time`, " + 
-      "date_format(`real_return_start_time`,'%Y-%m-%d %T') as `real_return_start_time`, date_format(`real_service_end_time`,'%Y-%m-%d %T') as `real_service_end_time`, `service_state_id` from `service_progress` where `reservation_id`=?;";
-    const result_prog = await connection.query(sql_prog, [service_id]);
-    const data_prog = result_prog[0];
-
-    let sstate = 0;
-    let sstate_time = undefined;
-    if (data_prog.length > 0) {
-      sstate = data_prog[0].service_state_id;
-      sstate_time = [ 0 ];
-      if(data_service[0].move_direction_id != 2)
-      {
-        sstate_time.push(data_prog[0].real_car_departure_time); // 차량출발
-        sstate_time.push(data_prog[0].real_pickup_time); // 픽업완료
-        sstate_time.push(data_prog[0].real_hospital_arrival_time); // 병원도착
-      }
-      if(data_service[0].move_direction_id != 1)
-      {
-        sstate_time.push(data_prog[0].real_return_hospital_arrival_time); // 귀가차량 병원도착
-        sstate_time.push(data_prog[0].real_return_start_time); // 귀가출발
-        sstate_time.push(data_prog[0].real_service_end_time); // 서비스종료
-      }
+    const service_prog = await get_service_progress(service_id, data_service[0].move_direction_id);
+    let service_state;
+    let service_state_time;
+    if(service_prog !== undefined) {
+      service_state = service_prog.service_state;
+      service_state_time = service_prog.service_state_time;
     }
 
     // 배차 (매니저 & 차량)
@@ -133,9 +117,16 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
 
     // 결제
     const sqlm =
-      "select * from `extra_payment` where `payment_state_id`=? and `reservation_id`=?;";
-    const sqlmr = await connection.query(sqlm, [payment_state.waitPay, service_id]);
-    const isNeedExtraPay = sqlmr[0].length > 0;
+      "select `payment_state_id`, date_format(`complete_payment_date`,'%Y-%m-%d %T') as `complete_payment_date` from `extra_payment` where `reservation_id`=?;";
+    const sqlmr = await connection.query(sqlm, [service_id]);
+    const sqlmd = sqlmr[0];
+    const isExistExtraPay = sqlmd.length > 0;
+    let isNeedExtraPay = false;
+    let complete_payment_date = null;
+    if(isExistExtraPay) {
+      isNeedExtraPay = sqlmd[0].payment_state_id == payment_state.waitPay;
+      complete_payment_date = sqlmd[0].complete_payment_date;
+    }
     data_service[0].reservation_state = rev_state_msg(
       data_service[0].reservation_state,
       isNeedExtraPay
@@ -156,17 +147,20 @@ router.post("/serviceDetail/:service_id", async function (req, res, next) {
     data_service[0].isOverPoint = gowith_finder(data_service[0].gowith_hospital_time);
 
     res.send({
-      service_state: sstate,
-      service_state_time: sstate_time,
+      service_state: service_state,
+      service_state_time: service_state_time,
       service: data_service[0],
       dispatch: sqldr[0],
       payMethod: payMethod,
       payCost: payCost,
+      isExistExtraPay: isExistExtraPay,
+      isNeedExtraPay: isNeedExtraPay,
+      complete_payment_date: complete_payment_date,
     });
   } catch (err) {
     logger.error(__filename + " : " + err);
     if (err == 0)
-      res.status(401).send({ err: "해당 서비스 정보가 존재하지 않습니다." });
+      res.status(400).send({ err: "해당 서비스 정보가 존재하지 않습니다." });
     else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });
   } finally {
     connection.release();
@@ -187,42 +181,20 @@ router.post(
 
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
-      const ss = service_state;
-      let param;
-
-      const sql_dire =
-        "select `move_direction_id` from `reservation` where `reservation_id`=?;";
-      const result_dire = await connection.query(sql_dire, [service_id]);
-      const data_dire = result_dire[0];
-      const direction = data_dire[0].move_direction_id; // 이동 방향 (집-병원=1, 병원-집=2, 집-집=3)
-
-      let sql;
-      if(direction == 3)
+      await connection.beginTransaction();
+      const param = [next_state, recTime.carDep, recTime.pickup, recTime.arrivalHos, recTime.carReady, recTime.goHome, recTime.complete];
+      const target = ["service_state_id", "real_car_departure_time", "real_pickup_time", "real_hospital_arrival_time", "real_return_hospital_arrival_time", "real_return_start_time", "real_service_end_time"];
+      for(let i = 0; i <= 6; i++)
       {
-        spl =
-          "update `service_progress` set `real_car_departure_time`=?, `real_pickup_time`=?, `real_hospital_arrival_time`=?, `real_return_hospital_arrival_time`=?, " +
-          "`real_return_start_time`=?, `real_service_end_time`=?, `service_state_id`=? where `reservation_id`=?;";
-        param = [recTime[ss.carDep], recTime[ss.pickup], recTime[ss.arrivalHos], recTime[ss.carReady], recTime[ss.goHome], recTime[ss.complete], next_state, service_id];
+        if(param[i] === undefined || param[i] === null || param[i] == "") param[i] = null;
+        const sql = "update `service_progress` set `" + target[i] + "`=? where `reservation_id`=?;";
+        const result = await connection.query(sql, [param[i], service_id]);
+        if (result[0].affectedRows == 0) throw (err = 0);
       }
-      else if(direction == 1)
-      {
-        spl =
-          "update `service_progress` set `real_car_departure_time`=?, `real_pickup_time`=?, `real_hospital_arrival_time`=?, " +
-          "`service_state_id`=? where `reservation_id`=?;";
-        param = [recTime[1], recTime[2], recTime[3], next_state, service_id ];
-      }
-      else if(direction == 2)
-      {
-        spl =
-          "update `service_progress` set `real_return_hospital_arrival_time`=?, `real_return_start_time`=?, `real_service_end_time`=?, " +
-          "`service_state_id`=? where `reservation_id`=?;";
-        param = [recTime[1], recTime[2], recTime[3], next_state, service_id ];
-      }
-
-      const result = await connection.query(spl, param);
-      if (result[0].affectedRows == 0) throw (err = 0);
+      await connection.commit();
       res.status(200).send();
     } catch (err) {
+      await connection.rollback();
       logger.error(__filename + " : " + err);
       if (err == 0) res.status(500).send({ err: "정보 변경 실패" });
       else res.status(500).send({ err: "오류-" + err }); // res.status(500).send({ err : "서버 오류" });

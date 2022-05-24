@@ -4,10 +4,13 @@ const pool = require("./mysql");
 const pool2 = require("./mysql2");
 const formatdate = require("./formatdate");
 
+const service_kind = require("../config/service_kind");
+const logger = require("../config/logger");
+
 module.exports = {
   calExtracost: async (reservationId) => {
-    // 서비스 예약 날짜
-    let hopeDate;
+    // 서비스 예약 날짜, 이동 방향
+    let hopeDate, moveDirectionId;
     // 서비스 종류, 병원동행 시간, 예상 픽업 시각, 희망 병원에서 귀가 출발 시각
     let serviceKindId, gowithTime, expPickupTime, hopeHospitalDepartureTime;
     // 실제 픽업 시각, 실제 병원에서 귀가 출발 시각, 실제 병원동행 시간
@@ -21,7 +24,8 @@ module.exports = {
 
     const connection = await pool2.getConnection(async (conn) => conn);
     try {
-      const sql1 = `SELECT service_kind_id, gowith_hospital_time, expect_pickup_time, hope_hospital_departure_time, hope_reservation_date
+      const sql1 = `SELECT service_kind_id, gowith_hospital_time, expect_pickup_time, hope_hospital_departure_time, hope_reservation_date,
+                    move_direction_id
                     FROM reservation WHERE reservation_id=?;`;
 
       const sql2 = `SELECT real_pickup_time, real_return_start_time, real_hospital_gowith_time
@@ -36,6 +40,7 @@ module.exports = {
       const sql_data1 = result1[0];
 
       hopeDate = sql_data1[0].hope_reservation_date;
+      moveDirectionId = sql_data1[0].move_direction_id;
 
       serviceKindId = sql_data1[0].service_kind_id;
       gowithTime = sql_data1[0].gowith_hospital_time;
@@ -68,7 +73,7 @@ module.exports = {
       let timelevel1; // 초과요금 부과 단게
       let overGowithTimeCost = 0; // 동행 시간 초과요금
 
-      if (serviceKindId != 1) {
+      if (serviceKindId != service_kind.move) {
         // 네츠 무브는 제외
         overGowithTime = realgowithTime - gowithTime; // 초과 동행 시간(분)
 
@@ -90,38 +95,35 @@ module.exports = {
       // 날짜로 변환
       hopeDate = formatdate.getFormatDate(new Date(hopeDate), 2); // 날짜
 
-      expPickupTime = hopeDate + " " + expPickupTime;
-      
-      expPickupTime = new Date(expPickupTime);
-      realPickupTime = new Date(realPickupTime * 1000);
-
-      if (serviceKindId == 3 || serviceKindId == 5) {
-        // 왕복일 경우
+      if (moveDirectionId != 1) { // 편도(병원-집), 왕복의 경우(편도(집-병원) 제외)
+        // 병원에서 귀가 출발 시간 확인
         hopeHospitalDepartureTime = hopeDate + " " + hopeHospitalDepartureTime;
         hopeHospitalDepartureTime = new Date(hopeHospitalDepartureTime);
-        realHospitalDepartureTime = new Date(realHospitalDepartureTime * 1000);
-      }
+        realHospitalDepartureTime = new Date(realHospitalDepartureTime);
 
-      // 승차 지연인지 판단
-      if (realPickupTime > expPickupTime) {
-        // 픽업 시간이 지연되면
-        let gap =
-          (realPickupTime.getTime() - expPickupTime.getTime()) / (1000 * 60); // 차이(분)
-        delayTime += parseInt(gap);
-      }
-
-      if (serviceKindId == 3 || serviceKindId == 5) {
-        // 왕복일 경우
+        // 승차 지연인지 판단
         if (realHospitalDepartureTime > hopeHospitalDepartureTime) {
           // 병원에서 귀가 출발 시간이 지연되면
-          let gap =
-            (realHospitalDepartureTime.getTime() -
-              hopeHospitalDepartureTime.getTime()) /
-            (1000 * 60); // 차이(분)
+          let gap = (realHospitalDepartureTime.getTime() - hopeHospitalDepartureTime.getTime()) / (1000 * 60); // 차이(분)
           delayTime += parseInt(gap);
         }
       }
 
+      if (moveDirectionId != 2) { // 편도(집-병원), 왕복의 경우(편도(병원-집) 제외)
+        // 픽업 시간 확인
+        expPickupTime = hopeDate + " " + expPickupTime;
+        expPickupTime = new Date(expPickupTime);
+        realPickupTime = new Date(realPickupTime);
+
+        // 승차 지연인지 판단
+        if (realPickupTime > expPickupTime) {
+          // 픽업 시간이 지연되면
+          let gap = (realPickupTime.getTime() - expPickupTime.getTime()) / (1000 * 60); // 차이(분)
+          delayTime += parseInt(gap);
+        }
+      }
+
+      // 초과 승차 지연 대기 시간
       delayTime = delayTime - delayTimeFreeUnit; // 초과 승차 지연 대기 시간(무료 제외)
 
       if (delayTime > 0) {
@@ -135,6 +137,7 @@ module.exports = {
         delayTimeCost = timelevel2 * delayTimeUnitValue;
       }
 
+      // 실제 승차 지연 대기 시간
       delayTime = delayTime + delayTimeFreeUnit; // 실제 승차 지연 대기 시간(무료 포함)
 
       // === 총 추가요금 ===
@@ -151,6 +154,7 @@ module.exports = {
       return result;
     } catch (err) {
       console.error("err : " + err);
+      logger.error(__filename + " : " + err);
     } finally {
       connection.release();
     }

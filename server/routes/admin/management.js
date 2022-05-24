@@ -10,6 +10,7 @@ const bcrypt = require("bcryptjs");
 
 const bcrypt_option = require("../../config/bcrypt");
 const uplPath = require("../../config/upload_path");
+const public_url = require("../../config/public_url");
 const logger = require("../../config/logger");
 const saltRounds = bcrypt_option.saltRounds;
 
@@ -60,15 +61,12 @@ router.post("/customer/detail", async function (req, res, next) {
     const result2 = await connection.query(sql2, [number]);
     const data2 = result2[0];
 
-    for (
-      let i = 0;
-      i < data1.length;
-      i++ // 매니저 구하기
-    ) {
+    for (let i = 0; i < data2.length; i++) // 매니저 구하기
+    {
       const sqlm =
-        "select NM.`netsmanager_id` as `id`, NM.`netsmanager_number` as `number`, NM.`netsmanager_name` as `name` from `reservation` as R, `car_dispatch`as D, `netsmanager` as NM " +
+        "select distinct NM.`netsmanager_id` as `id`, NM.`netsmanager_number` as `number`, NM.`netsmanager_name` as `name` from `reservation` as R, `car_dispatch` as D, `netsmanager` as NM " +
         "where R.`reservation_id`=? and R.`reservation_id`=D.`reservation_id` and D.`netsmanager_number`=NM.`netsmanager_number`;";
-      const sqlmr = await connection.query(sqlm, [data1[i].service_id]);
+      const sqlmr = await connection.query(sqlm, [data2[i].service_id]);
       data2[i].netsmanager = sqlmr[0];
     }
 
@@ -143,6 +141,9 @@ router.post("/manager/detail", async function (req, res, next) {
       "order by `start_time`;";
     const result4 = await connection.query(sql4, [number, now]);
     const data4 = result4[0];
+
+    const npp = data1[0].path_pic;
+    data1[0].path_pic = (npp === null || npp == "") ? null : public_url + npp;
 
     res.send({
       manager: data1[0],
@@ -352,6 +353,10 @@ router.post("/admin/detail", async function (req, res, next) {
     const result1 = await connection.query(sql1, [number]);
     const data1 = result1[0];
     if (data1.length == 0) throw (err = 0);
+
+    const npp = data1[0].path_pic;
+    data1[0].path_pic = (npp === null || npp == "") ? null : public_url + npp;
+
     res.send(data1[0]);
   } catch (err) {
     logger.error(__filename + " : " + err);
