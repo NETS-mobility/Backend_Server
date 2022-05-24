@@ -29,7 +29,7 @@ router.post("", async function (req, res, next) {
       "from `car_dispatch` as C, `reservation` as R, `service_info` as S " +
       "where C.`netsmanager_number`=? and C.`reservation_id`=R.`reservation_id` and R.`service_kind_id`=S.`service_kind_id` and R.`hope_reservation_date`=? "; //and R.`reservation_state_id`>=0 " +
     //"and exists(select * from `base_payment` as P where `payment_state_id`=? and R.`reservation_id`=P.`reservation_id`) " +
-    ("order by `pickup_time`;");
+      "order by `pickup_time`;";
     const sql_result = await connection.query(sql, [
       user_num,
       nowSplited,
