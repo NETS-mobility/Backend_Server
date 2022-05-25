@@ -5,7 +5,7 @@
           extra_payment -> [실제 서비스 시간, 초과요금]
           waiting_payment -> [대기시간, 대기요금]
           */
-         
+
 const express = require("express");
 const util = require("util"); // db에서 불러오는 파일 변환
 const mysql = require("mysql");
@@ -263,10 +263,10 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
         // 예약 확정
         case alarm_kind_number.confirm_reservation:
           {
-            let car_id, netsmanager_name;
+            let car_number, netsmanager_name;
 
             let sql =
-              "select cd.`car_id`, m.`netsmanager_name`, cd.`expect_car_pickup_time` as `reservation_date`, time(cd.`expect_car_pickup_time`) as `pickup_time`, " +
+              "select cd.`car_number`, m.`netsmanager_name`, cd.`expect_car_pickup_time` as `reservation_date`, time(cd.`expect_car_pickup_time`) as `pickup_time`, " +
               "YEAR(cd.`expect_car_pickup_time`) as year, month(cd.expect_car_pickup_time) as month, day(cd.`expect_car_pickup_time`) as day, " +
               "hour(cd.`expect_car_pickup_time`) as hour, minute(cd.`expect_car_pickup_time`) as min, second(cd.`expect_car_pickup_time`) as sec " +
               "from `car_dispatch` as cd inner join `reservation` as r inner join `netsmanager` as m " +
@@ -276,7 +276,7 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
             let sql_res = await connection1.query(sql, [reservation_id]);
 
             let res = Object.values(sql_res[0][0]);
-            car_id = res[0];
+            car_number = res[0];
             netsmanager_name = res[1];
             alarm.reservation_date = formatdate.getFormatDate(res[2], 2);
             alarm.pickup_time = res[3];
@@ -295,10 +295,10 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
             );
 
             alarm.add_alarm_object("서비스번호: ", reservation_id);
-            alarm.add_alarm_object(" 예약일정:", alarm.reservation_date);
-            alarm.add_alarm_object(" 픽업 예정시간: ", alarm.pickup_time);
-            alarm.add_alarm_object(" 배차 차량번호: ", car_id);
-            alarm.add_alarm_object(" 네츠 매니저: ", netsmanager_name);
+            alarm.add_alarm_object("예약일정: ", alarm.reservation_date);
+            alarm.add_alarm_object("픽업 예정시간: ", alarm.pickup_time);
+            alarm.add_alarm_object("배차 차량번호: ", car_number);
+            alarm.add_alarm_object("네츠 매니저: ", netsmanager_name);
 
             alarm.set_push("예약 확정", "네츠 예약이 확정되었습니다.");
 
