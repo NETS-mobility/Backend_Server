@@ -12,7 +12,6 @@ const logger = require("../../config/logger");
 const saltRounds = bcrypt_option.saltRounds;
 
 // ===== 로그인 =====
-
 router.post("", async function (req, res, next) {
   const { id, password, device_token } = req.body;
 
@@ -125,7 +124,6 @@ router.post("/findId", async function (req, res, next) {
 });
 
 // ===== 비밀번호 변경 =====
-
 router.post("/changePw", async function (req, res, next) {
   const { id, password } = req.body;
 

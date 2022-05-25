@@ -98,7 +98,14 @@ router.post("/admin", async function (req, res, next) {
 
     const now = formatdate.getFormatDate(new Date(), 2); // 날짜
 
-    await connection.query(sql, [id, hashed, name, phone, birth, now]);
+    await connection.query(sql, [
+      id,
+      hashed,
+      name,
+      phone,
+      birth,
+      now,
+    ]);
     res.status(200).send({ success: true });
   } catch (err) {
     logger.error(__filename + " : " + err);
