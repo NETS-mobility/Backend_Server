@@ -70,13 +70,6 @@ router.post("/payBaseCost", async function (req, res, next) {
     // 결제 신청일(무통장입금)
     const now = new Date(); // 오늘
     const submitDate = formatdate.getFormatDate(now, 1); // 날짜,시간
-    
-    // 입금 기한
-    // const now = new Date(); // 오늘
-    // const submitDate = formatdate.getFormatDate(now, 1); // 날짜,시간
-    // let validDate = new Date(now.setMinutes(now.getMinutes() + 90)); // 1시간 30분 후
-    // validDate = formatdate.getFormatDate(validDate, 1); // 날짜,시간
-    // validDate = validDate.substring(0, 17) + "59";
 
     // 결제 가능일
     const result2 = await connection.query(sql2, [reservationId]);
@@ -141,13 +134,6 @@ router.post("/payExtraCost", async function (req, res, next) {
     // 결제 신청일(무통장입금)
     const now = new Date(); // 오늘
     const submitDate = formatdate.getFormatDate(now, 1); // 날짜,시간
-    
-    // 입금 기한
-    // const now = new Date(); // 오늘
-    // const submitDate = formatdate.getFormatDate(now, 1); // 날짜,시간
-    // let validDate = new Date(now.setMinutes(now.getMinutes() + 90)); // 1시간 30분 후
-    // validDate = formatdate.getFormatDate(validDate, 1); // 날짜,시간
-    // validDate = validDate.substring(0, 17) + "59";
     
     const result3 = await connection.query(sql3, [
       payment_state.waitDepositPay,

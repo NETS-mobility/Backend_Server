@@ -31,9 +31,6 @@ router.post("/setCompleteBaseCost", async function (req, res, next) {
 
     const sql3 = `UPDATE base_payment SET payment_state_id=?, complete_payment_date=? WHERE reservation_id=?;`;
 
-    /*const sql4 = `INSERT INTO service_progress(reservation_id, service_state_id
-                  ) VALUES(?,?);`;*/
-
     const result1 = await connection.query(sql1, [reservationId]);
     const sql_data1 = result1[0];
 
@@ -53,11 +50,6 @@ router.post("/setCompleteBaseCost", async function (req, res, next) {
       now,
       reservationId,
     ]);
-
-    /*const result4 = await connection.query(sql4, [
-      reservationId,
-      service_state.ready,
-    ]);*/
 
     res.status(200).send({ success: true });
   } catch (err) {

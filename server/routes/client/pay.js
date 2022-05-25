@@ -91,12 +91,6 @@ router.post("/getPayInfo", async function (req, res, next) {
     const sql_data4 = result4[0];
     const phone = sql_data4[0].user_phone;
 
-    // 입금 기한
-    // const now = new Date(); // 오늘
-    // let validDate = new Date(now.setMinutes(now.getMinutes() + 90)); // 1시간 30분 후
-    // validDate = formatdate.getFormatDate(validDate, 1); // 날짜,시간
-    // validDate = validDate.substring(0, 17) + "59";
-
     if (reservationPaymentStateId == reservation_payment_state.waitBasePay) { // 기본 결제 대기
       res.status(200).send({
         merchantUid: merchantUid,
@@ -387,14 +381,6 @@ router.post("/iamport-webhook", async function (req, res, next) {
 
       // 결제 완료 시 다음 예약 상태, 다음 예약 결제 상태
       if (paymentType == "base_payment") { // 기본 결제
-        // 예약 확정 처리 및 서비스 준비
-        /*const sql_new_service = `INSERT INTO service_progress(reservation_id, service_state_id
-                                 ) VALUES(?,?);`;
-        const result_new_service = await connection.query(sql_new_service, [
-          reservationId,
-          service_state.ready,
-        ]);*/
-
         nextReservationStateId = reservation_state.ready;
         nextReservationPaymentStateId = reservation_payment_state.completeBasePay;
 
