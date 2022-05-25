@@ -65,6 +65,21 @@ router.post("/alarmList/", async function (req, res, next) {
           arr[i].alarm_object_data.reservation_date = temp_data[1];
           arr[i].alarm_object_data.pickup_time = temp_data[2];
           break;
+        case alarm_kind.confirm_reservation:
+          arr[i].alarm_title = "예약 확정";
+
+          arr[i].alarm_object_title.object1 = temp_title[0];
+          arr[i].alarm_object_title.object2 = temp_title[1];
+          arr[i].alarm_object_title.object3 = temp_title[2];
+          arr[i].alarm_object_title.object4 = temp_title[3];
+          arr[i].alarm_object_title.object5 = temp_title[4];
+
+          arr[i].alarm_object_data.reservation_id = temp_data[0];
+          arr[i].alarm_object_data.reservation_date = temp_data[1];
+          arr[i].alarm_object_data.pickup_time = temp_data[2];
+          arr[i].alarm_object_data.car_number = temp_data[3];
+          arr[i].alarm_object_data.netsmanager_name = temp_data[4];
+          break;
         case alarm_kind.cancellation:
           arr[i].alarm_title = "취소안내";
 
@@ -177,7 +192,6 @@ router.post("/alarmList/", async function (req, res, next) {
     connection.release();
   }
 });
-
 
 router.post("/addAlarm", async function (req, res, next) {
   try {
