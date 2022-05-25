@@ -263,10 +263,10 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
         // 예약 확정
         case alarm_kind_number.confirm_reservation:
           {
-            let car_number, netsmanager_name;
+            let car_id, netsmanager_name;
 
             let sql =
-              "select cd.`car_number`, m.`netsmanager_name`, cd.`expect_car_pickup_time` as `reservation_date`, time(cd.`expect_car_pickup_time`) as `pickup_time`, " +
+              "select cd.`car_id`, m.`netsmanager_name`, cd.`expect_car_pickup_time` as `reservation_date`, time(cd.`expect_car_pickup_time`) as `pickup_time`, " +
               "YEAR(cd.`expect_car_pickup_time`) as year, month(cd.expect_car_pickup_time) as month, day(cd.`expect_car_pickup_time`) as day, " +
               "hour(cd.`expect_car_pickup_time`) as hour, minute(cd.`expect_car_pickup_time`) as min, second(cd.`expect_car_pickup_time`) as sec " +
               "from `car_dispatch` as cd inner join `reservation` as r inner join `netsmanager` as m " +
@@ -274,9 +274,11 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
               "r.`reservation_id` = ?";
 
             let sql_res = await connection1.query(sql, [reservation_id]);
+            let sql_car =
+              "select c.car_number from car as c where c.car_id = ?";
 
             let res = Object.values(sql_res[0][0]);
-            car_number = res[0];
+            car_id = res[0];
             netsmanager_name = res[1];
             alarm.reservation_date = formatdate.getFormatDate(res[2], 2);
             alarm.pickup_time = res[3];
@@ -286,6 +288,11 @@ async function set_alarm(reciever, reservation_id, alarm_kind, user_id, temp) {
             const hour = res[7];
             const min = res[8];
             const sec = res[9];
+
+            let sql_car_res = await connection1.query(sql_car, car_id);
+            res = Object.values(sql_car_res[0][0]);
+
+            const car_number = res[0];
 
             alarm.set_context(
               "네츠 예약이 확정되었습니다. " +
