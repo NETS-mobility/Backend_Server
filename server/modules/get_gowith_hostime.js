@@ -1,4 +1,5 @@
 // === 실제 병원동행시간 반환 ===
+
 const pool2 = require('./mysql2');
 const service_state = require("../config/service_state");
 const date_to_string = require("./date_to_string");

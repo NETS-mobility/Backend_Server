@@ -5,6 +5,7 @@
           extra_payment -> [실제 서비스 시간, 초과요금]
           waiting_payment -> [대기시간, 대기요금]
           */
+         
 const express = require("express");
 const util = require("util"); // db에서 불러오는 파일 변환
 const mysql = require("mysql");

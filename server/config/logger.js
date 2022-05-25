@@ -1,3 +1,5 @@
+// === 서버로그 양식 정보 ===
+
 const { createLogger, transports, format } = require("winston"); // transports포함시키기?
 const { combine, timestamp, label, simple, colorize, printf } = format;
 const winstonDaily = require("winston-daily-rotate-file");

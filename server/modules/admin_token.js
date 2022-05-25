@@ -1,5 +1,6 @@
 // === 관리자 페이지 접근 검사 ===
 // 토큰을 통해 관리자 계정이 맞는지 확인
+
 const jwt = require("./jwt");
 const pool2 = require("./mysql2");
 

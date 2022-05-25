@@ -2,7 +2,7 @@
 
 module.exports = {
   headers: {
-    "appKey": process.env.TMAP_APP_KEY, // 앱키
+    "appKey": process.env.TMAP_APP_KEY,
     "Content-Type": "application/json"
   },
   urlStr:

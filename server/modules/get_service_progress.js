@@ -1,4 +1,5 @@
 // === 서비스 진행상황 반환 ===
+
 const pool2 = require('./mysql2');
 const service_state = require("../config/service_state");
 const logger = require("../config/logger");

@@ -1,4 +1,5 @@
 // === 필수서류 제출확인 ===
+
 const jwt = require('./jwt');
 const pool2 = require('./mysql2');
 

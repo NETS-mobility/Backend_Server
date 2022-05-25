@@ -1,3 +1,5 @@
+// === 픽업시간 지연여부 확인 및 지연 알림 발송 ===
+
 const express = require("express");
 const mysql = require("mysql");
 const pool2 = require("./mysql2");

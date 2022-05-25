@@ -1,4 +1,5 @@
 // === UI 예약 메시지 변환기 ===
+
 const rev_state = require("../config/reservation_state");
 
 module.exports = function (state, isNeedExtraPay) {
